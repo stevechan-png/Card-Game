@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trade Space</title>
+    <title>Card Game</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -20,20 +20,44 @@
 
     <section id="screen-title" class="screen active">
       <div class="title-wrap">
-        <p class="eyebrow">Two-player exchange</p>
-        <h1 class="brand">Trade Space</h1>
-        <p class="tagline">
-          Open a lobby, share the code, and type your offer. Your partner sees it live.
-        </p>
+        <h1 class="brand">Card Game</h1>
+        <p class="tagline">Play a match or open a live trade desk.</p>
         <div class="cta-row">
+          <button type="button" class="btn btn-primary" id="btn-play">Play</button>
+          <button type="button" class="btn btn-secondary" id="btn-trade">Trade</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-play" class="screen">
+      <div class="panel menu-panel">
+        <button type="button" class="btn-back" id="btn-play-back" aria-label="Back">
+          ← Back
+        </button>
+        <h2>Play</h2>
+        <p class="panel-copy empty-note">This screen is empty for now.</p>
+      </div>
+    </section>
+
+    <section id="screen-trade" class="screen">
+      <div class="panel menu-panel">
+        <button type="button" class="btn-back" id="btn-trade-back" aria-label="Back">
+          ← Back
+        </button>
+        <h2>Trade</h2>
+        <p class="panel-copy">Create a lobby, join with a code, or pick an open room.</p>
+        <div class="menu-actions">
           <button type="button" class="btn btn-primary" id="btn-create">
             Create Trade Space
           </button>
           <button type="button" class="btn btn-secondary" id="btn-join">
             Join Trade Space
           </button>
+          <button type="button" class="btn btn-secondary" id="btn-quick">
+            Quick Lobby
+          </button>
         </div>
-        <p id="title-error" class="error-msg" hidden></p>
+        <p id="trade-error" class="error-msg" hidden></p>
       </div>
     </section>
 
@@ -59,6 +83,22 @@
           Enter Room
         </button>
         <p id="join-error" class="error-msg" hidden></p>
+      </div>
+    </section>
+
+    <section id="screen-quick" class="screen">
+      <div class="panel quick-panel">
+        <button type="button" class="btn-back" id="btn-quick-back" aria-label="Back">
+          ← Back
+        </button>
+        <div class="quick-header">
+          <h2>Quick Lobby</h2>
+          <button type="button" class="btn-copy" id="btn-quick-refresh">Refresh</button>
+        </div>
+        <p class="panel-copy">Open lobbies waiting for a partner. Join with one click.</p>
+        <p id="quick-status" class="quick-status">Looking for lobbies…</p>
+        <div id="lobby-list" class="lobby-list" aria-live="polite"></div>
+        <p id="quick-error" class="error-msg" hidden></p>
       </div>
     </section>
 

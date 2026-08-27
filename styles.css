@@ -223,6 +223,8 @@ body {
 }
 
 .join-panel h2,
+.menu-panel h2,
+.quick-panel h2,
 .side-header h2 {
   margin: 0;
   font-family: var(--font-display);
@@ -234,6 +236,71 @@ body {
   margin: 0;
   color: rgba(243, 239, 228, 0.75);
   line-height: 1.45;
+}
+
+.empty-note {
+  font-style: italic;
+  color: rgba(243, 239, 228, 0.55);
+}
+
+.menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.menu-actions .btn {
+  width: 100%;
+}
+
+.quick-panel {
+  width: min(100%, 28rem);
+}
+
+.quick-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.quick-status {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(243, 239, 228, 0.65);
+}
+
+.lobby-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: min(50vh, 22rem);
+  overflow-y: auto;
+}
+
+.lobby-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: rgba(243, 239, 228, 0.06);
+  border: 1px solid rgba(243, 239, 228, 0.14);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+}
+
+.lobby-row-code {
+  font-family: var(--font-display);
+  letter-spacing: 0.14em;
+  color: #f0d27a;
+  font-size: 1.15rem;
+}
+
+.btn-sm {
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 999px;
+  width: auto;
 }
 
 .field {

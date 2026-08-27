@@ -1,25 +1,27 @@
-# Trade Space
+# Card Game
 
-A simple 2-player trading lobby that runs as a static site on GitHub Pages.
+A static browser app for GitHub Pages with a title menu, an empty Play screen, and a live 2-player Trade desk.
 
-## How to play
+## Title screen
 
-1. Open the site and choose **Create Trade Space**.
-2. Share the **lobby code** with the other player.
-3. The other player chooses **Join Trade Space** and enters the code.
-4. At the top: **1 oak log = 1 value**.
-5. Each player fills in **Item**, **Amount**, and **Estimated value** (all text fields).
-6. You can only edit your own side. Their side updates live and is read-only.
+- **Play** — placeholder screen for now
+- **Trade** — trading lobby menu
+
+## Trade
+
+1. **Create Trade Space** — host a lobby and share the code (also listed in Quick Lobby)
+2. **Join Trade Space** — enter a 6-character lobby code
+3. **Quick Lobby** — see open lobbies and join with one click (no code typing)
+
+In the trade room, each player fills **Item**, **Amount**, and **Estimated value**. Your side is editable; theirs updates live and is read-only. Rate shown at the top: **1 oak log = 1 value**.
 
 ## Deploy on GitHub Pages
 
-1. Create a GitHub repository and push these files to the default branch.
-2. In the repo: **Settings → Pages**.
-3. Set **Source** to **Deploy from a branch**.
-4. Choose your default branch and `/ (root)`, then save.
-5. After a minute or two, open the Pages URL.
+1. Push these files to a GitHub repository.
+2. **Settings → Pages** → Deploy from a branch → `/ (root)`.
+3. Open the Pages URL after it finishes building.
 
-This project already includes `.nojekyll` so GitHub Pages serves the files as-is.
+`.nojekyll` is included so Pages serves files as-is.
 
 ## Local preview
 
@@ -27,10 +29,9 @@ This project already includes `.nojekyll` so GitHub Pages serves the files as-is
 npx --yes serve .
 ```
 
-Open the local URL in two browser windows (or one normal + one private window) to test create/join.
+Use two browser windows (or one normal + one private) to test create/join and Quick Lobby.
 
 ## Notes
 
-- Real-time sync uses [PeerJS](https://peerjs.com/) (browser-to-browser). Both players need internet access.
-- Lobby codes are 6 characters.
-- A lobby supports two players.
+- Real-time sync uses [PeerJS](https://peerjs.com/). Both players need internet.
+- Quick Lobby discovery uses a shared PeerJS lobby board; open rooms appear while the host is waiting for a partner.
