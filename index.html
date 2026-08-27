@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trade Space</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <section id="screen-title" class="screen active">
+      <div class="title-wrap">
+        <p class="eyebrow">Two-player exchange</p>
+        <h1 class="brand">Trade Space</h1>
+        <p class="tagline">
+          Open a lobby, share the code, and type your offer. Your partner sees it live.
+        </p>
+        <div class="cta-row">
+          <button type="button" class="btn btn-primary" id="btn-create">
+            Create Trade Space
+          </button>
+          <button type="button" class="btn btn-secondary" id="btn-join">
+            Join Trade Space
+          </button>
+        </div>
+        <p id="title-error" class="error-msg" hidden></p>
+      </div>
+    </section>
+
+    <section id="screen-join" class="screen">
+      <div class="panel join-panel">
+        <button type="button" class="btn-back" id="btn-join-back" aria-label="Back">
+          ← Back
+        </button>
+        <h2>Join Trade Space</h2>
+        <p class="panel-copy">Enter the lobby code from the other player.</p>
+        <label class="field">
+          <span>Lobby code</span>
+          <input
+            id="join-code-input"
+            type="text"
+            maxlength="6"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="ABC123"
+          />
+        </label>
+        <button type="button" class="btn btn-primary" id="btn-join-confirm">
+          Enter Room
+        </button>
+        <p id="join-error" class="error-msg" hidden></p>
+      </div>
+    </section>
+
+    <section id="screen-room" class="screen">
+      <header class="room-header">
+        <button type="button" class="btn-back" id="btn-leave" aria-label="Leave room">
+          ← Leave
+        </button>
+        <div class="lobby-badge">
+          <span class="lobby-label">Lobby code</span>
+          <strong id="lobby-code-display">------</strong>
+          <button type="button" class="btn-copy" id="btn-copy-code" title="Copy code">
+            Copy
+          </button>
+        </div>
+        <p id="room-status" class="room-status">Waiting for partner…</p>
+      </header>
+
+      <p class="value-rule" aria-label="Exchange rate">1 oak log = 1 value</p>
+
+      <div class="trade-board">
+        <article class="trade-side mine">
+          <header class="side-header">
+            <h2>Your offer</h2>
+            <span class="side-hint">Editable</span>
+          </header>
+
+          <label class="field">
+            <span>Item</span>
+            <input
+              id="my-text"
+              type="text"
+              maxlength="200"
+              autocomplete="off"
+              placeholder="What are you offering?"
+            />
+          </label>
+
+          <div class="num-row">
+            <label class="field">
+              <span>Amount</span>
+              <input
+                id="my-amount"
+                type="text"
+                maxlength="80"
+                autocomplete="off"
+                placeholder="e.g. 64"
+              />
+            </label>
+            <label class="field">
+              <span>Estimated value</span>
+              <input
+                id="my-value"
+                type="text"
+                maxlength="80"
+                autocomplete="off"
+                placeholder="e.g. 64 oak logs"
+              />
+            </label>
+          </div>
+        </article>
+
+        <div class="trade-divider" aria-hidden="true">
+          <span>⇄</span>
+        </div>
+
+        <article class="trade-side theirs">
+          <header class="side-header">
+            <h2>Their offer</h2>
+            <span class="side-hint locked">Read only</span>
+          </header>
+
+          <div class="field">
+            <span>Item</span>
+            <div id="their-text" class="readonly-box empty" aria-live="polite">
+              Waiting…
+            </div>
+          </div>
+
+          <div class="num-row">
+            <div class="field">
+              <span>Amount</span>
+              <div id="their-amount" class="readonly-box num empty" aria-live="polite">
+                —
+              </div>
+            </div>
+            <div class="field">
+              <span>Estimated value</span>
+              <div id="their-value" class="readonly-box num empty" aria-live="polite">
+                —
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </body>
+</html>
