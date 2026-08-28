@@ -1,37 +1,27 @@
 # Card Game
 
-A static browser app for GitHub Pages with a title menu, an empty Play screen, and a live 2-player Trade desk.
+Static browser card game for GitHub Pages: shop, packs, collection, and live trading.
 
-## Title screen
+## Play
 
-- **Play** — placeholder screen for now
-- **Trade** — trading lobby menu
+- Start with **200 Coins**
+- **Card shop** — buy a **Common Pack** for **100 Coins**
+- **Backpack** (bottom-right) has tabs: **Packs / Cards / Items**
+- Tap a pack to open it and draw **5 cards** (weighted Common Pack odds)
 
 ## Trade
 
-1. **Create Trade Space** — host a lobby and share the code (also listed in Quick Lobby)
-2. **Join Trade Space** — enter a 6-character lobby code
-3. **Quick Lobby** — see open lobbies and join with one click (no code typing)
+1. Create / join / Quick Lobby as before
+2. Your offer slot shows **+** — tap it, pick a card from inventory, choose quantity
+3. Estimated value = card **$** price × quantity
+4. Partner sees your offer live (read-only)
 
-In the trade room, each player fills **Item**, **Amount**, and **Estimated value**. Your side is editable; theirs updates live and is read-only. Rate shown at the top: **1 oak log = 1 value**.
+## Deploy
 
-## Deploy on GitHub Pages
+Push to GitHub → **Settings → Pages** → branch `/ (root)`.
 
-1. Push these files to a GitHub repository.
-2. **Settings → Pages** → Deploy from a branch → `/ (root)`.
-3. Open the Pages URL after it finishes building.
-
-`.nojekyll` is included so Pages serves files as-is.
-
-## Local preview
+## Local
 
 ```bash
 npx --yes serve .
 ```
-
-Use two browser windows (or one normal + one private) to test create/join and Quick Lobby.
-
-## Notes
-
-- Real-time sync uses [PeerJS](https://peerjs.com/). Both players need internet.
-- Quick Lobby discovery uses a shared PeerJS lobby board; open rooms appear while the host is waiting for a partner.
