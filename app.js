@@ -134,8 +134,7 @@
       cps: 12,
       theme: "triceratops",
       blurb: "Horned relic",
-      emoji: "🦕",
-      model: "assets/triceratops-emoji.png",
+      model: "./assets/triceratops-emoji.png",
     },
     trex: {
       id: "trex",
@@ -162,8 +161,7 @@
   function cardArtHtml(card) {
     if (card.model) {
       const src = escapeHtml(resolveAssetUrl(card.model));
-      const fallback = escapeHtml(card.emoji || "?");
-      return `<img class="card-model" src="${src}" alt="${escapeHtml(card.name)}" draggable="false" data-fallback="${fallback}" onerror="this.outerHTML='<span class=\\'card-emoji\\' role=\\'img\\'>'+this.dataset.fallback+'</span>'" />`;
+      return `<img class="card-model" src="${src}" alt="${escapeHtml(card.name)}" draggable="false" decoding="async" />`;
     }
     if (card.emoji) {
       return `<span class="card-emoji" role="img" aria-label="${escapeHtml(card.name)}">${card.emoji}</span>`;
