@@ -22,10 +22,63 @@
       <div class="title-wrap">
         <h1 class="brand">Card Game</h1>
         <p class="tagline">Collect animals, open packs, and trade live.</p>
+        <p class="account-chip" id="title-account-chip">Playing as Guest</p>
         <div class="cta-row">
           <button type="button" class="btn btn-primary" id="btn-play">Play</button>
           <button type="button" class="btn btn-secondary" id="btn-trade">Trade</button>
+          <button type="button" class="btn btn-secondary" id="btn-settings">Settings</button>
         </div>
+      </div>
+    </section>
+
+    <section id="screen-settings" class="screen">
+      <div class="panel menu-panel">
+        <button type="button" class="btn-back" id="btn-settings-back" aria-label="Back">
+          ← Back
+        </button>
+        <h2>Settings</h2>
+        <p class="panel-copy">Manage your game account.</p>
+        <div class="menu-actions">
+          <button type="button" class="btn btn-primary" id="btn-accounts">Accounts</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-accounts" class="screen">
+      <div class="panel menu-panel accounts-panel">
+        <button type="button" class="btn-back" id="btn-accounts-back" aria-label="Back">
+          ← Back
+        </button>
+        <h2>Accounts</h2>
+        <p class="panel-copy" id="accounts-status">You are playing as a guest.</p>
+        <div class="menu-actions">
+          <button type="button" class="btn btn-primary" id="btn-account-register">Register</button>
+          <button type="button" class="btn btn-secondary" id="btn-account-login">Log in</button>
+          <button type="button" class="btn btn-secondary" id="btn-account-logout">Log out</button>
+        </div>
+        <p id="accounts-msg" class="shop-msg" hidden></p>
+      </div>
+    </section>
+
+    <section id="screen-account-form" class="screen">
+      <div class="panel menu-panel accounts-panel">
+        <button type="button" class="btn-back" id="btn-account-form-back" aria-label="Back">
+          ← Back
+        </button>
+        <h2 id="account-form-title">Register</h2>
+        <p class="panel-copy" id="account-form-copy">Create an account. It will be saved forever on this device.</p>
+        <label class="field">
+          <span>Account</span>
+          <input id="account-username" type="text" maxlength="24" autocomplete="username" />
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input id="account-password" type="password" maxlength="64" autocomplete="current-password" />
+        </label>
+        <button type="button" class="btn btn-primary btn-block" id="btn-account-submit">
+          Save
+        </button>
+        <p id="account-form-error" class="error-msg" hidden></p>
       </div>
     </section>
 
@@ -68,22 +121,55 @@
             </div>
             <h3>Common Pack</h3>
             <p class="pack-price">100 Coins · 5 cards</p>
+            <p class="pack-stock" id="pack-stock-label">In stock: —</p>
             <button type="button" class="btn btn-primary btn-sm" id="btn-buy-common-pack">
               Buy
             </button>
           </article>
         </div>
+        <p class="restock-timer" id="restock-timer" aria-live="polite">Restock in —</p>
         <p id="shop-msg" class="shop-msg" hidden></p>
       </div>
     </section>
 
     <section id="screen-sell-stop" class="screen">
-      <div class="panel menu-panel">
+      <div class="panel menu-panel sell-panel">
         <button type="button" class="btn-back" id="btn-sell-stop-back" aria-label="Back">
           ← Back
         </button>
-        <h2>Sell stop</h2>
-        <p class="panel-copy empty-note">This screen is empty for now.</p>
+        <div class="shop-header">
+          <h2>Sell stop</h2>
+          <p class="coin-badge" aria-live="polite">
+            <span class="coin-label">Coins</span>
+            <strong id="sell-coins">200</strong>
+          </p>
+        </div>
+        <p class="panel-copy">
+          Station up to 2 cards. They earn coins every second while assigned.
+        </p>
+        <p class="sell-rate" aria-live="polite">
+          Income: <strong id="sell-income-rate">0</strong>/s
+        </p>
+        <div class="sell-slots">
+          <div class="sell-slot-wrap">
+            <button type="button" class="trade-slot" id="sell-slot-0" aria-label="Sell slot 1">
+              <span class="trade-slot-plus">+</span>
+              <span class="trade-slot-label">Add card</span>
+            </button>
+            <button type="button" class="btn btn-ghost-slim" id="btn-clear-sell-0" hidden>
+              Clear
+            </button>
+          </div>
+          <div class="sell-slot-wrap">
+            <button type="button" class="trade-slot" id="sell-slot-1" aria-label="Sell slot 2">
+              <span class="trade-slot-plus">+</span>
+              <span class="trade-slot-label">Add card</span>
+            </button>
+            <button type="button" class="btn btn-ghost-slim" id="btn-clear-sell-1" hidden>
+              Clear
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -188,19 +274,31 @@
             Copy
           </button>
         </div>
-        <p id="room-status" class="room-status">Waiting for partner…</p>
+        <div class="room-partner">
+          <p id="room-status" class="room-status">Waiting for partner…</p>
+          <p class="partner-name" id="partner-name" hidden></p>
+          <button type="button" class="btn-kick" id="btn-kick" hidden>Kick</button>
+        </div>
       </header>
 
       <div class="trade-board">
         <article class="trade-side mine">
           <header class="side-header">
             <h2>Your offer</h2>
-            <span class="side-hint">Tap slot</span>
+            <span class="side-hint">Max 4 card types</span>
           </header>
-          <button type="button" class="trade-slot" id="my-trade-slot" aria-label="Choose a card">
+          <div id="my-trade-items" class="trade-items"></div>
+          <button type="button" class="trade-add-card" id="btn-add-trade-card">
             <span class="trade-slot-plus">+</span>
-            <span class="trade-slot-label">Add card</span>
+            <span>Add card</span>
           </button>
+          <label class="field cash-field">
+            <span>Cash</span>
+            <input id="my-trade-cash" type="number" min="0" step="1" value="0" />
+          </label>
+          <p class="trade-total">
+            Estimated total: <strong id="my-trade-total">$0</strong>
+          </p>
           <button type="button" class="btn btn-ghost-slim" id="btn-clear-offer" hidden>
             Clear offer
           </button>
@@ -211,14 +309,31 @@
         <article class="trade-side theirs">
           <header class="side-header">
             <h2>Their offer</h2>
-            <span class="side-hint locked">Read only</span>
+            <span class="side-hint locked" id="their-confirm-hint">Read only</span>
           </header>
-          <div class="trade-slot locked empty" id="their-trade-slot" aria-live="polite">
-            <span class="trade-slot-label">Waiting…</span>
+          <div id="their-trade-items" class="trade-items locked" aria-live="polite">
+            <p class="trade-empty">Waiting…</p>
           </div>
+          <p class="trade-cash-line" id="their-trade-cash-line">Cash: $0</p>
+          <p class="trade-total">
+            Estimated total: <strong id="their-trade-total">$0</strong>
+          </p>
         </article>
       </div>
+
+      <div class="trade-confirm-bar">
+        <p class="trade-confirm-status" id="trade-confirm-status">Set your offer, then confirm.</p>
+        <button type="button" class="btn btn-primary" id="btn-trade-confirm">Confirm</button>
+      </div>
     </section>
+
+    <div id="login-required-modal" class="overlay" hidden>
+      <div class="overlay-panel qty-panel">
+        <h2>Login required</h2>
+        <p class="panel-copy">You need to log in to trade.</p>
+        <button type="button" class="btn btn-primary" id="btn-login-required-ok">OK</button>
+      </div>
+    </div>
 
     <div id="pack-reveal" class="overlay" hidden>
       <div class="overlay-panel reveal-panel">
@@ -244,6 +359,58 @@
           <button type="button" class="btn btn-secondary" id="btn-qty-cancel">Cancel</button>
           <button type="button" class="btn btn-primary" id="btn-qty-confirm">Offer</button>
         </div>
+      </div>
+    </div>
+
+    <div id="card-sell-modal" class="overlay" hidden>
+      <div class="overlay-panel qty-panel">
+        <h2>Sell card</h2>
+        <div id="card-sell-preview" class="qty-preview"></div>
+        <label class="field">
+          <span>Quantity</span>
+          <div class="qty-with-keep">
+            <input id="card-sell-qty" type="number" min="1" step="1" value="1" />
+            <button type="button" class="btn-keep-one" id="btn-sell-keep-one" title="Sell all but one">
+              =1
+            </button>
+          </div>
+        </label>
+        <p class="qty-total">
+          You receive: <strong id="card-sell-total">$0</strong>
+        </p>
+        <p class="panel-copy" id="card-sell-hint">Owned: 0</p>
+        <div class="cta-row">
+          <button type="button" class="btn btn-secondary" id="btn-card-sell-cancel">Cancel</button>
+          <button type="button" class="btn btn-primary" id="btn-card-sell-confirm">Sell</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-gate" class="overlay" hidden>
+      <div class="overlay-panel admin-panel">
+        <h2>Admin access</h2>
+        <p class="panel-copy">Enter password</p>
+        <label class="field">
+          <span>Password</span>
+          <input id="admin-password" type="password" autocomplete="off" />
+        </label>
+        <p id="admin-gate-error" class="error-msg" hidden></p>
+        <div class="cta-row">
+          <button type="button" class="btn btn-secondary" id="btn-admin-gate-cancel">Cancel</button>
+          <button type="button" class="btn btn-primary" id="btn-admin-gate-enter">Enter</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-settings" class="overlay" hidden>
+      <div class="overlay-panel admin-panel">
+        <h2>Admin settings</h2>
+        <label class="admin-toggle">
+          <input type="checkbox" id="admin-infinite-stock" />
+          <span>Infinite stock</span>
+        </label>
+        <p class="panel-copy">When on, the shop never runs out of packs.</p>
+        <button type="button" class="btn btn-primary" id="btn-admin-close">Done</button>
       </div>
     </div>
 

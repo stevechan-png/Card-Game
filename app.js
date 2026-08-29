@@ -5,8 +5,16 @@
   const LOBBY_STALE_MS = 15000;
   const HEARTBEAT_MS = 4000;
   const STORAGE_KEY = "cardgame-player-v2";
+  const SHOP_STORAGE_KEY = "cardgame-shop-v1";
+  const ACCOUNTS_KEY = "cardgame-accounts-v1";
+  const SESSION_KEY = "cardgame-session-v1";
   const STARTING_COINS = 200;
   const CARDS_PER_PACK = 5;
+  const RESTOCK_MS = 3 * 60 * 1000;
+  const STOCK_MIN = 6;
+  const STOCK_MAX = 10;
+  const ADMIN_PASSWORD = "Stevevava";
+  const TRADE_CONFIRM_MS = 2000;
 
   const PACKS = {
     "common-pack": {
@@ -23,115 +31,135 @@
       name: "Chicken",
       value: 5,
       oneIn: 2,
+      cps: 1,
       theme: "chicken",
       blurb: "Farmyard flutter",
+      emoji: "🐔",
     },
     cow: {
       id: "cow",
       name: "Cow",
       value: 10,
       oneIn: 3,
+      cps: 2,
       theme: "cow",
       blurb: "Pasture classic",
+      emoji: "🐄",
     },
     pig: {
       id: "pig",
       name: "Pig",
       value: 12,
       oneIn: 5,
+      cps: 3,
       theme: "pig",
       blurb: "Muddy treasure",
+      emoji: "🐷",
     },
     salmon: {
       id: "salmon",
       name: "Salmon",
       value: 16,
       oneIn: 8,
+      cps: 4,
       theme: "salmon",
       blurb: "Upstream flash",
+      emoji: "🐟",
     },
     squid: {
       id: "squid",
       name: "Squid",
       value: 18,
       oneIn: 10,
+      cps: 5,
       theme: "squid",
       blurb: "Ink & tide",
+      emoji: "🦑",
     },
     monkey: {
       id: "monkey",
       name: "Monkey",
       value: 20,
       oneIn: 15,
+      cps: 6,
       theme: "monkey",
       blurb: "Canopy trickster",
+      emoji: "🐵",
     },
     lion: {
       id: "lion",
       name: "Lion",
-      value: 25,
+      value: 30,
       oneIn: 20,
+      cps: 8,
       theme: "lion",
       blurb: "Savanna crown",
+      emoji: "🦁",
     },
     tiger: {
       id: "tiger",
       name: "Tiger",
       value: 30,
       oneIn: 20,
+      cps: 8,
       theme: "tiger",
       blurb: "Striped thunder",
+      emoji: "🐯",
     },
     leopard: {
       id: "leopard",
       name: "Leopard",
-      value: 35,
+      value: 30,
       oneIn: 20,
+      cps: 8,
       theme: "leopard",
       blurb: "Spotted shadow",
+      emoji: "🐆",
     },
     shark: {
       id: "shark",
       name: "Shark",
       value: 40,
       oneIn: 30,
+      cps: 10,
       theme: "shark",
       blurb: "Deep blue menace",
+      emoji: "🦈",
     },
     triceratops: {
       id: "triceratops",
       name: "Triceratops",
       value: 50,
       oneIn: 40,
+      cps: 12,
       theme: "triceratops",
       blurb: "Horned relic",
+      emoji: null,
+      model: "Models/triceratops-emoji.png",
     },
     trex: {
       id: "trex",
       name: "T-Rex",
       value: 65,
       oneIn: 50,
+      cps: 15,
       theme: "trex",
       blurb: "Apex fossil",
+      emoji: "🦖",
     },
   };
 
   const COMMON_POOL = Object.values(CARDS);
 
-  const ART = {
-    chicken: `<svg viewBox="0 0 120 120"><circle cx="60" cy="62" r="28" fill="#f0c14a"/><circle cx="78" cy="48" r="14" fill="#f7d977"/><path d="M88 48l16 4-16 6z" fill="#e4572e"/><circle cx="82" cy="46" r="2.2" fill="#1a1408"/><path d="M40 78c8 16 32 16 40 0" fill="#e8a317"/><path d="M52 38c-8-12-20-8-18 2" fill="#f0c14a"/></svg>`,
-    cow: `<svg viewBox="0 0 120 120"><ellipse cx="60" cy="68" rx="34" ry="26" fill="#f4efe6"/><ellipse cx="44" cy="60" rx="10" ry="8" fill="#2a241c"/><ellipse cx="72" cy="74" rx="12" ry="9" fill="#2a241c"/><circle cx="42" cy="44" r="10" fill="#f4efe6"/><circle cx="78" cy="44" r="10" fill="#f4efe6"/><circle cx="60" cy="52" r="16" fill="#f4efe6"/><circle cx="54" cy="50" r="2" fill="#1a1408"/><circle cx="66" cy="50" r="2" fill="#1a1408"/><path d="M54 58h12v6c0 4-12 4-12 0z" fill="#e8b4b8"/></svg>`,
-    pig: `<svg viewBox="0 0 120 120"><ellipse cx="60" cy="70" rx="32" ry="24" fill="#f2a6b5"/><circle cx="60" cy="52" r="20" fill="#f7bcc8"/><ellipse cx="60" cy="58" rx="10" ry="7" fill="#e8899b"/><circle cx="56" cy="58" r="1.6" fill="#1a1408"/><circle cx="64" cy="58" r="1.6" fill="#1a1408"/><circle cx="52" cy="48" r="2.2" fill="#1a1408"/><circle cx="68" cy="48" r="2.2" fill="#1a1408"/><ellipse cx="38" cy="42" rx="7" ry="10" fill="#f2a6b5"/><ellipse cx="82" cy="42" rx="7" ry="10" fill="#f2a6b5"/></svg>`,
-    salmon: `<svg viewBox="0 0 120 120"><path d="M20 64c20-22 60-22 80 0-20 22-60 22-80 0z" fill="#ff7a59"/><path d="M90 64l18-12v24z" fill="#ff9478"/><path d="M48 52c8 4 16 4 24 0" stroke="#ffd1c4" stroke-width="3" fill="none"/><circle cx="34" cy="60" r="2.5" fill="#1a1408"/><path d="M58 74l8 12-4-12 10 10z" fill="#e4572e"/></svg>`,
-    squid: `<svg viewBox="0 0 120 120"><ellipse cx="60" cy="44" rx="22" ry="26" fill="#8b6cff"/><circle cx="52" cy="40" r="4" fill="#e8f0ff"/><circle cx="68" cy="40" r="4" fill="#e8f0ff"/><circle cx="53" cy="40" r="1.8" fill="#1a1408"/><circle cx="69" cy="40" r="1.8" fill="#1a1408"/><path d="M42 64c2 20 6 28 10 34M52 66c1 22 4 30 8 34M68 66c-1 22-4 30-8 34M78 64c-2 20-6 28-10 34M60 66c0 24 0 32 0 36" stroke="#b9a6ff" stroke-width="5" stroke-linecap="round" fill="none"/></svg>`,
-    monkey: `<svg viewBox="0 0 120 120"><circle cx="60" cy="58" r="28" fill="#8b5a2b"/><ellipse cx="60" cy="66" rx="18" ry="16" fill="#e7c7a0"/><circle cx="36" cy="54" r="12" fill="#8b5a2b"/><circle cx="84" cy="54" r="12" fill="#8b5a2b"/><circle cx="36" cy="54" r="7" fill="#e7c7a0"/><circle cx="84" cy="54" r="7" fill="#e7c7a0"/><circle cx="52" cy="58" r="2.4" fill="#1a1408"/><circle cx="68" cy="58" r="2.4" fill="#1a1408"/><path d="M54 70c4 4 8 4 12 0" stroke="#1a1408" stroke-width="2" fill="none"/></svg>`,
-    lion: `<svg viewBox="0 0 120 120"><circle cx="60" cy="62" r="34" fill="#c47a16"/><circle cx="60" cy="62" r="22" fill="#e8b84a"/><circle cx="52" cy="58" r="2.5" fill="#1a1408"/><circle cx="68" cy="58" r="2.5" fill="#1a1408"/><path d="M60 64v6" stroke="#1a1408" stroke-width="2"/><path d="M52 76c5 5 11 5 16 0" stroke="#1a1408" stroke-width="2" fill="none"/><path d="M40 40c8-10 20-10 28-2M80 40c-8-10-20-10-28-2" stroke="#a65f0a" stroke-width="6" fill="none"/></svg>`,
-    tiger: `<svg viewBox="0 0 120 120"><ellipse cx="60" cy="64" rx="34" ry="28" fill="#f08a24"/><path d="M40 48c8 8 8 20 0 28M60 44v40M80 48c-8 8-8 20 0 28" stroke="#1a1408" stroke-width="5" fill="none"/><circle cx="48" cy="58" r="2.5" fill="#1a1408"/><circle cx="72" cy="58" r="2.5" fill="#1a1408"/><path d="M54 70h12" stroke="#1a1408" stroke-width="2"/><path d="M34 40l-12-10M86 40l12-10" stroke="#f08a24" stroke-width="6"/></svg>`,
-    leopard: `<svg viewBox="0 0 120 120"><ellipse cx="60" cy="64" rx="34" ry="28" fill="#e0b15a"/><circle cx="44" cy="56" r="5" fill="#5a4020"/><circle cx="62" cy="48" r="4" fill="#5a4020"/><circle cx="78" cy="60" r="5" fill="#5a4020"/><circle cx="52" cy="74" r="4" fill="#5a4020"/><circle cx="70" cy="78" r="3.5" fill="#5a4020"/><circle cx="50" cy="58" r="2.3" fill="#1a1408"/><circle cx="70" cy="58" r="2.3" fill="#1a1408"/><path d="M34 42l-10-8M86 42l10-8" stroke="#e0b15a" stroke-width="6"/></svg>`,
-    shark: `<svg viewBox="0 0 120 120"><path d="M18 68c18-28 70-28 88-4-24 8-52 12-88 4z" fill="#6f8ea8"/><path d="M96 66l16-18v22z" fill="#8aa7c0"/><path d="M60 44l8-18-4 18" fill="#8aa7c0"/><path d="M30 74l10 16 4-14" fill="#dfe8f0"/><circle cx="36" cy="62" r="2.5" fill="#1a1408"/><path d="M28 68h18" stroke="#1a1408" stroke-width="2"/></svg>`,
-    triceratops: `<svg viewBox="0 0 120 120"><ellipse cx="58" cy="72" rx="36" ry="24" fill="#3f7a4c"/><path d="M78 58c18-6 28-2 30 10-16 4-28 2-30-10z" fill="#4f915c"/><circle cx="86" cy="62" r="3" fill="#1a1408"/><path d="M96 54l10-16M88 50l2-18M100 62l16-4" stroke="#d9e6c8" stroke-width="5" stroke-linecap="round"/><path d="M34 78c-10 4-16 12-14 16h40c-6-6-14-12-26-16z" fill="#2f5d3a"/></svg>`,
-    trex: `<svg viewBox="0 0 120 120"><path d="M30 78c8-28 40-40 62-28-4 18-18 30-40 34z" fill="#a63d2f"/><path d="M78 52c14-4 24 2 28 14-12 2-22 0-28-14z" fill="#c45240"/><circle cx="92" cy="58" r="2.6" fill="#1a1408"/><path d="M98 64h14" stroke="#1a1408" stroke-width="3"/><path d="M48 88l-4 18M60 90l2 18" stroke="#7a2c22" stroke-width="6" stroke-linecap="round"/><path d="M40 60l-16-8" stroke="#a63d2f" stroke-width="7" stroke-linecap="round"/></svg>`,
-  };
+  function cardArtHtml(card) {
+    if (card.model) {
+      return `<img class="card-model" src="${escapeHtml(card.model)}" alt="${escapeHtml(card.name)}" draggable="false" />`;
+    }
+    if (card.emoji) {
+      return `<span class="card-emoji" role="img" aria-label="${escapeHtml(card.name)}">${card.emoji}</span>`;
+    }
+    return `<span class="card-emoji">?</span>`;
+  }
 
   const screens = {
     title: document.getElementById("screen-title"),
@@ -140,6 +168,9 @@
     sellStop: document.getElementById("screen-sell-stop"),
     battles: document.getElementById("screen-battles"),
     inventory: document.getElementById("screen-inventory"),
+    settings: document.getElementById("screen-settings"),
+    accounts: document.getElementById("screen-accounts"),
+    accountForm: document.getElementById("screen-account-form"),
     trade: document.getElementById("screen-trade"),
     join: document.getElementById("screen-join"),
     quick: document.getElementById("screen-quick"),
@@ -149,7 +180,24 @@
   const els = {
     btnPlay: document.getElementById("btn-play"),
     btnTrade: document.getElementById("btn-trade"),
+    btnSettings: document.getElementById("btn-settings"),
+    titleAccountChip: document.getElementById("title-account-chip"),
     btnPlayBack: document.getElementById("btn-play-back"),
+    btnSettingsBack: document.getElementById("btn-settings-back"),
+    btnAccounts: document.getElementById("btn-accounts"),
+    btnAccountsBack: document.getElementById("btn-accounts-back"),
+    accountsStatus: document.getElementById("accounts-status"),
+    accountsMsg: document.getElementById("accounts-msg"),
+    btnAccountRegister: document.getElementById("btn-account-register"),
+    btnAccountLogin: document.getElementById("btn-account-login"),
+    btnAccountLogout: document.getElementById("btn-account-logout"),
+    btnAccountFormBack: document.getElementById("btn-account-form-back"),
+    accountFormTitle: document.getElementById("account-form-title"),
+    accountFormCopy: document.getElementById("account-form-copy"),
+    accountUsername: document.getElementById("account-username"),
+    accountPassword: document.getElementById("account-password"),
+    btnAccountSubmit: document.getElementById("btn-account-submit"),
+    accountFormError: document.getElementById("account-form-error"),
     btnCardShop: document.getElementById("btn-card-shop"),
     btnSellStop: document.getElementById("btn-sell-stop"),
     btnBattles: document.getElementById("btn-battles"),
@@ -160,7 +208,15 @@
     btnBackpack: document.getElementById("btn-backpack"),
     btnBuyCommonPack: document.getElementById("btn-buy-common-pack"),
     shopCoins: document.getElementById("shop-coins"),
+    packStockLabel: document.getElementById("pack-stock-label"),
+    restockTimer: document.getElementById("restock-timer"),
     inventoryCoins: document.getElementById("inventory-coins"),
+    sellCoins: document.getElementById("sell-coins"),
+    sellIncomeRate: document.getElementById("sell-income-rate"),
+    sellSlot0: document.getElementById("sell-slot-0"),
+    sellSlot1: document.getElementById("sell-slot-1"),
+    btnClearSell0: document.getElementById("btn-clear-sell-0"),
+    btnClearSell1: document.getElementById("btn-clear-sell-1"),
     inventoryList: document.getElementById("inventory-list"),
     inventoryTitle: document.getElementById("inventory-title"),
     inventoryCopy: document.getElementById("inventory-copy"),
@@ -176,9 +232,37 @@
     qtyTotalValue: document.getElementById("qty-total-value"),
     btnQtyCancel: document.getElementById("btn-qty-cancel"),
     btnQtyConfirm: document.getElementById("btn-qty-confirm"),
-    myTradeSlot: document.getElementById("my-trade-slot"),
-    theirTradeSlot: document.getElementById("their-trade-slot"),
+    cardSellModal: document.getElementById("card-sell-modal"),
+    cardSellPreview: document.getElementById("card-sell-preview"),
+    cardSellQty: document.getElementById("card-sell-qty"),
+    cardSellTotal: document.getElementById("card-sell-total"),
+    cardSellHint: document.getElementById("card-sell-hint"),
+    btnSellKeepOne: document.getElementById("btn-sell-keep-one"),
+    btnCardSellCancel: document.getElementById("btn-card-sell-cancel"),
+    btnCardSellConfirm: document.getElementById("btn-card-sell-confirm"),
+    adminGate: document.getElementById("admin-gate"),
+    adminSettings: document.getElementById("admin-settings"),
+    adminPassword: document.getElementById("admin-password"),
+    adminGateError: document.getElementById("admin-gate-error"),
+    btnAdminGateCancel: document.getElementById("btn-admin-gate-cancel"),
+    btnAdminGateEnter: document.getElementById("btn-admin-gate-enter"),
+    adminInfiniteStock: document.getElementById("admin-infinite-stock"),
+    btnAdminClose: document.getElementById("btn-admin-close"),
+    myTradeItems: document.getElementById("my-trade-items"),
+    theirTradeItems: document.getElementById("their-trade-items"),
+    btnAddTradeCard: document.getElementById("btn-add-trade-card"),
+    myTradeCash: document.getElementById("my-trade-cash"),
+    myTradeTotal: document.getElementById("my-trade-total"),
+    theirTradeCashLine: document.getElementById("their-trade-cash-line"),
+    theirTradeTotal: document.getElementById("their-trade-total"),
+    theirConfirmHint: document.getElementById("their-confirm-hint"),
     btnClearOffer: document.getElementById("btn-clear-offer"),
+    btnTradeConfirm: document.getElementById("btn-trade-confirm"),
+    tradeConfirmStatus: document.getElementById("trade-confirm-status"),
+    partnerName: document.getElementById("partner-name"),
+    btnKick: document.getElementById("btn-kick"),
+    loginRequiredModal: document.getElementById("login-required-modal"),
+    btnLoginRequiredOk: document.getElementById("btn-login-required-ok"),
     btnTradeBack: document.getElementById("btn-trade-back"),
     btnCreate: document.getElementById("btn-create"),
     btnJoin: document.getElementById("btn-join"),
@@ -219,61 +303,391 @@
   let currentScreen = "title";
   let inventoryReturnScreen = "title";
   let inventoryTab = "packs";
-  let inventoryMode = "browse"; // browse | trade
-  let pendingTradeCardId = null;
+  let inventoryMode = "browse"; // browse | trade | sell
+  let pendingSellSlot = null;
+  let sellTickTimer = null;
+  let shopUiTimer = null;
 
-  const myOffer = { cardId: null, qty: 0 };
-  const theirOffer = { cardId: null, qty: 0 };
-
-  function emptyBags() {
-    return { packs: {}, cards: {}, items: {} };
+  function randomStockAmount() {
+    return STOCK_MIN + Math.floor(Math.random() * (STOCK_MAX - STOCK_MIN + 1));
   }
 
-  function loadPlayer() {
+  function loadShop() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("cardgame-player-v1");
-      if (!raw) return { coins: STARTING_COINS, ...emptyBags() };
-      const data = JSON.parse(raw);
-      const coins = Number.isFinite(data.coins)
-        ? Math.max(0, Math.floor(data.coins))
-        : STARTING_COINS;
-      const bags = emptyBags();
-
-      if (data.packs || data.cards || data.items) {
-        for (const key of ["packs", "cards", "items"]) {
-          const src = data[key] || {};
-          for (const [id, count] of Object.entries(src)) {
-            const n = Math.floor(Number(count));
-            if (n > 0) bags[key][id] = n;
-          }
-        }
-      } else if (data.inventory && typeof data.inventory === "object") {
-        for (const [id, count] of Object.entries(data.inventory)) {
-          const n = Math.floor(Number(count));
-          if (n <= 0) continue;
-          if (PACKS[id]) bags.packs[id] = n;
-          else if (CARDS[id]) bags.cards[id] = n;
-          else bags.items[id] = n;
-        }
+      const raw = localStorage.getItem(SHOP_STORAGE_KEY);
+      if (!raw) {
+        return {
+          stock: randomStockAmount(),
+          nextRestockAt: Date.now() + RESTOCK_MS,
+          infiniteStock: false,
+        };
       }
-      return { coins, ...bags };
+      const data = JSON.parse(raw);
+      return {
+        stock: Math.max(0, Math.floor(Number(data.stock) || 0)),
+        nextRestockAt: Number(data.nextRestockAt) || Date.now() + RESTOCK_MS,
+        infiniteStock: Boolean(data.infiniteStock),
+      };
     } catch (_) {
-      return { coins: STARTING_COINS, ...emptyBags() };
+      return {
+        stock: randomStockAmount(),
+        nextRestockAt: Date.now() + RESTOCK_MS,
+        infiniteStock: false,
+      };
     }
   }
 
-  const player = loadPlayer();
+  const shop = loadShop();
 
-  function savePlayer() {
+  function saveShop() {
     localStorage.setItem(
-      STORAGE_KEY,
+      SHOP_STORAGE_KEY,
       JSON.stringify({
-        coins: player.coins,
-        packs: player.packs,
-        cards: player.cards,
-        items: player.items,
+        stock: shop.stock,
+        nextRestockAt: shop.nextRestockAt,
+        infiniteStock: shop.infiniteStock,
       })
     );
+  }
+
+  function applyDueRestocks() {
+    const now = Date.now();
+    if (!Number.isFinite(shop.nextRestockAt)) {
+      shop.nextRestockAt = now + RESTOCK_MS;
+      saveShop();
+      return;
+    }
+    if (now < shop.nextRestockAt) return;
+    const cycles = Math.floor((now - shop.nextRestockAt) / RESTOCK_MS) + 1;
+    shop.nextRestockAt += cycles * RESTOCK_MS;
+    shop.stock = randomStockAmount();
+    saveShop();
+  }
+
+  function closeAdminSettings() {
+    els.adminSettings.hidden = true;
+    els.btnBackpack.hidden = currentScreen === "inventory";
+    renderShopStock();
+  }
+
+  function formatCountdown(ms) {
+    const totalSec = Math.max(0, Math.ceil(ms / 1000));
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function renderShopStock() {
+    applyDueRestocks();
+    const remaining = Math.max(0, shop.nextRestockAt - Date.now());
+
+    if (shop.infiniteStock) {
+      els.packStockLabel.textContent = "In stock: ∞";
+      els.restockTimer.textContent = "Infinite stock enabled";
+      els.btnBuyCommonPack.disabled = player.coins < PACKS["common-pack"].price;
+      return;
+    }
+
+    els.packStockLabel.textContent =
+      shop.stock > 0 ? `In stock: ${shop.stock}` : "In stock: 0";
+    els.restockTimer.textContent =
+      shop.stock > 0
+        ? `Next restock replaces stock in ${formatCountdown(remaining)}`
+        : `Sold out · restocks in ${formatCountdown(remaining)}`;
+    els.btnBuyCommonPack.disabled =
+      shop.stock <= 0 || player.coins < PACKS["common-pack"].price;
+  }
+
+  function startShopUiTimer() {
+    if (shopUiTimer) return;
+    shopUiTimer = setInterval(() => {
+      const before = shop.stock;
+      applyDueRestocks();
+      if (currentScreen === "cardShop" || before !== shop.stock) {
+        if (currentScreen === "cardShop") renderShopStock();
+        else if (before !== shop.stock) saveShop();
+      }
+    }, 250);
+  }
+  let pendingTradeCardId = null;
+  let pendingSellCardId = null;
+  let accountFormMode = "register"; // register | login
+  let myConfirmed = false;
+  let theirConfirmed = false;
+  let bothConfirmedSince = null;
+  let tradeArmedTimer = null;
+  let tradeUiTimer = null;
+  let tradeExecuting = false;
+
+  const MAX_TRADE_CARD_TYPES = 4;
+
+  const myOffer = { cards: [], cash: 0 };
+  const theirOffer = { cards: [], cash: 0 };
+  let partnerUsername = null;
+
+  function emptyBags() {
+    return { packs: {}, cards: {}, items: {}, sellSlots: [null, null] };
+  }
+
+  function freshPlayer() {
+    return { coins: STARTING_COINS, ...emptyBags() };
+  }
+
+  function normalizePlayerData(data) {
+    const bags = emptyBags();
+    if (!data || typeof data !== "object") return freshPlayer();
+    const coins = Number.isFinite(data.coins)
+      ? Math.max(0, Math.floor(data.coins))
+      : STARTING_COINS;
+
+    if (data.packs || data.cards || data.items) {
+      for (const key of ["packs", "cards", "items"]) {
+        const src = data[key] || {};
+        for (const [id, count] of Object.entries(src)) {
+          const n = Math.floor(Number(count));
+          if (n > 0) bags[key][id] = n;
+        }
+      }
+    } else if (data.inventory && typeof data.inventory === "object") {
+      for (const [id, count] of Object.entries(data.inventory)) {
+        const n = Math.floor(Number(count));
+        if (n <= 0) continue;
+        if (PACKS[id]) bags.packs[id] = n;
+        else if (CARDS[id]) bags.cards[id] = n;
+        else bags.items[id] = n;
+      }
+    }
+
+    if (Array.isArray(data.sellSlots)) {
+      bags.sellSlots = [0, 1].map((i) => {
+        const id = data.sellSlots[i];
+        return typeof id === "string" && CARDS[id] ? id : null;
+      });
+    }
+    return { coins, ...bags };
+  }
+
+  function snapshotPlayer(p = player) {
+    return {
+      coins: p.coins,
+      packs: { ...p.packs },
+      cards: { ...p.cards },
+      items: { ...p.items },
+      sellSlots: [...p.sellSlots],
+    };
+  }
+
+  function applyPlayerData(data) {
+    const next = normalizePlayerData(data);
+    player.coins = next.coins;
+    player.packs = next.packs;
+    player.cards = next.cards;
+    player.items = next.items;
+    player.sellSlots = next.sellSlots;
+  }
+
+  function loadAccountsDb() {
+    try {
+      const raw = localStorage.getItem(ACCOUNTS_KEY);
+      if (!raw) return {};
+      const data = JSON.parse(raw);
+      return data && typeof data === "object" ? data : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /** Persist accounts without ever dropping stored passwords. */
+  function saveAccountsDb(db) {
+    const existing = loadAccountsDb();
+    const merged = { ...existing };
+    for (const [username, entry] of Object.entries(db || {})) {
+      const prev = existing[username] || {};
+      const password =
+        typeof entry.password === "string" && entry.password.length
+          ? entry.password
+          : typeof prev.password === "string"
+            ? prev.password
+            : "";
+      if (!password) continue;
+      merged[username] = {
+        password,
+        player: entry.player != null ? entry.player : prev.player || freshPlayer(),
+      };
+    }
+    // Keep every previously known account password forever.
+    for (const [username, prev] of Object.entries(existing)) {
+      if (!merged[username] && typeof prev.password === "string" && prev.password.length) {
+        merged[username] = {
+          password: prev.password,
+          player: prev.player || freshPlayer(),
+        };
+      }
+    }
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(merged));
+  }
+
+  function loadSessionUser() {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      const user = typeof data.user === "string" ? data.user.trim() : null;
+      if (!user) return null;
+      const db = loadAccountsDb();
+      return db[user] ? user : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function saveSessionUser(user) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ user: user || null }));
+  }
+
+  function loadGuestPlayer() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("cardgame-player-v1");
+      if (!raw) return freshPlayer();
+      return normalizePlayerData(JSON.parse(raw));
+    } catch (_) {
+      return freshPlayer();
+    }
+  }
+
+  function saveGuestPlayer(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshotPlayer(data)));
+  }
+
+  let sessionUser = loadSessionUser();
+  let player = freshPlayer();
+
+  if (sessionUser) {
+    const db = loadAccountsDb();
+    applyPlayerData(db[sessionUser]?.player || freshPlayer());
+  } else {
+    applyPlayerData(loadGuestPlayer());
+  }
+
+  function savePlayer() {
+    const snap = snapshotPlayer();
+    if (sessionUser) {
+      const db = loadAccountsDb();
+      const prev = db[sessionUser] || {};
+      // Never overwrite/remove password — only refresh player save.
+      db[sessionUser] = {
+        password: prev.password,
+        player: snap,
+      };
+      saveAccountsDb(db);
+    } else {
+      saveGuestPlayer(snap);
+    }
+  }
+
+  function renderAccountUi() {
+    const label = sessionUser ? `Logged in as ${sessionUser}` : "Playing as Guest";
+    els.titleAccountChip.textContent = label;
+    els.accountsStatus.textContent = sessionUser
+      ? `Logged in as ${sessionUser}. You can switch accounts anytime.`
+      : "You are playing as a guest. Register to keep this profile forever.";
+  }
+
+  function setAccountsMsg(message, isError = false) {
+    if (!message) {
+      els.accountsMsg.hidden = true;
+      els.accountsMsg.textContent = "";
+      els.accountsMsg.classList.remove("error");
+      return;
+    }
+    els.accountsMsg.hidden = false;
+    els.accountsMsg.textContent = message;
+    els.accountsMsg.classList.toggle("error", isError);
+  }
+
+  function openAccountForm(mode) {
+    accountFormMode = mode;
+    setError(els.accountFormError, "");
+    els.accountUsername.value = "";
+    els.accountPassword.value = "";
+    if (mode === "register") {
+      els.accountFormTitle.textContent = "Register";
+      els.accountFormCopy.textContent =
+        "Create an account. Your password is saved forever on this device.";
+      els.btnAccountSubmit.textContent = "Register";
+    } else {
+      els.accountFormTitle.textContent = "Log in";
+      els.accountFormCopy.textContent =
+        "Log into any saved account. You can do this even while logged in.";
+      els.btnAccountSubmit.textContent = "Log in";
+    }
+    showScreen("accountForm");
+    els.accountUsername.focus();
+  }
+
+  function registerAccount() {
+    const username = els.accountUsername.value.trim();
+    const password = els.accountPassword.value;
+    if (!username || username.length < 2) {
+      setError(els.accountFormError, "Account name must be at least 2 characters.");
+      return;
+    }
+    if (!password || password.length < 1) {
+      setError(els.accountFormError, "Password is required.");
+      return;
+    }
+    const db = loadAccountsDb();
+    if (db[username]) {
+      setError(els.accountFormError, "That account already exists. Try logging in.");
+      return;
+    }
+    // Save current progress into the new account.
+    db[username] = {
+      password,
+      player: snapshotPlayer(),
+    };
+    saveAccountsDb(db);
+    sessionUser = username;
+    saveSessionUser(sessionUser);
+    setAccountsMsg(`Registered and logged in as ${username}.`);
+    showScreen("accounts");
+    renderAccountUi();
+  }
+
+  function loginAccount() {
+    const username = els.accountUsername.value.trim();
+    const password = els.accountPassword.value;
+    const db = loadAccountsDb();
+    const entry = db[username];
+    if (!entry || entry.password !== password) {
+      setError(els.accountFormError, "Wrong account or password.");
+      return;
+    }
+    // Persist current profile before switching.
+    savePlayer();
+    sessionUser = username;
+    saveSessionUser(sessionUser);
+    applyPlayerData(entry.player || freshPlayer());
+    savePlayer();
+    setAccountsMsg(`Logged in as ${username}.`);
+    showScreen("accounts");
+    renderAccountUi();
+    renderPlayerUi();
+  }
+
+  function logoutAccount() {
+    if (!sessionUser) {
+      setAccountsMsg("You are already a guest.", true);
+      return;
+    }
+    savePlayer();
+    sessionUser = null;
+    saveSessionUser(null);
+    applyPlayerData(freshPlayer());
+    saveGuestPlayer(player);
+    setAccountsMsg("Logged out. You are on a new guest profile.");
+    renderAccountUi();
+    renderPlayerUi();
   }
 
   function inventoryTotal() {
@@ -300,12 +714,17 @@
       : "";
     return `
       <article class="animal-card theme-${card.theme} ${compact ? "compact" : ""}" data-card-id="${card.id}">
+        <div class="card-texture" aria-hidden="true"></div>
+        <div class="card-pattern" aria-hidden="true"></div>
         <div class="card-sheen" aria-hidden="true"></div>
+        <div class="card-frame" aria-hidden="true"></div>
         <div class="card-top">
           <span class="card-rarity">1/${card.oneIn}</span>
           ${valueHtml}
         </div>
-        <div class="card-art">${ART[card.id] || ""}</div>
+        <div class="card-art">
+          <div class="card-medallion">${cardArtHtml(card)}</div>
+        </div>
         <div class="card-body">
           <h3 class="card-name">${escapeHtml(card.name)}</h3>
           <p class="card-blurb">${escapeHtml(card.blurb)}</p>
@@ -368,9 +787,15 @@
   }
 
   function renderInventoryList() {
-    if (inventoryMode === "trade") {
-      els.inventoryTitle.textContent = "Select a card";
-      els.inventoryCopy.textContent = "Pick a card, then choose how many to offer.";
+    const pickMode = inventoryMode === "trade" || inventoryMode === "sell";
+
+    if (pickMode) {
+      els.inventoryTitle.textContent =
+        inventoryMode === "sell" ? "Station a card" : "Select a card";
+      els.inventoryCopy.textContent =
+        inventoryMode === "sell"
+          ? "Pick a card to earn coins every second."
+          : "Pick a card, then choose how many to offer.";
       document.querySelectorAll(".inv-tab").forEach((tab) => {
         const on = tab.getAttribute("data-inv-tab") === "cards";
         tab.classList.toggle("active", on);
@@ -383,7 +808,7 @@
         inventoryTab === "packs"
           ? "Tap a pack to open it for 5 cards."
           : inventoryTab === "cards"
-            ? "Your collected animal cards."
+            ? "Your collected animal cards. Right-click a card to sell."
             : "General items will show up here.";
       document.querySelectorAll(".inv-tab").forEach((tab) => {
         tab.hidden = false;
@@ -392,7 +817,7 @@
     }
 
     const activeBag =
-      inventoryMode === "trade"
+      pickMode
         ? player.cards
         : inventoryTab === "packs"
           ? player.packs
@@ -405,6 +830,8 @@
       const emptyMsg =
         inventoryMode === "trade"
           ? "No cards to offer yet. Open some packs first."
+          : inventoryMode === "sell"
+            ? "No cards to station. Open some packs first."
           : inventoryTab === "packs"
             ? "No packs. Visit the Card shop."
             : inventoryTab === "cards"
@@ -414,12 +841,16 @@
       return;
     }
 
-    if (inventoryMode === "trade" || inventoryTab === "cards") {
+    if (pickMode || inventoryTab === "cards") {
       els.inventoryList.innerHTML = `<div class="card-grid">${activeEntries
         .map(([id, count]) => {
           const card = CARDS[id];
           if (!card) return "";
-          return `<button type="button" class="card-pick" data-pick-card="${id}">${cardFaceHtml(card, { qty: count })}</button>`;
+          const cpsNote =
+            inventoryMode === "sell"
+              ? `<div class="card-cps-tag">+${card.cps}/s</div>`
+              : "";
+          return `<button type="button" class="card-pick" data-pick-card="${id}">${cardFaceHtml(card, { qty: count })}${cpsNote}</button>`;
         })
         .join("")}</div>`;
       return;
@@ -455,45 +886,360 @@
       .join("");
   }
 
-  function renderTradeSlots() {
-    if (myOffer.cardId && myOffer.qty > 0 && CARDS[myOffer.cardId]) {
-      const card = CARDS[myOffer.cardId];
-      const total = card.value * myOffer.qty;
-      els.myTradeSlot.classList.add("filled");
-      els.myTradeSlot.innerHTML = `
-        ${cardFaceHtml(card, { qty: myOffer.qty, compact: true })}
-        <div class="slot-meta">Est. <strong>$${total}</strong></div>
+  function totalSellCps() {
+    return player.sellSlots.reduce((sum, id) => {
+      const card = id ? CARDS[id] : null;
+      return sum + (card ? card.cps : 0);
+    }, 0);
+  }
+
+  function renderSellSlot(index) {
+    const slotEl = index === 0 ? els.sellSlot0 : els.sellSlot1;
+    const clearBtn = index === 0 ? els.btnClearSell0 : els.btnClearSell1;
+    const cardId = player.sellSlots[index];
+    const card = cardId ? CARDS[cardId] : null;
+
+    if (card) {
+      slotEl.classList.add("filled");
+      slotEl.innerHTML = `
+        ${cardFaceHtml(card, { compact: true })}
+        <div class="slot-meta">+<strong>${card.cps}</strong>/s</div>
       `;
-      els.btnClearOffer.hidden = false;
+      clearBtn.hidden = false;
     } else {
-      els.myTradeSlot.classList.remove("filled");
-      els.myTradeSlot.innerHTML = `
+      slotEl.classList.remove("filled");
+      slotEl.innerHTML = `
         <span class="trade-slot-plus">+</span>
         <span class="trade-slot-label">Add card</span>
       `;
-      els.btnClearOffer.hidden = true;
+      clearBtn.hidden = true;
+    }
+  }
+
+  function renderSellStop() {
+    renderSellSlot(0);
+    renderSellSlot(1);
+    els.sellCoins.textContent = String(player.coins);
+    els.sellIncomeRate.textContent = String(totalSellCps());
+  }
+
+  function assignSellSlot(index, cardId) {
+    if (!CARDS[cardId] || !player.cards[cardId]) return;
+    const prev = player.sellSlots[index];
+    if (prev) {
+      player.cards[prev] = (player.cards[prev] || 0) + 1;
+    }
+    player.cards[cardId] -= 1;
+    if (player.cards[cardId] <= 0) delete player.cards[cardId];
+    player.sellSlots[index] = cardId;
+    savePlayer();
+    pendingSellSlot = null;
+    inventoryMode = "browse";
+    showScreen("sellStop");
+    renderPlayerUi();
+  }
+
+  function clearSellSlot(index) {
+    const prev = player.sellSlots[index];
+    if (!prev) return;
+    player.cards[prev] = (player.cards[prev] || 0) + 1;
+    player.sellSlots[index] = null;
+    savePlayer();
+    renderPlayerUi();
+  }
+
+  function tickSellIncome() {
+    const cps = totalSellCps();
+    if (cps <= 0) return;
+    player.coins += cps;
+    savePlayer();
+    if (currentScreen === "sellStop") {
+      els.sellCoins.textContent = String(player.coins);
+    }
+    if (currentScreen === "cardShop") {
+      els.shopCoins.textContent = String(player.coins);
+      renderShopStock();
+    }
+    if (currentScreen === "inventory") {
+      els.inventoryCoins.textContent = String(player.coins);
+    }
+  }
+
+  function startSellTicker() {
+    if (sellTickTimer) return;
+    sellTickTimer = setInterval(tickSellIncome, 1000);
+  }
+
+  function emptyOffer() {
+    return { cards: [], cash: 0 };
+  }
+
+  function normalizeOffer(data) {
+    const cards = [];
+    const rawCards = Array.isArray(data?.cards) ? data.cards : [];
+    for (const row of rawCards) {
+      if (!row || typeof row.cardId !== "string" || !CARDS[row.cardId]) continue;
+      const qty = Math.max(0, Math.floor(Number(row.qty) || 0));
+      if (qty <= 0) continue;
+      if (cards.some((c) => c.cardId === row.cardId)) continue;
+      cards.push({ cardId: row.cardId, qty });
+      if (cards.length >= MAX_TRADE_CARD_TYPES) break;
+    }
+    const cash = Math.max(0, Math.floor(Number(data?.cash) || 0));
+    return { cards, cash };
+  }
+
+  function offerHasContent(offer) {
+    return offer.cash > 0 || offer.cards.some((c) => c.qty > 0);
+  }
+
+  function offerTotalValue(offer) {
+    let total = offer.cash || 0;
+    for (const row of offer.cards) {
+      const card = CARDS[row.cardId];
+      if (card) total += card.value * row.qty;
+    }
+    return total;
+  }
+
+  function canAffordMyOffer() {
+    if (myOffer.cash > player.coins) return false;
+    for (const row of myOffer.cards) {
+      if ((player.cards[row.cardId] || 0) < row.qty) return false;
+    }
+    return true;
+  }
+
+  function snapshotOffer(offer) {
+    return {
+      cards: offer.cards.map((c) => ({ cardId: c.cardId, qty: c.qty })),
+      cash: offer.cash || 0,
+    };
+  }
+
+  function offerCardsHtml(offer, editable) {
+    if (!offer.cards.length) {
+      return `<p class="trade-empty">${editable ? "No cards yet." : "Waiting…"}</p>`;
+    }
+    return offer.cards
+      .map((row) => {
+        const card = CARDS[row.cardId];
+        if (!card) return "";
+        const lineValue = card.value * row.qty;
+        const removeBtn = editable
+          ? `<button type="button" class="btn-remove-trade" data-remove-trade="${row.cardId}" title="Remove">×</button>`
+          : "";
+        return `
+          <div class="trade-item-row">
+            <div class="trade-item-card">${cardFaceHtml(card, { qty: row.qty, compact: true })}</div>
+            <div class="trade-item-meta">
+              <div>${escapeHtml(card.name)} ×${row.qty}</div>
+              <div class="trade-item-value">$${lineValue}</div>
+            </div>
+            ${removeBtn}
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  function updatePartnerChrome() {
+    if (partnerUsername) {
+      els.partnerName.hidden = false;
+      els.partnerName.textContent = partnerUsername;
+      els.btnKick.hidden = false;
+      els.roomStatus.textContent = "Connected — trading live";
+    } else {
+      els.partnerName.hidden = true;
+      els.partnerName.textContent = "";
+      els.btnKick.hidden = true;
+    }
+  }
+
+  function clearPartnerPresence() {
+    partnerUsername = null;
+    updatePartnerChrome();
+  }
+
+  function renderTradeSlots() {
+    const locked = myConfirmed;
+    els.btnAddTradeCard.disabled = locked || myOffer.cards.length >= MAX_TRADE_CARD_TYPES;
+    els.btnAddTradeCard.hidden = locked ? false : myOffer.cards.length >= MAX_TRADE_CARD_TYPES;
+    els.myTradeCash.disabled = locked;
+    els.btnClearOffer.disabled = locked;
+    els.btnAddTradeCard.classList.toggle("trade-locked", locked);
+
+    els.myTradeItems.innerHTML = offerCardsHtml(myOffer, !locked);
+    els.myTradeCash.value = String(myOffer.cash || 0);
+    els.myTradeTotal.textContent = `$${offerTotalValue(myOffer)}`;
+    els.btnClearOffer.hidden = !offerHasContent(myOffer);
+
+    els.theirTradeItems.innerHTML = offerCardsHtml(theirOffer, false);
+    els.theirTradeCashLine.textContent = `Cash: $${theirOffer.cash || 0}`;
+    els.theirTradeTotal.textContent = `$${offerTotalValue(theirOffer)}`;
+
+    els.theirConfirmHint.textContent = theirConfirmed ? "Confirmed" : "Read only";
+    els.theirConfirmHint.classList.toggle("confirmed", theirConfirmed);
+    updatePartnerChrome();
+    renderTradeConfirmUi();
+  }
+
+  function clearTradeArmedTimer() {
+    if (tradeArmedTimer) {
+      clearTimeout(tradeArmedTimer);
+      tradeArmedTimer = null;
+    }
+    bothConfirmedSince = null;
+  }
+
+  function renderTradeConfirmUi() {
+    if (!els.btnTradeConfirm) return;
+    els.btnTradeConfirm.textContent = myConfirmed ? "Unconfirm" : "Confirm";
+    els.btnTradeConfirm.classList.toggle("btn-secondary", myConfirmed);
+    els.btnTradeConfirm.classList.toggle("btn-primary", !myConfirmed);
+
+    if (tradeExecuting) {
+      els.tradeConfirmStatus.textContent = "Trade complete!";
+      return;
     }
 
-    if (theirOffer.cardId && theirOffer.qty > 0 && CARDS[theirOffer.cardId]) {
-      const card = CARDS[theirOffer.cardId];
-      const total = card.value * theirOffer.qty;
-      els.theirTradeSlot.classList.add("filled");
-      els.theirTradeSlot.classList.remove("empty");
-      els.theirTradeSlot.innerHTML = `
-        ${cardFaceHtml(card, { qty: theirOffer.qty, compact: true })}
-        <div class="slot-meta">Est. <strong>$${total}</strong></div>
-      `;
-    } else {
-      els.theirTradeSlot.classList.remove("filled");
-      els.theirTradeSlot.classList.add("empty");
-      els.theirTradeSlot.innerHTML = `<span class="trade-slot-label">Waiting…</span>`;
+    if (myConfirmed && theirConfirmed && bothConfirmedSince) {
+      const left = Math.max(0, TRADE_CONFIRM_MS - (Date.now() - bothConfirmedSince));
+      const secs = (left / 1000).toFixed(1);
+      els.tradeConfirmStatus.textContent = `Both confirmed — trading in ${secs}s…`;
+      return;
+    }
+    if (myConfirmed && !theirConfirmed) {
+      els.tradeConfirmStatus.textContent = "You confirmed. Waiting for partner…";
+      return;
+    }
+    if (!myConfirmed && theirConfirmed) {
+      els.tradeConfirmStatus.textContent = "Partner confirmed. Confirm to lock the trade.";
+      return;
+    }
+    els.tradeConfirmStatus.textContent = "Set your offer, then confirm.";
+  }
+
+  function armDualConfirmTrade() {
+    if (!(myConfirmed && theirConfirmed)) {
+      clearTradeArmedTimer();
+      renderTradeConfirmUi();
+      return;
+    }
+    if (!bothConfirmedSince) bothConfirmedSince = Date.now();
+    const wait = Math.max(0, TRADE_CONFIRM_MS - (Date.now() - bothConfirmedSince));
+    if (tradeArmedTimer) clearTimeout(tradeArmedTimer);
+    tradeArmedTimer = setTimeout(() => {
+      if (myConfirmed && theirConfirmed) executeTrade(false);
+    }, wait);
+    renderTradeConfirmUi();
+    if (!tradeUiTimer) {
+      tradeUiTimer = setInterval(() => {
+        if (!(myConfirmed && theirConfirmed)) {
+          clearInterval(tradeUiTimer);
+          tradeUiTimer = null;
+          return;
+        }
+        renderTradeConfirmUi();
+      }, 100);
+    }
+  }
+
+  function setMyConfirmed(next) {
+    myConfirmed = Boolean(next);
+    if (!myConfirmed) clearTradeArmedTimer();
+    sendPayload({
+      type: "confirm",
+      confirmed: myConfirmed,
+      ...snapshotOffer(myOffer),
+    });
+    renderTradeSlots();
+    armDualConfirmTrade();
+  }
+
+  function toggleTradeConfirm() {
+    if (tradeExecuting) return;
+    if (!conn || !conn.open) {
+      setStatus("Connect with a partner before confirming.");
+      return;
+    }
+    if (!myConfirmed && !offerHasContent(myOffer) && !offerHasContent(theirOffer)) {
+      els.tradeConfirmStatus.textContent = "Add cards or cash (or wait for theirs) before confirming.";
+      return;
+    }
+    if (!myConfirmed && !canAffordMyOffer()) {
+      els.tradeConfirmStatus.textContent = "You don't have enough cards or cash for this offer.";
+      return;
+    }
+    setMyConfirmed(!myConfirmed);
+  }
+
+  function executeTrade(fromPartnerSignal = false) {
+    if (tradeExecuting) return;
+    if (!offerHasContent(myOffer) && !offerHasContent(theirOffer)) return;
+    if (!fromPartnerSignal && !(myConfirmed && theirConfirmed)) return;
+
+    tradeExecuting = true;
+    clearTradeArmedTimer();
+
+    if (!canAffordMyOffer()) {
+      tradeExecuting = false;
+      myConfirmed = false;
+      clearTradeArmedTimer();
+      sendPayload({
+        type: "confirm",
+        confirmed: false,
+        ...snapshotOffer(myOffer),
+      });
+      renderTradeSlots();
+      els.tradeConfirmStatus.textContent = "Trade failed — not enough cards or cash.";
+      sendPayload({ type: "trade-fail", reason: "missing-cards" });
+      return;
+    }
+
+    for (const row of myOffer.cards) {
+      player.cards[row.cardId] -= row.qty;
+      if (player.cards[row.cardId] <= 0) delete player.cards[row.cardId];
+    }
+    if (myOffer.cash > 0) player.coins -= myOffer.cash;
+
+    for (const row of theirOffer.cards) {
+      player.cards[row.cardId] = (player.cards[row.cardId] || 0) + row.qty;
+    }
+    if (theirOffer.cash > 0) player.coins += theirOffer.cash;
+
+    savePlayer();
+
+    Object.assign(myOffer, emptyOffer());
+    Object.assign(theirOffer, emptyOffer());
+    myConfirmed = false;
+    theirConfirmed = false;
+    if (!fromPartnerSignal) sendPayload({ type: "trade-done" });
+    renderTradeSlots();
+    renderPlayerUi();
+    els.tradeConfirmStatus.textContent = "Trade complete!";
+    setStatus("Trade complete — set a new offer anytime.");
+    setTimeout(() => {
+      tradeExecuting = false;
+      renderTradeConfirmUi();
+    }, 1200);
+  }
+
+  function resetTradeLockState() {
+    myConfirmed = false;
+    theirConfirmed = false;
+    tradeExecuting = false;
+    clearTradeArmedTimer();
+    if (tradeUiTimer) {
+      clearInterval(tradeUiTimer);
+      tradeUiTimer = null;
     }
   }
 
   function renderPlayerUi() {
     els.shopCoins.textContent = String(player.coins);
     els.inventoryCoins.textContent = String(player.coins);
-    els.btnBuyCommonPack.disabled = player.coins < PACKS["common-pack"].price;
+    renderShopStock();
 
     const total = inventoryTotal();
     if (total > 0) {
@@ -505,20 +1251,59 @@
 
     if (currentScreen === "inventory") renderInventoryList();
     if (currentScreen === "room") renderTradeSlots();
+    if (currentScreen === "sellStop") renderSellStop();
   }
 
   function buyPack(packId) {
     const pack = PACKS[packId];
     if (!pack) return;
+    applyDueRestocks();
+    if (!shop.infiniteStock && shop.stock <= 0) {
+      setShopMessage("Sold out. Wait for the restock timer.", true);
+      renderShopStock();
+      return;
+    }
     if (player.coins < pack.price) {
       setShopMessage("Not enough coins.", true);
       return;
     }
     player.coins -= pack.price;
+    if (!shop.infiniteStock) {
+      shop.stock -= 1;
+      saveShop();
+    }
     player.packs[packId] = (player.packs[packId] || 0) + 1;
     savePlayer();
     renderPlayerUi();
     setShopMessage(`Bought ${pack.name}. Open it from your backpack.`);
+  }
+
+  function openAdminGate() {
+    setError(els.adminGateError, "");
+    els.adminPassword.value = "";
+    els.adminGate.hidden = false;
+    els.btnBackpack.hidden = true;
+    setTimeout(() => els.adminPassword.focus(), 0);
+  }
+
+  function closeAdminGate() {
+    els.adminGate.hidden = true;
+    els.btnBackpack.hidden = currentScreen === "inventory";
+  }
+
+  function openAdminSettings() {
+    closeAdminGate();
+    els.adminInfiniteStock.checked = shop.infiniteStock;
+    els.adminSettings.hidden = false;
+    els.btnBackpack.hidden = true;
+  }
+
+  function tryAdminLogin() {
+    if (els.adminPassword.value === ADMIN_PASSWORD) {
+      openAdminSettings();
+      return;
+    }
+    setError(els.adminGateError, "Wrong password.");
   }
 
   function showScreen(name) {
@@ -526,12 +1311,21 @@
     Object.values(screens).forEach((el) => el.classList.remove("active"));
     screens[name].classList.add("active");
     els.btnBackpack.hidden = name === "inventory";
-    if (name === "cardShop" || name === "inventory" || name === "room") renderPlayerUi();
+    if (name === "title" || name === "accounts" || name === "settings") renderAccountUi();
+    if (
+      name === "cardShop" ||
+      name === "inventory" ||
+      name === "room" ||
+      name === "sellStop"
+    ) {
+      renderPlayerUi();
+    }
   }
 
-  function openInventory(mode = "browse") {
+  function openInventory(mode = "browse", sellSlotIndex = null) {
     inventoryMode = mode;
-    if (mode === "trade") inventoryTab = "cards";
+    pendingSellSlot = mode === "sell" ? sellSlotIndex : null;
+    if (mode === "trade" || mode === "sell") inventoryTab = "cards";
     inventoryReturnScreen = currentScreen === "inventory" ? inventoryReturnScreen : currentScreen;
     showScreen("inventory");
     renderInventoryList();
@@ -541,11 +1335,17 @@
     const card = CARDS[cardId];
     const owned = player.cards[cardId] || 0;
     if (!card || owned < 1) return;
+    const existing = myOffer.cards.find((c) => c.cardId === cardId);
+    if (!existing && myOffer.cards.length >= MAX_TRADE_CARD_TYPES) {
+      els.tradeConfirmStatus.textContent = "You can only add 4 different card types.";
+      showScreen("room");
+      return;
+    }
     pendingTradeCardId = cardId;
-    els.qtyTitle.textContent = `Offer ${card.name}`;
+    els.qtyTitle.textContent = existing ? `Update ${card.name}` : `Offer ${card.name}`;
     els.qtyPreview.innerHTML = cardFaceHtml(card, { qty: owned, compact: true });
     els.qtyInput.max = String(owned);
-    els.qtyInput.value = "1";
+    els.qtyInput.value = String(existing ? existing.qty : 1);
     updateQtyTotal();
     els.qtyModal.hidden = false;
     els.btnBackpack.hidden = true;
@@ -567,15 +1367,85 @@
     els.btnBackpack.hidden = currentScreen === "inventory";
   }
 
+  function openCardSellModal(cardId) {
+    const card = CARDS[cardId];
+    const owned = player.cards[cardId] || 0;
+    if (!card || owned < 1) return;
+    pendingSellCardId = cardId;
+    els.cardSellPreview.innerHTML = cardFaceHtml(card, { qty: owned, compact: true });
+    els.cardSellQty.max = String(owned);
+    els.cardSellQty.value = "1";
+    els.cardSellHint.textContent = `Owned: ${owned} · Unit value $${card.value}`;
+    els.btnSellKeepOne.disabled = owned < 2;
+    updateCardSellTotal();
+    els.cardSellModal.hidden = false;
+    els.btnBackpack.hidden = true;
+  }
+
+  function updateCardSellTotal() {
+    const card = CARDS[pendingSellCardId];
+    if (!card) return;
+    const owned = player.cards[pendingSellCardId] || 0;
+    let qty = Math.floor(Number(els.cardSellQty.value) || 0);
+    qty = Math.max(1, Math.min(owned, qty));
+    els.cardSellQty.value = String(qty);
+    els.cardSellTotal.textContent = `$${card.value * qty}`;
+    els.btnCardSellConfirm.disabled = qty < 1 || qty > owned;
+  }
+
+  function setSellKeepOne() {
+    const owned = player.cards[pendingSellCardId] || 0;
+    if (owned < 2) return;
+    els.cardSellQty.value = String(owned - 1);
+    updateCardSellTotal();
+  }
+
+  function closeCardSellModal() {
+    els.cardSellModal.hidden = true;
+    pendingSellCardId = null;
+    els.btnBackpack.hidden = currentScreen === "inventory";
+  }
+
+  function confirmCardSell() {
+    const cardId = pendingSellCardId;
+    const card = CARDS[cardId];
+    const owned = player.cards[cardId] || 0;
+    if (!card || owned < 1) {
+      closeCardSellModal();
+      return;
+    }
+    let qty = Math.floor(Number(els.cardSellQty.value) || 0);
+    qty = Math.max(1, Math.min(owned, qty));
+    const payout = card.value * qty;
+    player.cards[cardId] -= qty;
+    if (player.cards[cardId] <= 0) delete player.cards[cardId];
+    player.coins += payout;
+    savePlayer();
+    closeCardSellModal();
+    renderPlayerUi();
+  }
+
   function confirmTradeQty() {
+    if (myConfirmed) return;
     const cardId = pendingTradeCardId;
     const card = CARDS[cardId];
     const owned = player.cards[cardId] || 0;
     let qty = Math.floor(Number(els.qtyInput.value) || 0);
     qty = Math.max(1, Math.min(owned, qty));
     if (!card || qty < 1) return;
-    myOffer.cardId = cardId;
-    myOffer.qty = qty;
+
+    const existing = myOffer.cards.find((c) => c.cardId === cardId);
+    if (existing) {
+      existing.qty = qty;
+    } else {
+      if (myOffer.cards.length >= MAX_TRADE_CARD_TYPES) {
+        closeQtyModal();
+        showScreen("room");
+        els.tradeConfirmStatus.textContent = "You can only add 4 different card types.";
+        return;
+      }
+      myOffer.cards.push({ cardId, qty });
+    }
     closeQtyModal();
     inventoryMode = "browse";
     showScreen("room");
@@ -584,9 +1454,27 @@
   }
 
   function clearMyOffer() {
-    myOffer.cardId = null;
-    myOffer.qty = 0;
+    if (myConfirmed) return;
+    Object.assign(myOffer, emptyOffer());
     renderTradeSlots();
+    scheduleOfferSync();
+  }
+
+  function removeTradeCard(cardId) {
+    if (myConfirmed) return;
+    myOffer.cards = myOffer.cards.filter((c) => c.cardId !== cardId);
+    renderTradeSlots();
+    scheduleOfferSync();
+  }
+
+  function syncMyTradeCashFromInput() {
+    if (myConfirmed) return;
+    let cash = Math.floor(Number(els.myTradeCash.value) || 0);
+    cash = Math.max(0, Math.min(player.coins, cash));
+    els.myTradeCash.value = String(cash);
+    myOffer.cash = cash;
+    els.myTradeTotal.textContent = `$${offerTotalValue(myOffer)}`;
+    els.btnClearOffer.hidden = !offerHasContent(myOffer);
     scheduleOfferSync();
   }
 
@@ -871,10 +1759,10 @@
     }
     role = null;
     lobbyCode = null;
-    myOffer.cardId = null;
-    myOffer.qty = 0;
-    theirOffer.cardId = null;
-    theirOffer.qty = 0;
+    Object.assign(myOffer, emptyOffer());
+    Object.assign(theirOffer, emptyOffer());
+    resetTradeLockState();
+    clearPartnerPresence();
     els.lobbyCode.textContent = "------";
     renderTradeSlots();
     setStatus("Waiting for partner…");
@@ -892,12 +1780,14 @@
   function currentOfferPayload(type) {
     return {
       type,
-      cardId: myOffer.cardId,
-      qty: myOffer.qty,
+      ...snapshotOffer(myOffer),
+      confirmed: myConfirmed,
+      username: sessionUser || "Guest",
     };
   }
 
   function scheduleOfferSync() {
+    if (myConfirmed) return;
     if (sendTimer) clearTimeout(sendTimer);
     sendTimer = setTimeout(() => {
       sendPayload(currentOfferPayload("offer"));
@@ -905,9 +1795,34 @@
   }
 
   function applyTheirOffer(data) {
-    theirOffer.cardId = typeof data.cardId === "string" ? data.cardId : null;
-    theirOffer.qty = Math.max(0, Math.floor(Number(data.qty) || 0));
+    const next = normalizeOffer(data);
+    theirOffer.cards = next.cards;
+    theirOffer.cash = next.cash;
+    if (typeof data.confirmed === "boolean") {
+      theirConfirmed = data.confirmed;
+      if (!theirConfirmed) clearTradeArmedTimer();
+    }
+    if (typeof data.username === "string" && data.username.trim()) {
+      partnerUsername = data.username.trim();
+    }
     renderTradeSlots();
+    armDualConfirmTrade();
+  }
+
+  function kickPartner() {
+    if (!conn) return;
+    sendPayload({ type: "kicked" });
+    try {
+      conn.close();
+    } catch (_) {}
+    conn = null;
+    Object.assign(theirOffer, emptyOffer());
+    theirConfirmed = false;
+    clearTradeArmedTimer();
+    clearPartnerPresence();
+    setStatus("Partner kicked — waiting…");
+    renderTradeSlots();
+    if (role === "host" && lobbyCode) announceLobby(lobbyCode).catch(() => {});
   }
 
   function bindConnection(connection) {
@@ -915,7 +1830,9 @@
     const onReady = () => {
       setStatus("Connected — trading live");
       if (role === "host") markLobbyFull();
+      resetTradeLockState();
       sendPayload(currentOfferPayload("hello"));
+      renderTradeSlots();
     };
     if (connection.open) onReady();
     else connection.on("open", onReady);
@@ -929,20 +1846,50 @@
         showScreen(joinReturnScreen);
         return;
       }
+      if (data.type === "kicked") {
+        destroySession();
+        showScreen("trade");
+        setError(els.tradeError, "You were kicked from the trade room.");
+        return;
+      }
       if (data.type === "hello" || data.type === "offer") {
         applyTheirOffer(data);
         if (data.type === "hello") {
           setStatus("Connected — trading live");
           sendPayload(currentOfferPayload("offer"));
         }
+        return;
+      }
+      if (data.type === "confirm") {
+        theirConfirmed = Boolean(data.confirmed);
+        const next = normalizeOffer(data);
+        theirOffer.cards = next.cards;
+        theirOffer.cash = next.cash;
+        if (typeof data.username === "string" && data.username.trim()) {
+          partnerUsername = data.username.trim();
+        }
+        if (!theirConfirmed) clearTradeArmedTimer();
+        renderTradeSlots();
+        armDualConfirmTrade();
+        return;
+      }
+      if (data.type === "trade-done") {
+        if (!tradeExecuting) executeTrade(true);
+        return;
+      }
+      if (data.type === "trade-fail") {
+        tradeExecuting = false;
+        setMyConfirmed(false);
+        els.tradeConfirmStatus.textContent = "Partner could not complete the trade.";
       }
     });
 
     connection.on("close", () => {
       if (conn === connection) conn = null;
       setStatus("Partner disconnected — waiting…");
-      theirOffer.cardId = null;
-      theirOffer.qty = 0;
+      Object.assign(theirOffer, emptyOffer());
+      resetTradeLockState();
+      clearPartnerPresence();
       renderTradeSlots();
       if (role === "host" && lobbyCode) announceLobby(lobbyCode).catch(() => {});
     });
@@ -1098,10 +2045,43 @@
 
   els.btnPlay.addEventListener("click", () => showScreen("play"));
   els.btnTrade.addEventListener("click", () => {
+    if (!sessionUser) {
+      els.loginRequiredModal.hidden = false;
+      els.btnBackpack.hidden = true;
+      return;
+    }
     setError(els.tradeError, "");
     showScreen("trade");
   });
+  els.btnLoginRequiredOk.addEventListener("click", () => {
+    els.loginRequiredModal.hidden = true;
+    els.btnBackpack.hidden = currentScreen === "inventory";
+    showScreen("title");
+  });
+  els.btnSettings.addEventListener("click", () => {
+    setAccountsMsg("");
+    renderAccountUi();
+    showScreen("settings");
+  });
   els.btnPlayBack.addEventListener("click", () => showScreen("title"));
+  els.btnSettingsBack.addEventListener("click", () => showScreen("title"));
+  els.btnAccounts.addEventListener("click", () => {
+    setAccountsMsg("");
+    renderAccountUi();
+    showScreen("accounts");
+  });
+  els.btnAccountsBack.addEventListener("click", () => showScreen("settings"));
+  els.btnAccountRegister.addEventListener("click", () => openAccountForm("register"));
+  els.btnAccountLogin.addEventListener("click", () => openAccountForm("login"));
+  els.btnAccountLogout.addEventListener("click", logoutAccount);
+  els.btnAccountFormBack.addEventListener("click", () => showScreen("accounts"));
+  els.btnAccountSubmit.addEventListener("click", () => {
+    if (accountFormMode === "register") registerAccount();
+    else loginAccount();
+  });
+  els.accountPassword.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") els.btnAccountSubmit.click();
+  });
   els.btnCardShop.addEventListener("click", () => {
     setShopMessage("");
     showScreen("cardShop");
@@ -1112,13 +2092,40 @@
   els.btnSellStopBack.addEventListener("click", () => showScreen("play"));
   els.btnBattlesBack.addEventListener("click", () => showScreen("play"));
   els.btnInventoryBack.addEventListener("click", () => {
-    const back = inventoryMode === "trade" ? "room" : inventoryReturnScreen || "title";
+    const back =
+      inventoryMode === "trade"
+        ? "room"
+        : inventoryMode === "sell"
+          ? "sellStop"
+          : inventoryReturnScreen || "title";
     inventoryMode = "browse";
+    pendingSellSlot = null;
     showScreen(back);
   });
   els.btnBackpack.addEventListener("click", () => openInventory("browse"));
   els.btnBuyCommonPack.addEventListener("click", () => buyPack("common-pack"));
   els.btnRevealDone.addEventListener("click", hidePackReveal);
+
+  els.btnAdminGateCancel.addEventListener("click", closeAdminGate);
+  els.btnAdminGateEnter.addEventListener("click", tryAdminLogin);
+  els.adminPassword.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") tryAdminLogin();
+  });
+  els.btnAdminClose.addEventListener("click", closeAdminSettings);
+  els.adminInfiniteStock.addEventListener("change", () => {
+    shop.infiniteStock = els.adminInfiniteStock.checked;
+    saveShop();
+    renderShopStock();
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key !== "Alt" || e.repeat) return;
+    if (!els.adminGate.hidden || !els.adminSettings.hidden) return;
+    if (!els.qtyModal.hidden || !els.packReveal.hidden || !els.cardSellModal.hidden) return;
+    e.preventDefault();
+    openAdminGate();
+  });
+
   els.btnTradeBack.addEventListener("click", () => {
     destroySession();
     showScreen("title");
@@ -1126,7 +2133,7 @@
 
   document.querySelectorAll(".inv-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
-      if (inventoryMode === "trade") return;
+      if (inventoryMode === "trade" || inventoryMode === "sell") return;
       inventoryTab = tab.getAttribute("data-inv-tab");
       renderInventoryList();
     });
@@ -1139,13 +2146,59 @@
       return;
     }
     const cardBtn = e.target.closest("[data-pick-card]");
-    if (cardBtn && inventoryMode === "trade") {
-      openQtyModal(cardBtn.getAttribute("data-pick-card"));
+    if (!cardBtn) return;
+    const cardId = cardBtn.getAttribute("data-pick-card");
+    if (inventoryMode === "trade") {
+      if (myConfirmed) return;
+      openQtyModal(cardId);
+      return;
+    }
+    if (inventoryMode === "sell" && pendingSellSlot !== null) {
+      assignSellSlot(pendingSellSlot, cardId);
     }
   });
 
-  els.myTradeSlot.addEventListener("click", () => openInventory("trade"));
+  els.inventoryList.addEventListener("contextmenu", (e) => {
+    const cardBtn = e.target.closest("[data-pick-card]");
+    if (!cardBtn) return;
+    if (inventoryMode !== "browse") return;
+    e.preventDefault();
+    openCardSellModal(cardBtn.getAttribute("data-pick-card"));
+  });
+
+  els.cardSellQty.addEventListener("input", updateCardSellTotal);
+  els.btnSellKeepOne.addEventListener("click", setSellKeepOne);
+  els.btnCardSellCancel.addEventListener("click", closeCardSellModal);
+  els.btnCardSellConfirm.addEventListener("click", confirmCardSell);
+
+  els.myTradeItems.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-remove-trade]");
+    if (!btn || myConfirmed) return;
+    removeTradeCard(btn.getAttribute("data-remove-trade"));
+  });
+  els.btnAddTradeCard.addEventListener("click", () => {
+    if (myConfirmed) return;
+    if (myOffer.cards.length >= MAX_TRADE_CARD_TYPES) {
+      els.tradeConfirmStatus.textContent = "You can only add 4 different card types.";
+      return;
+    }
+    openInventory("trade");
+  });
+  els.myTradeCash.addEventListener("input", syncMyTradeCashFromInput);
+  els.myTradeCash.addEventListener("change", syncMyTradeCashFromInput);
+  els.btnTradeConfirm.addEventListener("click", toggleTradeConfirm);
+  els.btnKick.addEventListener("click", kickPartner);
   els.btnClearOffer.addEventListener("click", clearMyOffer);
+  els.sellSlot0.addEventListener("click", () => openInventory("sell", 0));
+  els.sellSlot1.addEventListener("click", () => openInventory("sell", 1));
+  els.btnClearSell0.addEventListener("click", (e) => {
+    e.stopPropagation();
+    clearSellSlot(0);
+  });
+  els.btnClearSell1.addEventListener("click", (e) => {
+    e.stopPropagation();
+    clearSellSlot(1);
+  });
   els.qtyInput.addEventListener("input", updateQtyTotal);
   els.btnQtyCancel.addEventListener("click", closeQtyModal);
   els.btnQtyConfirm.addEventListener("click", confirmTradeQty);
@@ -1212,5 +2265,8 @@
     destroyBoard();
   });
 
+  renderAccountUi();
   renderPlayerUi();
+  startSellTicker();
+  startShopUiTimer();
 })();
