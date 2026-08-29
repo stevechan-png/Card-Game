@@ -752,8 +752,8 @@ body {
 }
 
 .theme-triceratops .card-model {
-  /* Screen blend removes black backplates; keep a solid fallback if blend fails */
-  mix-blend-mode: screen;
+  /* The bundled PNG has native transparency, so preserve its original colors. */
+  mix-blend-mode: normal;
 }
 
 .card-svg {
