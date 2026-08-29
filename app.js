@@ -134,8 +134,8 @@
       cps: 12,
       theme: "triceratops",
       blurb: "Horned relic",
-      emoji: null,
-      model: "Models/triceratops-emoji.png",
+      emoji: "🦕",
+      model: "assets/triceratops-emoji.png",
     },
     trex: {
       id: "trex",
@@ -151,9 +151,19 @@
 
   const COMMON_POOL = Object.values(CARDS);
 
+  function resolveAssetUrl(relPath) {
+    try {
+      return new URL(relPath, document.baseURI).href;
+    } catch (_) {
+      return relPath;
+    }
+  }
+
   function cardArtHtml(card) {
     if (card.model) {
-      return `<img class="card-model" src="${escapeHtml(card.model)}" alt="${escapeHtml(card.name)}" draggable="false" />`;
+      const src = escapeHtml(resolveAssetUrl(card.model));
+      const fallback = escapeHtml(card.emoji || "?");
+      return `<img class="card-model" src="${src}" alt="${escapeHtml(card.name)}" draggable="false" data-fallback="${fallback}" onerror="this.outerHTML='<span class=\\'card-emoji\\' role=\\'img\\'>'+this.dataset.fallback+'</span>'" />`;
     }
     if (card.emoji) {
       return `<span class="card-emoji" role="img" aria-label="${escapeHtml(card.name)}">${card.emoji}</span>`;
@@ -247,6 +257,7 @@
     btnAdminGateCancel: document.getElementById("btn-admin-gate-cancel"),
     btnAdminGateEnter: document.getElementById("btn-admin-gate-enter"),
     adminInfiniteStock: document.getElementById("admin-infinite-stock"),
+    adminUnkickable: document.getElementById("admin-unkickable"),
     btnAdminClose: document.getElementById("btn-admin-close"),
     myTradeItems: document.getElementById("my-trade-items"),
     theirTradeItems: document.getElementById("their-trade-items"),
@@ -285,6 +296,7 @@
 
   let peer = null;
   let conn = null;
+  let kickingPartner = false;
   let role = null;
   let lobbyCode = null;
   let sendTimer = null;
@@ -320,6 +332,7 @@
           stock: randomStockAmount(),
           nextRestockAt: Date.now() + RESTOCK_MS,
           infiniteStock: false,
+          unkickable: false,
         };
       }
       const data = JSON.parse(raw);
@@ -327,12 +340,14 @@
         stock: Math.max(0, Math.floor(Number(data.stock) || 0)),
         nextRestockAt: Number(data.nextRestockAt) || Date.now() + RESTOCK_MS,
         infiniteStock: Boolean(data.infiniteStock),
+        unkickable: Boolean(data.unkickable),
       };
     } catch (_) {
       return {
         stock: randomStockAmount(),
         nextRestockAt: Date.now() + RESTOCK_MS,
         infiniteStock: false,
+        unkickable: false,
       };
     }
   }
@@ -346,6 +361,7 @@
         stock: shop.stock,
         nextRestockAt: shop.nextRestockAt,
         infiniteStock: shop.infiniteStock,
+        unkickable: shop.unkickable,
       })
     );
   }
@@ -424,6 +440,7 @@
   const myOffer = { cards: [], cash: 0 };
   const theirOffer = { cards: [], cash: 0 };
   let partnerUsername = null;
+  let partnerUnkickable = false;
 
   function emptyBags() {
     return { packs: {}, cards: {}, items: {}, sellSlots: [null, null] };
@@ -1047,17 +1064,23 @@
     if (partnerUsername) {
       els.partnerName.hidden = false;
       els.partnerName.textContent = partnerUsername;
-      els.btnKick.hidden = false;
+      const canKick = role === "host";
+      els.btnKick.hidden = !canKick;
+      els.btnKick.disabled = canKick && partnerUnkickable;
+      els.btnKick.title = partnerUnkickable ? "This player is unkickable" : "Kick from room";
       els.roomStatus.textContent = "Connected — trading live";
     } else {
       els.partnerName.hidden = true;
       els.partnerName.textContent = "";
       els.btnKick.hidden = true;
+      els.btnKick.disabled = false;
+      els.btnKick.title = "Kick from room";
     }
   }
 
   function clearPartnerPresence() {
     partnerUsername = null;
+    partnerUnkickable = false;
     updatePartnerChrome();
   }
 
@@ -1294,6 +1317,7 @@
   function openAdminSettings() {
     closeAdminGate();
     els.adminInfiniteStock.checked = shop.infiniteStock;
+    els.adminUnkickable.checked = shop.unkickable;
     els.adminSettings.hidden = false;
     els.btnBackpack.hidden = true;
   }
@@ -1783,6 +1807,7 @@
       ...snapshotOffer(myOffer),
       confirmed: myConfirmed,
       username: sessionUser || "Guest",
+      unkickable: Boolean(shop.unkickable),
     };
   }
 
@@ -1805,24 +1830,24 @@
     if (typeof data.username === "string" && data.username.trim()) {
       partnerUsername = data.username.trim();
     }
+    if (typeof data.unkickable === "boolean") {
+      partnerUnkickable = data.unkickable;
+    }
     renderTradeSlots();
     armDualConfirmTrade();
   }
 
   function kickPartner() {
-    if (!conn) return;
+    if (!conn || role !== "host") return;
+    if (partnerUnkickable) {
+      setError(els.tradeError, "That player is unkickable.");
+      return;
+    }
+    // Send kick and wait: kickable guests leave (close cleans up);
+    // unkickable guests reply kick-denied and stay connected.
+    kickingPartner = true;
     sendPayload({ type: "kicked" });
-    try {
-      conn.close();
-    } catch (_) {}
-    conn = null;
-    Object.assign(theirOffer, emptyOffer());
-    theirConfirmed = false;
-    clearTradeArmedTimer();
-    clearPartnerPresence();
-    setStatus("Partner kicked — waiting…");
-    renderTradeSlots();
-    if (role === "host" && lobbyCode) announceLobby(lobbyCode).catch(() => {});
+    setStatus("Kicking partner…");
   }
 
   function bindConnection(connection) {
@@ -1847,9 +1872,22 @@
         return;
       }
       if (data.type === "kicked") {
+        if (shop.unkickable) {
+          sendPayload({ type: "kick-denied" });
+          setError(els.tradeError, "Kick blocked — you are unkickable.");
+          return;
+        }
         destroySession();
         showScreen("trade");
         setError(els.tradeError, "You were kicked from the trade room.");
+        return;
+      }
+      if (data.type === "kick-denied") {
+        kickingPartner = false;
+        partnerUnkickable = true;
+        updatePartnerChrome();
+        setStatus("Connected — trading live");
+        setError(els.tradeError, "Kick failed — that player is unkickable.");
         return;
       }
       if (data.type === "hello" || data.type === "offer") {
@@ -1867,6 +1905,9 @@
         theirOffer.cash = next.cash;
         if (typeof data.username === "string" && data.username.trim()) {
           partnerUsername = data.username.trim();
+        }
+        if (typeof data.unkickable === "boolean") {
+          partnerUnkickable = data.unkickable;
         }
         if (!theirConfirmed) clearTradeArmedTimer();
         renderTradeSlots();
@@ -1886,7 +1927,9 @@
 
     connection.on("close", () => {
       if (conn === connection) conn = null;
-      setStatus("Partner disconnected — waiting…");
+      const wasKick = kickingPartner;
+      kickingPartner = false;
+      setStatus(wasKick ? "Partner kicked — waiting…" : "Partner disconnected — waiting…");
       Object.assign(theirOffer, emptyOffer());
       resetTradeLockState();
       clearPartnerPresence();
@@ -2116,6 +2159,11 @@
     shop.infiniteStock = els.adminInfiniteStock.checked;
     saveShop();
     renderShopStock();
+  });
+  els.adminUnkickable.addEventListener("change", () => {
+    shop.unkickable = els.adminUnkickable.checked;
+    saveShop();
+    if (conn) sendPayload(currentOfferPayload("offer"));
   });
 
   window.addEventListener("keydown", (e) => {
