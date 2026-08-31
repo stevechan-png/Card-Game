@@ -369,6 +369,17 @@ body {
   border-radius: 12px;
 }
 
+.shop-card-rare {
+  border-color: rgba(141, 111, 255, 0.28);
+  background:
+    linear-gradient(135deg, rgba(91, 62, 200, 0.16), transparent 58%),
+    rgba(243, 239, 228, 0.06);
+}
+
+.pack-art-rare {
+  background: rgba(141, 111, 255, 0.16);
+}
+
 .shop-card h3 {
   grid-area: title;
   margin: 0;
@@ -573,6 +584,15 @@ body {
   border-color: rgba(201, 154, 30, 0.45);
 }
 
+.pack-row.sealed {
+  cursor: default;
+  opacity: 0.86;
+}
+
+.pack-row.sealed:hover {
+  border-color: rgba(243, 239, 228, 0.14);
+}
+
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -690,9 +710,33 @@ body {
   backdrop-filter: blur(4px);
 }
 
+.card-rarity {
+  white-space: nowrap;
+}
+
 .card-value {
   color: #ffe789;
   text-shadow: 0 0 10px rgba(255, 214, 90, 0.35);
+}
+
+.rarity-common {
+  color: #ffffff;
+}
+
+.rarity-sep {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.rarity-rare {
+  color: #4ea8ff;
+}
+
+.animal-card .card-rarity.rarity-common {
+  color: #ffffff;
+}
+
+.animal-card .card-rarity.rarity-rare {
+  color: #4ea8ff;
 }
 
 .card-art {
@@ -736,6 +780,14 @@ body {
   font-size: 2.75rem;
 }
 
+.card-emoji-empty {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
 .card-model {
   width: 88%;
   height: 88%;
@@ -743,6 +795,10 @@ body {
   filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.35));
   user-select: none;
   pointer-events: none;
+}
+
+.card-model-knockout {
+  mix-blend-mode: screen;
 }
 
 .theme-triceratops .card-medallion {
@@ -955,6 +1011,134 @@ body {
     35deg,
     transparent 0 13px,
     rgba(0, 0, 0, 0.12) 13px 16px
+  );
+}
+
+.theme-skeleton {
+  background:
+    radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.4), transparent 42%),
+    linear-gradient(160deg, #1c1c1e 0%, #8d8d92 48%, #ecece8 100%);
+  color: #141414;
+}
+.theme-skeleton .card-pattern {
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 10px,
+    rgba(255, 255, 255, 0.08) 10px 12px
+  );
+}
+
+.theme-zombie {
+  background:
+    radial-gradient(circle at 70% 20%, rgba(180, 255, 140, 0.28), transparent 42%),
+    linear-gradient(160deg, #14240e 0%, #4f7a38 50%, #c6e39a 100%);
+  color: #101808;
+}
+.theme-zombie .card-pattern {
+  background: radial-gradient(rgba(20, 40, 10, 0.22) 1.2px, transparent 1.8px);
+  background-size: 9px 9px;
+}
+
+.theme-spirit {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(220, 240, 255, 0.45), transparent 46%),
+    linear-gradient(160deg, #0c1828 0%, #4a6d8c 48%, #d7e8f8 100%);
+  color: #eef6ff;
+}
+.theme-spirit .card-pattern {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0 1px, transparent 2px);
+  background-size: 12px 12px;
+}
+
+.theme-spiritual-horse-rider {
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255, 230, 170, 0.38), transparent 40%),
+    linear-gradient(160deg, #1a1430 0%, #6a4aa0 46%, #f0d48a 100%);
+  color: #1a1020;
+}
+.theme-spiritual-horse-rider .card-pattern {
+  background: repeating-linear-gradient(
+    25deg,
+    transparent 0 16px,
+    rgba(255, 230, 160, 0.12) 16px 18px
+  );
+}
+
+.theme-ghoul {
+  background:
+    radial-gradient(circle at 68% 16%, rgba(190, 255, 210, 0.28), transparent 40%),
+    linear-gradient(160deg, #0e1c16 0%, #3d6a52 48%, #a8d4b4 100%);
+  color: #0c1610;
+}
+.theme-ghoul .card-pattern {
+  background: repeating-linear-gradient(
+    -18deg,
+    transparent 0 11px,
+    rgba(0, 0, 0, 0.12) 11px 13px
+  );
+}
+
+.theme-ghost-fox {
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 210, 170, 0.35), transparent 42%),
+    linear-gradient(160deg, #1c1420 0%, #8a5a48 48%, #f4d8c4 100%);
+  color: #1a1010;
+}
+.theme-ghost-fox .card-pattern {
+  background: radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.14) 0 6px, transparent 7px);
+}
+
+.theme-demon {
+  background:
+    radial-gradient(circle at 75% 18%, rgba(255, 90, 70, 0.38), transparent 42%),
+    linear-gradient(160deg, #18060a 0%, #8a1c28 48%, #f0a090 100%);
+  color: #1a0808;
+}
+.theme-demon .card-pattern {
+  background: repeating-linear-gradient(
+    42deg,
+    transparent 0 12px,
+    rgba(0, 0, 0, 0.16) 12px 15px
+  );
+}
+
+.theme-dragon {
+  background:
+    radial-gradient(circle at 30% 12%, rgba(255, 210, 90, 0.4), transparent 40%),
+    linear-gradient(160deg, #241008 0%, #b43c1c 46%, #f2c070 100%);
+  color: #1a0c08;
+}
+.theme-dragon .card-pattern {
+  background:
+    radial-gradient(circle at 32% 38%, rgba(0, 0, 0, 0.14) 0 8px, transparent 9px),
+    radial-gradient(circle at 64% 62%, rgba(0, 0, 0, 0.12) 0 10px, transparent 11px);
+}
+
+.theme-kitsune {
+  background:
+    radial-gradient(circle at 70% 16%, rgba(255, 170, 90, 0.4), transparent 42%),
+    linear-gradient(160deg, #2a1208 0%, #d46a28 50%, #ffe0b0 100%);
+  color: #1a1008;
+}
+.theme-kitsune .card-pattern {
+  background: repeating-linear-gradient(
+    -30deg,
+    transparent 0 14px,
+    rgba(255, 255, 255, 0.08) 14px 16px
+  );
+}
+
+.theme-grim-reaper {
+  background:
+    radial-gradient(circle at 50% 10%, rgba(200, 170, 255, 0.28), transparent 40%),
+    linear-gradient(160deg, #07060c 0%, #3a2a58 48%, #b8a8d8 100%);
+  color: #f0ecff;
+}
+.theme-grim-reaper .card-pattern {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0 18px,
+    rgba(255, 255, 255, 0.05) 18px 19px
   );
 }
 

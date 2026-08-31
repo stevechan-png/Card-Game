@@ -13,6 +13,9 @@
   const RESTOCK_MS = 3 * 60 * 1000;
   const STOCK_MIN = 6;
   const STOCK_MAX = 10;
+  const RARE_STOCK_MIN = 2;
+  const RARE_STOCK_MAX = 5;
+  const RARE_MISS_CHANCE = 0.1;
   const ADMIN_PASSWORD = "Stevevava";
   const TRADE_CONFIRM_MS = 2000;
 
@@ -22,6 +25,16 @@
       name: "Common Pack",
       price: 100,
       pool: "common",
+      stockKey: "stock",
+      canOpen: true,
+    },
+    "rare-pack": {
+      id: "rare-pack",
+      name: "Rare Pack",
+      price: 500,
+      pool: "rare",
+      stockKey: "rareStock",
+      canOpen: true,
     },
   };
 
@@ -125,6 +138,7 @@
       theme: "shark",
       blurb: "Deep blue menace",
       emoji: "🦈",
+      altOneIn: 2,
     },
     triceratops: {
       id: "triceratops",
@@ -146,9 +160,144 @@
       blurb: "Apex fossil",
       emoji: "🦖",
     },
+    skeleton: {
+      id: "skeleton",
+      name: "Skeleton",
+      value: 45,
+      oneIn: 4,
+      cps: 11,
+      theme: "skeleton",
+      blurb: "Rattling bones",
+      emoji: "💀",
+    },
+    zombie: {
+      id: "zombie",
+      name: "Zombie",
+      value: 50,
+      oneIn: 7,
+      cps: 12,
+      theme: "zombie",
+      blurb: "Still walking",
+      emoji: "🧟",
+    },
+    spirit: {
+      id: "spirit",
+      name: "Spirit",
+      value: 60,
+      oneIn: 10,
+      cps: 14,
+      theme: "spirit",
+      blurb: "A whisper of light",
+      emoji: "👻",
+    },
+    "spiritual-horse-rider": {
+      id: "spiritual-horse-rider",
+      name: "Spiritual Horse Rider",
+      value: 65,
+      oneIn: 15,
+      cps: 15,
+      theme: "spiritual-horse-rider",
+      blurb: "Moonlit charge",
+      model: "./assets/spiritual-horseman-model.png",
+      modelKnockout: true,
+    },
+    ghoul: {
+      id: "ghoul",
+      name: "Ghoul",
+      value: 75,
+      oneIn: 20,
+      cps: 17,
+      theme: "ghoul",
+      blurb: "Hunger in the dark",
+      model: "./assets/ghoul-model.png",
+      modelKnockout: true,
+    },
+    "ghost-fox": {
+      id: "ghost-fox",
+      name: "Ghost Fox",
+      value: 90,
+      oneIn: 25,
+      cps: 19,
+      theme: "ghost-fox",
+      blurb: "Pale tails in mist",
+      model: "./assets/ghost-fox-model.png",
+      modelKnockout: true,
+    },
+    demon: {
+      id: "demon",
+      name: "Demon",
+      value: 110,
+      oneIn: 30,
+      cps: 22,
+      theme: "demon",
+      blurb: "Horned bargain",
+      emoji: "😈",
+    },
+    dragon: {
+      id: "dragon",
+      name: "Dragon",
+      value: 145,
+      oneIn: 45,
+      cps: 26,
+      theme: "dragon",
+      blurb: "Hoard and flame",
+      emoji: "🐉",
+    },
+    kitsune: {
+      id: "kitsune",
+      name: "Kitsune",
+      value: 185,
+      oneIn: 60,
+      cps: 30,
+      theme: "kitsune",
+      blurb: "Nine-tailed omen",
+      model: "./assets/kitsune-model.png",
+      modelKnockout: true,
+    },
+    "grim-reaper": {
+      id: "grim-reaper",
+      name: "Grim Reaper",
+      value: 250,
+      oneIn: 80,
+      cps: 35,
+      theme: "grim-reaper",
+      blurb: "The last collector",
+      model: "./assets/grim-reaper-model.png",
+      modelKnockout: true,
+    },
   };
 
-  const COMMON_POOL = Object.values(CARDS);
+  const COMMON_POOL = [
+    CARDS.chicken,
+    CARDS.cow,
+    CARDS.pig,
+    CARDS.salmon,
+    CARDS.squid,
+    CARDS.monkey,
+    CARDS.lion,
+    CARDS.tiger,
+    CARDS.leopard,
+    CARDS.shark,
+    CARDS.triceratops,
+    CARDS.trex,
+  ];
+
+  const RARE_POOL = [
+    { id: "shark", oneIn: 2 },
+    { id: "skeleton", oneIn: 4 },
+    { id: "zombie", oneIn: 7 },
+    { id: "spirit", oneIn: 10 },
+    { id: "spiritual-horse-rider", oneIn: 15 },
+    { id: "ghoul", oneIn: 20 },
+    { id: "ghost-fox", oneIn: 25 },
+    { id: "demon", oneIn: 30 },
+    { id: "dragon", oneIn: 45 },
+    { id: "kitsune", oneIn: 60 },
+    { id: "grim-reaper", oneIn: 80 },
+  ];
+
+  const COMMON_CARD_IDS = new Set(COMMON_POOL.map((c) => c.id));
+  const RARE_CARD_IDS = new Set(RARE_POOL.map((c) => c.id));
 
   function resolveAssetUrl(relPath) {
     try {
@@ -161,12 +310,13 @@
   function cardArtHtml(card) {
     if (card.model) {
       const src = escapeHtml(resolveAssetUrl(card.model));
-      return `<img class="card-model" src="${src}" alt="${escapeHtml(card.name)}" draggable="false" decoding="async" />`;
+      const knockout = card.modelKnockout ? " card-model-knockout" : "";
+      return `<img class="card-model${knockout}" src="${src}" alt="${escapeHtml(card.name)}" draggable="false" decoding="async" />`;
     }
     if (card.emoji) {
       return `<span class="card-emoji" role="img" aria-label="${escapeHtml(card.name)}">${card.emoji}</span>`;
     }
-    return `<span class="card-emoji">?</span>`;
+    return `<span class="card-emoji card-emoji-empty" aria-hidden="true"></span>`;
   }
 
   const screens = {
@@ -215,8 +365,10 @@
     btnInventoryBack: document.getElementById("btn-inventory-back"),
     btnBackpack: document.getElementById("btn-backpack"),
     btnBuyCommonPack: document.getElementById("btn-buy-common-pack"),
+    btnBuyRarePack: document.getElementById("btn-buy-rare-pack"),
     shopCoins: document.getElementById("shop-coins"),
     packStockLabel: document.getElementById("pack-stock-label"),
+    rarePackStockLabel: document.getElementById("rare-pack-stock-label"),
     restockTimer: document.getElementById("restock-timer"),
     inventoryCoins: document.getElementById("inventory-coins"),
     sellCoins: document.getElementById("sell-coins"),
@@ -322,31 +474,38 @@
     return STOCK_MIN + Math.floor(Math.random() * (STOCK_MAX - STOCK_MIN + 1));
   }
 
+  function randomRareStockAmount() {
+    if (Math.random() < RARE_MISS_CHANCE) return 0;
+    return RARE_STOCK_MIN + Math.floor(Math.random() * (RARE_STOCK_MAX - RARE_STOCK_MIN + 1));
+  }
+
+  function freshShopState() {
+    return {
+      stock: randomStockAmount(),
+      rareStock: randomRareStockAmount(),
+      nextRestockAt: Date.now() + RESTOCK_MS,
+      infiniteStock: false,
+      unkickable: false,
+    };
+  }
+
   function loadShop() {
     try {
       const raw = localStorage.getItem(SHOP_STORAGE_KEY);
-      if (!raw) {
-        return {
-          stock: randomStockAmount(),
-          nextRestockAt: Date.now() + RESTOCK_MS,
-          infiniteStock: false,
-          unkickable: false,
-        };
-      }
+      if (!raw) return freshShopState();
       const data = JSON.parse(raw);
       return {
         stock: Math.max(0, Math.floor(Number(data.stock) || 0)),
+        rareStock:
+          data.rareStock == null
+            ? randomRareStockAmount()
+            : Math.max(0, Math.floor(Number(data.rareStock) || 0)),
         nextRestockAt: Number(data.nextRestockAt) || Date.now() + RESTOCK_MS,
         infiniteStock: Boolean(data.infiniteStock),
         unkickable: Boolean(data.unkickable),
       };
     } catch (_) {
-      return {
-        stock: randomStockAmount(),
-        nextRestockAt: Date.now() + RESTOCK_MS,
-        infiniteStock: false,
-        unkickable: false,
-      };
+      return freshShopState();
     }
   }
 
@@ -357,12 +516,15 @@
       SHOP_STORAGE_KEY,
       JSON.stringify({
         stock: shop.stock,
+        rareStock: shop.rareStock,
         nextRestockAt: shop.nextRestockAt,
         infiniteStock: shop.infiniteStock,
         unkickable: shop.unkickable,
       })
     );
   }
+
+  saveShop();
 
   function applyDueRestocks() {
     const now = Date.now();
@@ -375,6 +537,7 @@
     const cycles = Math.floor((now - shop.nextRestockAt) / RESTOCK_MS) + 1;
     shop.nextRestockAt += cycles * RESTOCK_MS;
     shop.stock = randomStockAmount();
+    shop.rareStock = randomRareStockAmount();
     saveShop();
   }
 
@@ -391,35 +554,54 @@
     return `${m}:${String(s).padStart(2, "0")}`;
   }
 
+  function packStockCount(pack) {
+    return pack.stockKey === "rareStock" ? shop.rareStock : shop.stock;
+  }
+
+  function consumePackStock(pack) {
+    if (pack.stockKey === "rareStock") shop.rareStock -= 1;
+    else shop.stock -= 1;
+  }
+
+  function formatStockLabel(count) {
+    return count > 0 ? `In stock: ${count}` : "In stock: 0";
+  }
+
   function renderShopStock() {
     applyDueRestocks();
     const remaining = Math.max(0, shop.nextRestockAt - Date.now());
+    const common = PACKS["common-pack"];
+    const rare = PACKS["rare-pack"];
 
     if (shop.infiniteStock) {
       els.packStockLabel.textContent = "In stock: ∞";
+      els.rarePackStockLabel.textContent = "In stock: ∞";
       els.restockTimer.textContent = "Infinite stock enabled";
-      els.btnBuyCommonPack.disabled = player.coins < PACKS["common-pack"].price;
+      els.btnBuyCommonPack.disabled = player.coins < common.price;
+      els.btnBuyRarePack.disabled = player.coins < rare.price;
       return;
     }
 
-    els.packStockLabel.textContent =
-      shop.stock > 0 ? `In stock: ${shop.stock}` : "In stock: 0";
-    els.restockTimer.textContent =
-      shop.stock > 0
-        ? `Next restock replaces stock in ${formatCountdown(remaining)}`
-        : `Sold out · restocks in ${formatCountdown(remaining)}`;
-    els.btnBuyCommonPack.disabled =
-      shop.stock <= 0 || player.coins < PACKS["common-pack"].price;
+    els.packStockLabel.textContent = formatStockLabel(shop.stock);
+    els.rarePackStockLabel.textContent = formatStockLabel(shop.rareStock);
+    const anyStock = shop.stock > 0 || shop.rareStock > 0;
+    els.restockTimer.textContent = anyStock
+      ? `Next restock replaces stock in ${formatCountdown(remaining)}`
+      : `Sold out · restocks in ${formatCountdown(remaining)}`;
+    els.btnBuyCommonPack.disabled = shop.stock <= 0 || player.coins < common.price;
+    els.btnBuyRarePack.disabled = shop.rareStock <= 0 || player.coins < rare.price;
   }
 
   function startShopUiTimer() {
     if (shopUiTimer) return;
     shopUiTimer = setInterval(() => {
       const before = shop.stock;
+      const beforeRare = shop.rareStock;
       applyDueRestocks();
-      if (currentScreen === "cardShop" || before !== shop.stock) {
+      const changed = before !== shop.stock || beforeRare !== shop.rareStock;
+      if (currentScreen === "cardShop" || changed) {
         if (currentScreen === "cardShop") renderShopStock();
-        else if (before !== shop.stock) saveShop();
+        else if (changed) saveShop();
       }
     }, 250);
   }
@@ -718,6 +900,18 @@
       .replace(/"/g, "&quot;");
   }
 
+  function rarityHtml(card) {
+    const fromCommon = COMMON_CARD_IDS.has(card.id);
+    const fromRare = RARE_CARD_IDS.has(card.id);
+    if (fromCommon && fromRare && card.altOneIn) {
+      return `<span class="card-rarity"><span class="rarity-common">1/${card.oneIn}</span><span class="rarity-sep">-</span><span class="rarity-rare">1/${card.altOneIn}</span></span>`;
+    }
+    if (fromRare) {
+      return `<span class="card-rarity rarity-rare">1/${card.oneIn}</span>`;
+    }
+    return `<span class="card-rarity rarity-common">1/${card.oneIn}</span>`;
+  }
+
   function cardFaceHtml(card, opts = {}) {
     const qty = opts.qty;
     const showValue = opts.showValue !== false;
@@ -734,7 +928,7 @@
         <div class="card-sheen" aria-hidden="true"></div>
         <div class="card-frame" aria-hidden="true"></div>
         <div class="card-top">
-          <span class="card-rarity">1/${card.oneIn}</span>
+          ${rarityHtml(card)}
           ${valueHtml}
         </div>
         <div class="card-art">
@@ -755,20 +949,28 @@
     let r = Math.random() * total;
     for (let i = 0; i < pool.length; i += 1) {
       r -= weights[i];
-      if (r <= 0) return pool[i];
+      if (r <= 0) return CARDS[pool[i].id] || pool[i];
     }
-    return pool[pool.length - 1];
+    const last = pool[pool.length - 1];
+    return CARDS[last.id] || last;
+  }
+
+  function poolForPack(pack) {
+    if (pack.pool === "rare") return RARE_POOL;
+    return COMMON_POOL;
   }
 
   function openPack(packId) {
     const pack = PACKS[packId];
     if (!pack || !player.packs[packId]) return;
+    if (!pack.canOpen) return;
     player.packs[packId] -= 1;
     if (player.packs[packId] <= 0) delete player.packs[packId];
 
+    const pool = poolForPack(pack);
     const drawn = [];
     for (let i = 0; i < CARDS_PER_PACK; i += 1) {
-      const card = weightedDraw(COMMON_POOL);
+      const card = weightedDraw(pool);
       drawn.push(card);
       player.cards[card.id] = (player.cards[card.id] || 0) + 1;
     }
@@ -874,7 +1076,18 @@
     if (inventoryTab === "packs") {
       els.inventoryList.innerHTML = activeEntries
         .map(([id, count]) => {
-          const pack = PACKS[id] || { name: id };
+          const pack = PACKS[id] || { name: id, canOpen: false };
+          if (!pack.canOpen) {
+            return `
+              <div class="inventory-row pack-row sealed">
+                <div>
+                  <div class="item-name">${escapeHtml(pack.name)}</div>
+                  <span class="item-note">Sealed · can't open yet</span>
+                </div>
+                <div class="item-count">×${count}</div>
+              </div>
+            `;
+          }
           return `
             <button type="button" class="inventory-row pack-row" data-open-pack="${id}">
               <div>
@@ -1279,7 +1492,7 @@
     const pack = PACKS[packId];
     if (!pack) return;
     applyDueRestocks();
-    if (!shop.infiniteStock && shop.stock <= 0) {
+    if (!shop.infiniteStock && packStockCount(pack) <= 0) {
       setShopMessage("Sold out. Wait for the restock timer.", true);
       renderShopStock();
       return;
@@ -1290,13 +1503,17 @@
     }
     player.coins -= pack.price;
     if (!shop.infiniteStock) {
-      shop.stock -= 1;
+      consumePackStock(pack);
       saveShop();
     }
     player.packs[packId] = (player.packs[packId] || 0) + 1;
     savePlayer();
     renderPlayerUi();
-    setShopMessage(`Bought ${pack.name}. Open it from your backpack.`);
+    setShopMessage(
+      pack.canOpen
+        ? `Bought ${pack.name}. Open it from your backpack.`
+        : `Bought ${pack.name}. Keep it sealed for now.`
+    );
   }
 
   function openAdminGate() {
@@ -2145,6 +2362,7 @@
   });
   els.btnBackpack.addEventListener("click", () => openInventory("browse"));
   els.btnBuyCommonPack.addEventListener("click", () => buyPack("common-pack"));
+  els.btnBuyRarePack.addEventListener("click", () => buyPack("rare-pack"));
   els.btnRevealDone.addEventListener("click", hidePackReveal);
 
   els.btnAdminGateCancel.addEventListener("click", closeAdminGate);
