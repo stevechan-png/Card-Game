@@ -10,9 +10,9 @@
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260912-corners" />
     <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js" defer></script>
-    <script src="app.js" defer></script>
+    <script src="app.js?v=20260912-corners" defer></script>
   </head>
   <body>
     <div class="bg-grid" aria-hidden="true"></div>
@@ -609,30 +609,33 @@
       </div>
     </div>
 
+    <nav class="game-nav" id="game-nav" aria-label="Game navigation">
     <button
       type="button"
-      class="craft-btn"
+      class="game-nav-btn craft-btn"
       id="btn-crafting"
       aria-label="Open crafting"
       title="Crafting"
     >
       <span class="craft-label" aria-hidden="true">🛠️</span>
+      <span class="game-nav-label">Crafting</span>
     </button>
 
     <button
       type="button"
-      class="quests-btn"
+      class="game-nav-btn quests-btn"
       id="btn-quests"
       aria-label="Open quests"
       title="Quests"
     >
       <span class="quests-label" aria-hidden="true">📜</span>
+      <span class="game-nav-label">Quests</span>
       <span class="quests-count" id="quests-count" hidden>0</span>
     </button>
 
     <button
       type="button"
-      class="index-btn"
+      class="game-nav-btn index-btn"
       id="btn-index"
       aria-label="Open index"
       title="Index"
@@ -645,12 +648,13 @@
         <path fill="currentColor" d="M14.2 2.4v6.2l2.1-1.3 2.1 1.3V2.4h-4.2z" />
         <path fill="currentColor" d="M10 10.2h6.2v1.4H10zm0 3.1h5.2v1.4H10z" opacity="0.85" />
       </svg>
+      <span class="game-nav-label">Index</span>
       <span class="index-count" id="index-count" hidden>0</span>
     </button>
 
     <button
       type="button"
-      class="backpack-btn"
+      class="game-nav-btn backpack-btn"
       id="btn-backpack"
       aria-label="Open backpack"
       title="Backpack"
@@ -661,7 +665,9 @@
           d="M8 6V5a4 4 0 0 1 8 0v1h2a2 2 0 0 1 2 2v11a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V8a2 2 0 0 1 2-2h2zm2 0h4V5a2 2 0 1 0-4 0v1zm-1 5v2h6v-2H9z"
         />
       </svg>
+      <span class="game-nav-label">Backpack</span>
       <span class="backpack-count" id="backpack-count" hidden>0</span>
     </button>
+    </nav>
   </body>
 </html>

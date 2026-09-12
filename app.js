@@ -743,6 +743,7 @@
     battlePartyList: document.getElementById("battle-party-list"),
     btnBattlePartyClose: document.getElementById("btn-battle-party-close"),
     btnInventoryBack: document.getElementById("btn-inventory-back"),
+    gameNav: document.getElementById("game-nav"),
     btnBackpack: document.getElementById("btn-backpack"),
     btnIndex: document.getElementById("btn-index"),
     btnIndexBack: document.getElementById("btn-index-back"),
@@ -2016,15 +2017,23 @@
 
   function refreshFabs() {
     const overlay = isOverlayOpen();
-    els.btnBackpack.hidden = overlay || currentScreen === "inventory" || currentScreen === "battle";
-    els.btnIndex.hidden = overlay || currentScreen === "index" || currentScreen === "battle";
-    els.btnQuests.hidden =
-      overlay || currentScreen === "quests" || currentScreen === "room" || currentScreen === "battle";
-    els.btnCrafting.hidden =
-      overlay ||
-      currentScreen === "crafting" ||
-      currentScreen === "room" ||
-      currentScreen === "battle";
+    const hideNavigation = overlay || currentScreen === "room" || currentScreen === "battle";
+    els.gameNav.hidden = hideNavigation;
+
+    const destinations = [
+      [els.btnIndex, "index"],
+      [els.btnQuests, "quests"],
+      [els.btnCrafting, "crafting"],
+      [els.btnBackpack, "inventory"],
+    ];
+    for (const [button, destination] of destinations) {
+      const isCurrent = currentScreen === destination;
+      button.hidden = false;
+      button.disabled = isCurrent;
+      button.classList.toggle("is-current", isCurrent);
+      if (isCurrent) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    }
   }
 
   function openPack(packId) {
