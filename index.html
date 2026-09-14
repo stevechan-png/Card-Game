@@ -10,9 +10,9 @@
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260912-corners" />
-    <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js" defer></script>
-    <script src="app.js?v=20260912-corners" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20260914-healmult" />
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js" defer></script>
+    <script src="app.js?v=20260914-healmult" defer></script>
   </head>
   <body>
     <div class="bg-grid" aria-hidden="true"></div>
@@ -40,6 +40,7 @@
         <p class="panel-copy">Manage your game account and auto-sell.</p>
         <label class="admin-toggle">
           <input type="checkbox" id="setting-backpack-counter" checked />
+          <span class="switch" aria-hidden="true"></span>
           <span>Backpack counter</span>
         </label>
         <p class="panel-copy">When off, the backpack icon has no item count.</p>
@@ -215,14 +216,15 @@
         <p class="panel-copy">Pick a battle mode.</p>
         <div class="menu-actions">
           <button type="button" class="btn btn-primary" id="btn-npc-battles">NPC Battles</button>
-          <button type="button" class="btn btn-secondary" id="btn-multiplayer-battles" disabled>
+          <button type="button" class="btn btn-secondary" id="btn-multiplayer-battles">
             Multiplayer Battles
           </button>
-          <button type="button" class="btn btn-secondary" id="btn-trial-mode" disabled>
+          <button type="button" class="btn btn-secondary" id="btn-trial-mode">
             Trial Mode
           </button>
         </div>
-        <p class="panel-copy empty-note">Multiplayer battles will use the same lobby system as Trade.</p>
+        <p class="panel-copy empty-note">Trial Mode is waves until you can't continue. Cards heal after every wave.</p>
+        <p id="battles-msg" class="shop-msg" hidden></p>
       </div>
     </section>
 
@@ -348,8 +350,8 @@
         <button type="button" class="btn-back" id="btn-trade-back" aria-label="Back">
           ← Back
         </button>
-        <h2>Trade</h2>
-        <p class="panel-copy">Create a lobby, join with a code, or pick an open room.</p>
+        <h2 id="lobby-menu-title">Trade</h2>
+        <p class="panel-copy" id="lobby-menu-copy">Create a lobby, join with a code, or pick an open room.</p>
         <div class="menu-actions">
           <button type="button" class="btn btn-primary" id="btn-create">Create Trade Space</button>
           <button type="button" class="btn btn-secondary" id="btn-join">Join Trade Space</button>
@@ -364,8 +366,8 @@
         <button type="button" class="btn-back" id="btn-join-back" aria-label="Back">
           ← Back
         </button>
-        <h2>Join Trade Space</h2>
-        <p class="panel-copy">Enter the lobby code from the other player.</p>
+        <h2 id="join-menu-title">Join Trade Space</h2>
+        <p class="panel-copy" id="join-menu-copy">Enter the lobby code from the other player.</p>
         <label class="field">
           <span>Lobby code</span>
           <input
@@ -388,10 +390,10 @@
           ← Back
         </button>
         <div class="quick-header">
-          <h2>Quick Lobby</h2>
+          <h2 id="quick-menu-title">Quick Lobby</h2>
           <button type="button" class="btn-copy" id="btn-quick-refresh">Refresh</button>
         </div>
-        <p class="panel-copy">Open lobbies waiting for a partner. Join with one click.</p>
+        <p class="panel-copy" id="quick-menu-copy">Open lobbies waiting for a partner. Join with one click.</p>
         <p id="quick-status" class="quick-status">Looking for lobbies…</p>
         <div id="lobby-list" class="lobby-list" aria-live="polite"></div>
         <p id="quick-error" class="error-msg" hidden></p>
@@ -416,6 +418,14 @@
           <button type="button" class="btn-kick" id="btn-kick" hidden>Kick</button>
         </div>
       </header>
+
+      <div id="battle-lobby-panel" class="battle-lobby-panel" hidden>
+        <p class="panel-copy" id="battle-lobby-copy">Waiting for a partner to join this battle lobby.</p>
+        <button type="button" class="btn btn-primary" id="btn-battle-pick-team" disabled>
+          Choose team
+        </button>
+        <p class="shop-msg" id="battle-lobby-ready">Waiting for partner…</p>
+      </div>
 
       <div class="trade-board">
         <article class="trade-side mine">
@@ -466,7 +476,7 @@
     <div id="login-required-modal" class="overlay" hidden>
       <div class="overlay-panel qty-panel">
         <h2>Login required</h2>
-        <p class="panel-copy">You need to log in to trade.</p>
+        <p class="panel-copy" id="login-required-copy">You need to log in to trade.</p>
         <button type="button" class="btn btn-primary" id="btn-login-required-ok">OK</button>
       </div>
     </div>
@@ -533,6 +543,17 @@
       </div>
     </div>
 
+    <div id="fire-mutate-modal" class="overlay" hidden>
+      <div class="overlay-panel qty-panel">
+        <h2>Fire Mutation</h2>
+        <p class="panel-copy" id="fire-mutate-copy">Are you sure you want to apply the Fire Mutation to this card.</p>
+        <div class="cta-row">
+          <button type="button" class="btn btn-secondary" id="btn-fire-mutate-no">No</button>
+          <button type="button" class="btn btn-primary" id="btn-fire-mutate-yes">Yes</button>
+        </div>
+      </div>
+    </div>
+
     <div id="admin-gate" class="overlay" hidden>
       <div class="overlay-panel admin-panel">
         <h2>Admin access</h2>
@@ -552,51 +573,89 @@
     <div id="admin-settings" class="overlay" hidden>
       <div class="overlay-panel admin-panel">
         <h2>Admin settings</h2>
-        <label class="admin-toggle">
-          <input type="checkbox" id="admin-infinite-stock" />
-          <span>Infinite stock</span>
-        </label>
-        <p class="panel-copy">When on, the shop never runs out of packs.</p>
-        <label class="admin-toggle">
-          <input type="checkbox" id="admin-unkickable" />
-          <span>Unkickable</span>
-        </label>
-        <p class="panel-copy">When on, trade room hosts cannot kick you.</p>
-        <label class="admin-toggle">
-          <input type="checkbox" id="admin-instant-quests" />
-          <span>Instant quest completion</span>
-        </label>
-        <p class="panel-copy">When on, every active quest is completed immediately.</p>
-        <label class="admin-toggle">
-          <input type="checkbox" id="admin-no-quest-cooldown" />
-          <span>0 quest cooldown</span>
-        </label>
-        <p class="panel-copy">When on, claimed quests reroll instantly instead of waiting 30 minutes.</p>
-        <p class="panel-copy admin-odds-heading">Mutation merger odds</p>
-        <div class="admin-odds-grid">
-          <label class="field">
-            <span>No mutation %</span>
-            <input id="admin-odds-none" type="number" min="0" step="1" />
+        <section class="admin-section">
+          <h3>Play</h3>
+          <label class="admin-toggle">
+            <input type="checkbox" id="admin-infinite-stock" />
+            <span class="switch" aria-hidden="true"></span>
+            <span>Infinite stock</span>
           </label>
-          <label class="field">
-            <span>Shiny %</span>
-            <input id="admin-odds-shiny" type="number" min="0" step="1" />
+          <p class="admin-hint">Shop packs never run out.</p>
+          <label class="admin-toggle">
+            <input type="checkbox" id="admin-unkickable" />
+            <span class="switch" aria-hidden="true"></span>
+            <span>Unkickable</span>
           </label>
-          <label class="field">
-            <span>Silver %</span>
-            <input id="admin-odds-silver" type="number" min="0" step="1" />
+          <p class="admin-hint">Trade hosts cannot kick you.</p>
+          <label class="admin-toggle">
+            <input type="checkbox" id="admin-instant-quests" />
+            <span class="switch" aria-hidden="true"></span>
+            <span>Instant quest completion</span>
           </label>
-          <label class="field">
-            <span>Gold %</span>
-            <input id="admin-odds-gold" type="number" min="0" step="1" />
+          <p class="admin-hint">Active quests complete immediately.</p>
+          <label class="admin-toggle">
+            <input type="checkbox" id="admin-no-quest-cooldown" />
+            <span class="switch" aria-hidden="true"></span>
+            <span>0 quest cooldown</span>
           </label>
-          <label class="field">
-            <span>Diamond %</span>
-            <input id="admin-odds-diamond" type="number" min="0" step="1" />
+          <p class="admin-hint">Claimed quests reroll instantly.</p>
+        </section>
+        <section class="admin-section">
+          <h3>Crafting</h3>
+          <label class="admin-toggle">
+            <input type="checkbox" id="admin-no-craft-wait" />
+            <span class="switch" aria-hidden="true"></span>
+            <span>No crafting wait</span>
           </label>
-        </div>
-        <p class="panel-copy">Weights do not need to add to 100. They are scaled automatically.</p>
+          <p class="admin-hint">Crafts finish instantly and can be claimed right away.</p>
+        </section>
+        <section class="admin-section">
+          <h3>Luck</h3>
+          <label class="field admin-luck-field">
+            <span>Luck multiplier</span>
+            <input id="admin-luck" type="number" min="0" step="any" />
+          </label>
+          <p class="admin-luck-preview" id="admin-luck-preview">Card labels stay the printed 1-in. Luck 1 draws the full pool.</p>
+          <p class="admin-hint">No cap. Card labels never change. With luck 50, Grim Reaper still reads 1/80, and anything that would be 1/1 or easier is skipped in packs.</p>
+        </section>
+        <section class="admin-section">
+          <h3>Mutation merger odds</h3>
+          <div class="admin-odds-grid">
+            <label class="field">
+              <span>No mutation %</span>
+              <input id="admin-odds-none" type="number" min="0" step="1" />
+            </label>
+            <label class="field">
+              <span>Shiny %</span>
+              <input id="admin-odds-shiny" type="number" min="0" step="1" />
+            </label>
+            <label class="field">
+              <span>Silver %</span>
+              <input id="admin-odds-silver" type="number" min="0" step="1" />
+            </label>
+            <label class="field">
+              <span>Gold %</span>
+              <input id="admin-odds-gold" type="number" min="0" step="1" />
+            </label>
+            <label class="field">
+              <span>Diamond %</span>
+              <input id="admin-odds-diamond" type="number" min="0" step="1" />
+            </label>
+          </div>
+          <p class="admin-hint">Weights do not need to add to 100. They are scaled automatically.</p>
+        </section>
         <button type="button" class="btn btn-primary" id="btn-admin-close">Done</button>
+      </div>
+    </div>
+
+    <div id="npc-reward-tip" class="npc-reward-tip" hidden></div>
+
+    <div id="battle-reward" class="overlay" hidden>
+      <div class="overlay-panel reveal-panel craft-result-panel">
+        <h2 id="battle-reward-title">You win</h2>
+        <p class="panel-copy" id="battle-reward-copy">You earned a reward.</p>
+        <ul id="battle-reward-list" class="battle-reward-list"></ul>
+        <button type="button" class="btn btn-primary" id="btn-battle-reward-done">Done</button>
       </div>
     </div>
 

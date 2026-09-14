@@ -1,9 +1,8 @@
 (() => {
-  const PEER_PREFIX = "cardgame-trade-";
-  const BOARD_ID = "cardgame-lobby-board-v1";
   const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const LOBBY_STALE_MS = 15000;
   const HEARTBEAT_MS = 4000;
+  const JOIN_TIMEOUT_MS = 16000;
   const STORAGE_KEY = "cardgame-player-v2";
   const SHOP_STORAGE_KEY = "cardgame-shop-v1";
   const ACCOUNTS_KEY = "cardgame-accounts-v1";
@@ -48,6 +47,12 @@
       id: "restock-token",
       name: "Restock Token",
       note: "Tap to force a shop restock.",
+      usable: true,
+    },
+    "fire-gem": {
+      id: "fire-gem",
+      name: "Fire Gem",
+      note: "Tap to apply Fire Mutation to one card.",
       usable: true,
     },
   };
@@ -369,6 +374,20 @@
         { id: "force-of-death", name: "Force of Death", damage: 43 },
       ],
     },
+    unknown: {
+      id: "unknown",
+      name: "???",
+      value: 99999,
+      oneIn: 99999,
+      cps: 0,
+      theme: "unknown",
+      blurb: "???",
+      emoji: "?",
+      battleOnly: true,
+      moves: [
+        { id: "the-end", name: "???", damage: 99999, isWipe: true },
+      ],
+    },
   };
 
   const SECOND_MOVE_MISS_CHANCE = 0.1;
@@ -393,7 +412,8 @@
     move.goesBeforeHeal = isJumpscare;
     move.cooldownTurns = isHeal && !isJumpscare ? HEAL_MOVE_TURN_GAP : 0;
     move.missChance = isSecond ? SECOND_MOVE_MISS_CHANCE : 0;
-    move.alwaysFirst = isJumpscare || isHeal || slot === 1;
+    move.isWipe = Boolean(move.isWipe);
+    move.alwaysFirst = isJumpscare || isHeal || slot === 1 || move.isWipe;
     move.alwaysLast = isThird;
     return move;
   }
@@ -427,6 +447,17 @@
     return rng() < 0.5 ? [a, b] : [b, a];
   }
 
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function rng() {
+      a |= 0;
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
   function strikeAction(strike, rng) {
     const missed = strike.move.missChance > 0 && rng() < strike.move.missChance;
     return {
@@ -447,9 +478,12 @@
     function consider(side) {
       if (!side || !side.move) return;
       const move = side.move;
-      const mult = side.statMult || 1;
-      if (move.isJumpscare) {
-        const amount = Math.max(1, Math.round(jumpscareDamage(move, side.jumpscareUses) * mult));
+      const dmgMult = side.statMult || 1;
+      const healMult = side.healMult != null ? side.healMult : 1;
+      if (move.isJumpscare || move.isWipe) {
+        const amount = move.isWipe
+          ? Math.max(1, Math.ceil(move.damage * dmgMult))
+          : Math.max(1, Math.ceil(jumpscareDamage(move, side.jumpscareUses) * dmgMult));
         if (amount > 0) {
           jumpscares.push({
             sideId: side.id,
@@ -465,7 +499,7 @@
         heals.push({
           sideId: side.id,
           type: "heal",
-          amount: move.heal,
+          amount: Math.max(0, Math.ceil(move.heal * healMult)),
           moveId: move.id,
         });
       }
@@ -473,7 +507,7 @@
         strikes.push({
           sideId: side.id,
           type: "damage",
-          amount: Math.max(0, Math.round(move.damage * mult)),
+          amount: Math.max(0, Math.ceil(move.damage * dmgMult)),
           moveId: move.id,
           move,
         });
@@ -547,12 +581,28 @@
     diamond: 5,
   };
   const MUTATION_SPECS = {
-    shiny: { id: "shiny", label: "Shiny", prefix: "Shiny", hpMult: 1.2, dmgMult: 1.2, className: "mutation-shiny" },
-    silver: { id: "silver", label: "Silver", prefix: "Silver", hpMult: 1.3, dmgMult: 1.3, className: "mutation-silver" },
-    gold: { id: "gold", label: "Gold", prefix: "Gold", hpMult: 1.4, dmgMult: 1.4, className: "mutation-gold" },
-    diamond: { id: "diamond", label: "Diamond", prefix: "Diamond", hpMult: 1.6, dmgMult: 1.6, className: "mutation-diamond" },
+    shiny: { id: "shiny", label: "Shiny", prefix: "Shiny", hpMult: 1.2, dmgMult: 1.2, healMult: 1.2, className: "mutation-shiny" },
+    silver: { id: "silver", label: "Silver", prefix: "Silver", hpMult: 1.3, dmgMult: 1.3, healMult: 1.3, className: "mutation-silver" },
+    gold: { id: "gold", label: "Gold", prefix: "Gold", hpMult: 1.4, dmgMult: 1.4, healMult: 1.4, className: "mutation-gold" },
+    diamond: { id: "diamond", label: "Diamond", prefix: "Diamond", hpMult: 1.6, dmgMult: 1.6, healMult: 1.6, className: "mutation-diamond" },
+    fire: { id: "fire", label: "Fire", prefix: "Fire", hpMult: 0.8, dmgMult: 1.8, healMult: 1, econMult: 1, className: "mutation-fire", crafted: true },
   };
-  const MUTATION_RANK = { "": 0, shiny: 1, silver: 2, gold: 3, diamond: 4 };
+  const MUTATION_RANK = { "": 0, shiny: 1, silver: 2, gold: 3, diamond: 4, fire: 5 };
+  const FIRE_GEM_CRAFT_MS = 5 * 60 * 1000;
+  const CRAFT_RECIPES = {
+    "fire-gem": {
+      id: "fire-gem",
+      name: "Fire Gem",
+      itemId: "fire-gem",
+      craftMs: FIRE_GEM_CRAFT_MS,
+      blurb: "3 Demons, 1 Kitsune, and 10,000 coins. 5 minutes to finish.",
+      coins: 10000,
+      materials: [
+        { cardId: "demon", count: 3 },
+        { cardId: "kitsune", count: 1 },
+      ],
+    },
+  };
 
   function parseCardKey(key) {
     if (!key || typeof key !== "string") return { baseId: "", mutation: "" };
@@ -578,15 +628,56 @@
     return mutation ? MUTATION_SPECS[mutation] : null;
   }
 
-  function cardStatMult(key) {
+  function mutationHpMult(key) {
     const spec = mutationSpec(key);
-    return spec ? spec.hpMult : 1;
+    return spec && spec.hpMult != null ? spec.hpMult : 1;
+  }
+
+  function mutationDmgMult(key) {
+    const spec = mutationSpec(key);
+    return spec && spec.dmgMult != null ? spec.dmgMult : 1;
+  }
+
+  function mutationHealMult(key) {
+    const spec = mutationSpec(key);
+    return spec && spec.healMult != null ? spec.healMult : 1;
+  }
+
+  function mutationEconMult(key) {
+    const spec = mutationSpec(key);
+    if (!spec) return 1;
+    if (spec.econMult != null) return spec.econMult;
+    return spec.hpMult != null ? spec.hpMult : 1;
+  }
+
+  function cardStatMult(key) {
+    return mutationHpMult(key);
+  }
+
+  function ceilMutationStat(base, key) {
+    const n = Number(base) || 0;
+    const scaled = n * mutationHpMult(key);
+    if (!Number.isFinite(scaled) || scaled <= 0) return 0;
+    return Math.ceil(scaled);
+  }
+
+  function ceilEconStat(base, key) {
+    const n = Number(base) || 0;
+    const scaled = n * mutationEconMult(key);
+    if (!Number.isFinite(scaled) || scaled <= 0) return 0;
+    return Math.ceil(scaled);
   }
 
   function cardValueForKey(key) {
     const card = baseCard(key);
     if (!card) return 0;
-    return Math.max(1, Math.round(card.value * cardStatMult(key)));
+    return Math.max(1, ceilEconStat(card.value, key));
+  }
+
+  function cardCpsForKey(key) {
+    const card = baseCard(key);
+    if (!card) return 0;
+    return ceilEconStat(card.cps, key);
   }
 
   function cardDisplayName(key) {
@@ -730,8 +821,12 @@
     btnBattlesBack: document.getElementById("btn-battles-back"),
     btnNpcBattles: document.getElementById("btn-npc-battles"),
     btnNpcBattlesBack: document.getElementById("btn-npc-battles-back"),
+    btnMultiplayerBattles: document.getElementById("btn-multiplayer-battles"),
+    btnTrialMode: document.getElementById("btn-trial-mode"),
+    battlesMsg: document.getElementById("battles-msg"),
     npcFighterList: document.getElementById("npc-fighter-list"),
     npcBattlesMsg: document.getElementById("npc-battles-msg"),
+    npcRewardTip: document.getElementById("npc-reward-tip"),
     btnBattleFlee: document.getElementById("btn-battle-flee"),
     battleFoe: document.getElementById("battle-foe"),
     battleFoeMeta: document.getElementById("battle-foe-meta"),
@@ -742,6 +837,11 @@
     battleParty: document.getElementById("battle-party"),
     battlePartyList: document.getElementById("battle-party-list"),
     btnBattlePartyClose: document.getElementById("btn-battle-party-close"),
+    battleReward: document.getElementById("battle-reward"),
+    battleRewardTitle: document.getElementById("battle-reward-title"),
+    battleRewardCopy: document.getElementById("battle-reward-copy"),
+    battleRewardList: document.getElementById("battle-reward-list"),
+    btnBattleRewardDone: document.getElementById("btn-battle-reward-done"),
     btnInventoryBack: document.getElementById("btn-inventory-back"),
     gameNav: document.getElementById("game-nav"),
     btnBackpack: document.getElementById("btn-backpack"),
@@ -813,6 +913,9 @@
     adminUnkickable: document.getElementById("admin-unkickable"),
     adminInstantQuests: document.getElementById("admin-instant-quests"),
     adminNoQuestCooldown: document.getElementById("admin-no-quest-cooldown"),
+    adminNoCraftWait: document.getElementById("admin-no-craft-wait"),
+    adminLuck: document.getElementById("admin-luck"),
+    adminLuckPreview: document.getElementById("admin-luck-preview"),
     adminOddsNone: document.getElementById("admin-odds-none"),
     adminOddsShiny: document.getElementById("admin-odds-shiny"),
     adminOddsSilver: document.getElementById("admin-odds-silver"),
@@ -820,6 +923,10 @@
     adminOddsDiamond: document.getElementById("admin-odds-diamond"),
     btnAdminClose: document.getElementById("btn-admin-close"),
     restockTokenModal: document.getElementById("restock-token-modal"),
+    fireMutateModal: document.getElementById("fire-mutate-modal"),
+    fireMutateCopy: document.getElementById("fire-mutate-copy"),
+    btnFireMutateNo: document.getElementById("btn-fire-mutate-no"),
+    btnFireMutateYes: document.getElementById("btn-fire-mutate-yes"),
     btnRestockTokenNo: document.getElementById("btn-restock-token-no"),
     btnRestockTokenYes: document.getElementById("btn-restock-token-yes"),
     myTradeItems: document.getElementById("my-trade-items"),
@@ -836,8 +943,19 @@
     partnerName: document.getElementById("partner-name"),
     btnKick: document.getElementById("btn-kick"),
     loginRequiredModal: document.getElementById("login-required-modal"),
+    loginRequiredCopy: document.getElementById("login-required-copy"),
     btnLoginRequiredOk: document.getElementById("btn-login-required-ok"),
     btnTradeBack: document.getElementById("btn-trade-back"),
+    lobbyMenuTitle: document.getElementById("lobby-menu-title"),
+    lobbyMenuCopy: document.getElementById("lobby-menu-copy"),
+    joinMenuTitle: document.getElementById("join-menu-title"),
+    joinMenuCopy: document.getElementById("join-menu-copy"),
+    quickMenuTitle: document.getElementById("quick-menu-title"),
+    quickMenuCopy: document.getElementById("quick-menu-copy"),
+    battleLobbyPanel: document.getElementById("battle-lobby-panel"),
+    battleLobbyCopy: document.getElementById("battle-lobby-copy"),
+    btnBattlePickTeam: document.getElementById("btn-battle-pick-team"),
+    battleLobbyReady: document.getElementById("battle-lobby-ready"),
     btnCreate: document.getElementById("btn-create"),
     btnJoin: document.getElementById("btn-join"),
     btnQuick: document.getElementById("btn-quick"),
@@ -874,6 +992,11 @@
   let heartbeatTimer = null;
   let boardReadyPromise = null;
   let browsingQuick = false;
+  let netMode = "trade";
+  let myPvpTeam = null;
+  let theirPvpTeam = null;
+  let myPvpChoice = null;
+  let theirPvpChoice = null;
 
   let currentScreen = "title";
   let inventoryReturnScreen = "title";
@@ -884,6 +1007,7 @@
   let questTab = "daily";
   let craftTab = "bench";
   let mergerPickKey = null;
+  let pendingFireCardKey = null;
   let questPlaySaveAcc = 0;
   let questClaimFlash = "";
   let questClaimFlashUntil = 0;
@@ -893,89 +1017,107 @@
   let shopUiTimer = null;
   let battle = null;
   let pendingBattleNpc = null;
+  let pendingBattleKind = null;
   let pendingBattleTeam = [];
   let battleAnimGen = 0;
+  let battleRewardAction = "hide";
 
   const PLAYER_TEAM_SIZE = 3;
   const BATTLE_LOG_FADE_MS = 220;
   const BATTLE_LOG_HOLD_MS = 800;
+  const BATTLE_FAINT_MS = 950;
 
   const NPC_FIGHTERS = {
     beginner: {
       id: "beginner",
       name: "Beginner Fighter",
       team: ["chicken", "chicken", "chicken"],
+      reward: { packs: { "common-pack": 1 } },
     },
     animal: {
       id: "animal",
       name: "Animal Fighter",
       team: ["chicken", "cow", "pig"],
+      reward: { packs: { "common-pack": 1 }, coins: 100 },
     },
     animal2: {
       id: "animal2",
       name: "Animal Fighter 2",
       team: ["pig", "salmon", "squid"],
+      reward: { coins: 300 },
     },
     ocean: {
       id: "ocean",
       name: "Ocean Fighter",
       team: ["salmon", "squid", "squid"],
+      reward: { coins: 500 },
     },
     monkeyTamer: {
       id: "monkeyTamer",
       name: "Monkey Tamer",
       team: ["monkey", "monkey", "monkey"],
+      reward: { packs: { "rare-pack": 1 } },
     },
     wildAnimal: {
       id: "wildAnimal",
       name: "Wild Animal Fighter",
       team: ["tiger", "lion", "leopard"],
+      reward: { packs: { "rare-pack": 1 }, coins: 100 },
     },
     beastTrainer: {
       id: "beastTrainer",
       name: "Beast Trainer",
       team: ["shark", "triceratops", "trex"],
+      reward: { packs: { "rare-pack": 2 } },
     },
     prehistoric: {
       id: "prehistoric",
       name: "Prehistoric Fighter",
       team: ["triceratops", "trex", "trex"],
+      reward: { items: { "restock-token": 1 }, coins: 500 },
     },
     undead1: {
       id: "undead1",
       name: "Undead Trainer I",
       team: ["skeleton", "zombie", "spirit"],
+      reward: { items: { "restock-token": 2 }, coins: 800 },
     },
     undead2: {
       id: "undead2",
       name: "Undead Trainer II",
       team: ["zombie", "skeleton", "skeleton", "spirit", "spirit", "spirit"],
       danger: true,
+      reward: { items: { "restock-token": 3 }, packs: { "rare-pack": 1 } },
     },
     spiritTrainer: {
       id: "spiritTrainer",
       name: "Spirit Trainer",
       team: ["spiritual-horse-rider", "ghoul", "ghost-fox"],
+      reward: { items: { "restock-token": 1 }, packs: { "rare-pack": 1 } },
     },
     hellFighter: {
       id: "hellFighter",
       name: "Hell Fighter",
       team: ["demon", "demon", "demon"],
+      reward: { packs: { "rare-pack": 2 } },
     },
     legendTrainer: {
       id: "legendTrainer",
       name: "Legend Trainer",
       team: ["dragon", "dragon", "kitsune"],
+      reward: { items: { "restock-token": 2 }, coins: 1500 },
     },
     kitsuneTrainer: {
       id: "kitsuneTrainer",
       name: "Kitsune Trainer",
       team: ["kitsune", "kitsune", "kitsune"],
+      reward: { packs: { "rare-pack": 2 }, items: { "restock-token": 2 } },
     },
     hellForces: {
       id: "hellForces",
       name: "Hell Forces",
       team: ["demon", "grim-reaper", "grim-reaper"],
+      reward: { packs: { "rare-pack": 3 }, coins: 3000 },
     },
     demonBoss: {
       id: "demonBoss",
@@ -983,8 +1125,51 @@
       team: ["demon", "demon", "grim-reaper", "demon", "grim-reaper", "demon"],
       danger: true,
       serif: true,
+      reward: { packs: { "rare-pack": 4 }, items: { "restock-token": 4 } },
     },
   };
+
+  const NPC_FIGHTER_LIST = Object.values(NPC_FIGHTERS);
+  const TRIAL_LATE_WAVES = {
+    20: { name: "Wave 20", team: ["demon", "demon", "demon", "grim-reaper", "grim-reaper", "grim-reaper"], danger: true },
+    21: { name: "Wave 21", team: ["demon", "demon", "grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper"], danger: true },
+    22: { name: "Wave 22", team: ["demon", "grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper"], danger: true },
+    23: { name: "Wave 23", team: ["grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper"], danger: true },
+    24: { name: "Wave 24", team: ["grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper", "kitsune", "kitsune"], danger: true },
+    25: { name: "Wave 25", team: ["grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper", "kitsune"], danger: true },
+    26: { name: "Wave 26", team: ["grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper", "grim-reaper"], danger: true },
+    27: { name: "Wave 27", team: Array(12).fill("dragon"), danger: true },
+    28: { name: "???", team: ["unknown"], danger: true, serif: true },
+  };
+
+  function trialWaveFromNpc(npc, waveNumber) {
+    if (!npc) return null;
+    return {
+      name: npc.name,
+      team: npc.team.slice(),
+      danger: Boolean(npc.danger),
+      serif: Boolean(npc.serif),
+      wave: waveNumber,
+    };
+  }
+
+  function trialWaveDef(waveNumber) {
+    const n = Number(waveNumber);
+    if (n >= 1 && n <= 8) return trialWaveFromNpc(NPC_FIGHTER_LIST[n - 1], n);
+    if (n === 9) return { name: "Wave 9", team: ["squid", "shark", "skeleton"] };
+    if (n === 10) return { name: "Wave 10", team: ["shark", "skeleton", "shark"] };
+    if (n === 11) return { name: "Wave 11", team: ["triceratops", "triceratops", "trex", "trex"] };
+    if (n >= 12 && n <= 19) return trialWaveFromNpc(NPC_FIGHTER_LIST[n - 4], n);
+    return TRIAL_LATE_WAVES[n] ? { ...TRIAL_LATE_WAVES[n], team: TRIAL_LATE_WAVES[n].team.slice(), wave: n } : null;
+  }
+
+  function trialWaveReward(waveNumber) {
+    const n = Number(waveNumber);
+    if (!n || n < 1) return null;
+    const reward = { coins: 130 * 2 ** Math.floor((n - 1) / 2) };
+    if (n % 5 === 0) reward.packs = { "rare-pack": 2 ** (n / 5) };
+    return reward;
+  }
 
   function randomStockAmount() {
     return STOCK_MIN + Math.floor(Math.random() * (STOCK_MAX - STOCK_MIN + 1));
@@ -1004,6 +1189,8 @@
       unkickable: false,
       instantQuests: false,
       noQuestCooldown: false,
+      noCraftWait: false,
+      luck: 1,
       mutationOdds: { ...DEFAULT_MUTATION_ODDS },
     };
   }
@@ -1024,6 +1211,8 @@
         unkickable: Boolean(data.unkickable),
         instantQuests: Boolean(data.instantQuests),
         noQuestCooldown: Boolean(data.noQuestCooldown),
+        noCraftWait: Boolean(data.noCraftWait),
+        luck: sanitizeLuck(data.luck),
         mutationOdds: sanitizeMutationOdds(data.mutationOdds),
       };
     } catch (_) {
@@ -1044,6 +1233,8 @@
         unkickable: shop.unkickable,
         instantQuests: shop.instantQuests,
         noQuestCooldown: shop.noQuestCooldown,
+        noCraftWait: Boolean(shop.noCraftWait),
+        luck: sanitizeLuck(shop.luck),
         mutationOdds: sanitizeMutationOdds(shop.mutationOdds),
       })
     );
@@ -1100,6 +1291,7 @@
   }
 
   function closeAdminSettings() {
+    applyLuckFromAdmin(true);
     readAdminOddsFromInputs();
     els.adminSettings.hidden = true;
     refreshFabs();
@@ -1162,6 +1354,28 @@
         if (currentScreen === "cardShop") renderShopStock();
         else if (changed) saveShop();
       }
+      if (currentScreen === "crafting" && craftTab === "bench") {
+        const timers = document.querySelectorAll("[data-craft-timer]");
+        if (timers.length) {
+          const now = Date.now();
+          let needsRefresh = false;
+          timers.forEach((el) => {
+            const job = (player.craftJobs || []).find((j) => j.id === el.getAttribute("data-craft-timer"));
+            if (!job) {
+              needsRefresh = true;
+              return;
+            }
+            if (craftJobReady(job)) {
+              if (el.textContent !== "Ready to claim") needsRefresh = true;
+            } else {
+              el.textContent = formatCountdown(job.readyAt - now);
+              const bar = document.querySelector(`[data-craft-bar="${job.id}"]`);
+              if (bar) bar.style.width = `${Math.round(craftJobProgress(job) * 100)}%`;
+            }
+          });
+          if (needsRefresh) renderCrafting();
+        }
+      }
     }, 250);
   }
   let pendingTradeCardId = null;
@@ -1202,6 +1416,7 @@
       indexClaimed: {},
       quests: [],
       questLocks: [],
+      craftJobs: [],
       settings: defaultSettings(),
     };
   }
@@ -1266,6 +1481,7 @@
 
     bags.quests = sanitizeQuests(data.quests);
     bags.questLocks = sanitizeQuestLocks(data.questLocks);
+    bags.craftJobs = sanitizeCraftJobs(data.craftJobs);
     fillQuestSlots(bags.quests, bags.questLocks);
     applyInstantQuests(bags.quests);
     bags.settings = sanitizeSettings(data.settings);
@@ -1285,6 +1501,7 @@
       indexClaimed: { ...(p.indexClaimed || {}) },
       quests: snapshotQuests(p.quests),
       questLocks: [...(p.questLocks || [])],
+      craftJobs: snapshotCraftJobs(p.craftJobs),
       settings: sanitizeSettings(p.settings),
     };
   }
@@ -1301,6 +1518,7 @@
     player.indexClaimed = next.indexClaimed;
     player.quests = next.quests;
     player.questLocks = next.questLocks;
+    player.craftJobs = next.craftJobs;
     player.settings = next.settings;
   }
 
@@ -1521,16 +1739,62 @@
       .replace(/"/g, "&quot;");
   }
 
+  function sanitizeLuck(raw) {
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n <= 0) return 1;
+    return n;
+  }
+
+  function formatOneIn(oneIn) {
+    const n = Number(oneIn);
+    if (!Number.isFinite(n) || n <= 0) return "1";
+    if (n >= 10) return String(Math.round(n));
+    const rounded = Math.round(n * 10) / 10;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  }
+
+  function luckPreviewText(luck) {
+    const l = sanitizeLuck(luck);
+    if (l <= 1) return "Card labels stay the printed 1-in. Luck 1 draws the full pool.";
+    return `Labels stay the printed 1-in. Rates 1/${formatOneIn(l)} and easier become undrawable.`;
+  }
+
+  function refreshLuckPreview(raw) {
+    if (!els.adminLuckPreview) return;
+    els.adminLuckPreview.textContent = luckPreviewText(raw == null ? shop.luck : raw);
+  }
+
+  function applyLuckFromAdmin(rewrite) {
+    if (!els.adminLuck) return;
+    const raw = String(els.adminLuck.value || "").trim();
+    const parsed = Number(raw);
+    const valid = Number.isFinite(parsed) && parsed > 0;
+    if (!valid) {
+      refreshLuckPreview(rewrite ? 1 : raw);
+      if (!rewrite) return;
+      shop.luck = 1;
+      els.adminLuck.value = "1";
+    } else {
+      shop.luck = parsed;
+      if (rewrite) els.adminLuck.value = String(shop.luck);
+      refreshLuckPreview(shop.luck);
+    }
+    saveShop();
+  }
+
   function rarityHtml(card) {
     const fromCommon = COMMON_CARD_IDS.has(card.id);
     const fromRare = RARE_CARD_IDS.has(card.id);
     if (fromCommon && fromRare && card.altOneIn) {
-      return `<span class="card-rarity"><span class="rarity-common">1/${card.oneIn}</span><span class="rarity-sep">-</span><span class="rarity-rare">1/${card.altOneIn}</span></span>`;
+      return `<span class="card-rarity"><span class="rarity-common">1/${formatOneIn(card.oneIn)}</span><span class="rarity-sep">-</span><span class="rarity-rare">1/${formatOneIn(card.altOneIn)}</span></span>`;
+    }
+    if (card.battleOnly) {
+      return `<span class="card-rarity">???</span>`;
     }
     if (fromRare) {
-      return `<span class="card-rarity rarity-rare">1/${card.oneIn}</span>`;
+      return `<span class="card-rarity rarity-rare">1/${formatOneIn(card.oneIn)}</span>`;
     }
-    return `<span class="card-rarity rarity-common">1/${card.oneIn}</span>`;
+    return `<span class="card-rarity rarity-common">1/${formatOneIn(card.oneIn)}</span>`;
   }
 
   function cardFaceHtml(card, opts = {}) {
@@ -1545,7 +1809,7 @@
       ? `<span class="card-value">$${cardValueForKey(key)}</span>`
       : "";
     const hp =
-      opts.hp != null ? opts.hp : Math.max(1, Math.round(card.hp * (spec ? spec.hpMult : 1)));
+      opts.hp != null ? opts.hp : Math.max(1, ceilMutationStat(card.hp, key));
     const hpHtml = `<span class="card-hp">HP&nbsp;${hp}</span>`;
     const name = spec ? `${spec.prefix} ${card.name}` : card.name;
     const mutClass = spec ? spec.className : "";
@@ -1555,6 +1819,8 @@
         : "";
     const crystal =
       spec && spec.id === "diamond" ? `<div class="card-crystal" aria-hidden="true"></div>` : "";
+    const flame =
+      spec && spec.id === "fire" ? `<div class="card-flame" aria-hidden="true"><span>🔥</span></div>` : "";
     return `
       <article class="animal-card theme-${card.theme} ${compact ? "compact" : ""} ${mutClass}" data-card-id="${escapeHtml(key)}">
         <div class="card-texture" aria-hidden="true"></div>
@@ -1563,6 +1829,7 @@
         <div class="card-frame" aria-hidden="true"></div>
         ${sparkles}
         ${crystal}
+        ${flame}
         <div class="card-top">
           ${rarityHtml(card)}
           <span class="card-top-right">${hpHtml}${valueHtml}</span>
@@ -1585,16 +1852,38 @@
     return cardFaceHtml(card, { ...opts, cardKey: key });
   }
 
-  function weightedDraw(pool) {
-    const weights = pool.map((c) => 1 / c.oneIn);
+  function poolEntryOneIn(entry) {
+    const n = Number(entry && entry.oneIn);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  }
+
+  function pickPoolEntry(pool) {
+    if (!pool || !pool.length) return null;
+    const weights = pool.map((c) => 1 / poolEntryOneIn(c));
     const total = weights.reduce((a, b) => a + b, 0);
     let r = Math.random() * total;
     for (let i = 0; i < pool.length; i += 1) {
       r -= weights[i];
-      if (r <= 0) return CARDS[pool[i].id] || pool[i];
+      if (r <= 0) return pool[i];
     }
-    const last = pool[pool.length - 1];
-    return CARDS[last.id] || last;
+    return pool[pool.length - 1];
+  }
+
+  function drawablePool(pool) {
+    const luck = sanitizeLuck(shop.luck);
+    const kept = pool.filter((entry) => {
+      const oneIn = poolEntryOneIn(entry);
+      return oneIn / luck > 1;
+    });
+    if (kept.length) return kept;
+    let rarest = 0;
+    for (const entry of pool) rarest = Math.max(rarest, poolEntryOneIn(entry));
+    return pool.filter((entry) => poolEntryOneIn(entry) === rarest);
+  }
+
+  function weightedDraw(pool) {
+    const entry = pickPoolEntry(drawablePool(pool)) || pickPoolEntry(pool);
+    return CARDS[entry.id] || entry;
   }
 
   function poolForPack(pack) {
@@ -1608,7 +1897,7 @@
 
   function markIndexFound(cardId) {
     const baseId = parseCardKey(cardId).baseId;
-    if (!CARDS[baseId]) return;
+    if (!CARDS[baseId] || CARDS[baseId].battleOnly) return;
     if (!player.indexFound) player.indexFound = {};
     player.indexFound[baseId] = true;
   }
@@ -1664,6 +1953,105 @@
     const next = (locks || []).filter((n) => Number.isFinite(n) && n > now);
     if (shop.noQuestCooldown) next.length = 0;
     return next;
+  }
+
+  function snapshotCraftJobs(list) {
+    return sanitizeCraftJobs(list);
+  }
+
+  function sanitizeCraftJobs(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const job of raw) {
+      if (!job || !CRAFT_RECIPES[job.recipeId]) continue;
+      const readyAt = Number(job.readyAt);
+      if (!Number.isFinite(readyAt) || readyAt <= 0) continue;
+      out.push({
+        id: typeof job.id === "string" && job.id ? job.id : newCraftJobId(),
+        recipeId: job.recipeId,
+        readyAt,
+      });
+    }
+    return out;
+  }
+
+  function newCraftJobId() {
+    return `cj-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function ownedBaseCardCount(cardId) {
+    return player.cards[cardId] || 0;
+  }
+
+  function recipeCoinCost(recipe) {
+    const n = Number(recipe && recipe.coins);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  }
+
+  function canAffordRecipe(recipe) {
+    if ((player.coins || 0) < recipeCoinCost(recipe)) return false;
+    return (recipe.materials || []).every((mat) => ownedBaseCardCount(mat.cardId) >= mat.count);
+  }
+
+  function consumeRecipeMaterials(recipe) {
+    if (!canAffordRecipe(recipe)) return false;
+    const coins = recipeCoinCost(recipe);
+    if (coins) player.coins -= coins;
+    for (const mat of recipe.materials) {
+      player.cards[mat.cardId] -= mat.count;
+      if (player.cards[mat.cardId] <= 0) delete player.cards[mat.cardId];
+    }
+    return true;
+  }
+
+  function startCraftRecipe(recipeId) {
+    const recipe = CRAFT_RECIPES[recipeId];
+    if (!recipe) return;
+    if (!consumeRecipeMaterials(recipe)) return;
+    if (!Array.isArray(player.craftJobs)) player.craftJobs = [];
+    const wait = shop.noCraftWait ? 0 : recipe.craftMs;
+    player.craftJobs.push({
+      id: newCraftJobId(),
+      recipeId: recipe.id,
+      readyAt: Date.now() + wait,
+    });
+    savePlayer();
+    renderPlayerUi();
+    renderCrafting();
+  }
+
+  function craftJobReady(job) {
+    if (!job) return false;
+    if (shop.noCraftWait) return true;
+    return job.readyAt <= Date.now();
+  }
+
+  function craftJobProgress(job) {
+    if (craftJobReady(job)) return 1;
+    const recipe = CRAFT_RECIPES[job.recipeId];
+    const total = recipe && recipe.craftMs ? recipe.craftMs : FIRE_GEM_CRAFT_MS;
+    const startAt = job.readyAt - total;
+    return Math.min(1, Math.max(0, (Date.now() - startAt) / total));
+  }
+
+  function claimCraftJob(jobId) {
+    if (!Array.isArray(player.craftJobs)) return;
+    const idx = player.craftJobs.findIndex((job) => job.id === jobId);
+    if (idx < 0) return;
+    const job = player.craftJobs[idx];
+    if (!craftJobReady(job)) return;
+    const recipe = CRAFT_RECIPES[job.recipeId];
+    if (!recipe) {
+      player.craftJobs.splice(idx, 1);
+      savePlayer();
+      renderCrafting();
+      return;
+    }
+    player.craftJobs.splice(idx, 1);
+    player.items[recipe.itemId] = (player.items[recipe.itemId] || 0) + 1;
+    savePlayer();
+    renderPlayerUi();
+    renderCrafting();
   }
 
   function unusedQuestTypes(existing) {
@@ -2011,7 +2399,9 @@
       els.cardSellModal,
       els.loginRequiredModal,
       els.restockTokenModal,
+      els.fireMutateModal,
       els.craftResult,
+      els.battleReward,
     ].some((el) => el && !el.hidden);
   }
 
@@ -2195,10 +2585,94 @@
       tab.classList.toggle("active", tab.getAttribute("data-craft-tab") === craftTab);
     });
     if (craftTab === "bench") {
+      const recipe = CRAFT_RECIPES["fire-gem"];
+      const jobs = Array.isArray(player.craftJobs) ? player.craftJobs : [];
+      const coinCost = recipeCoinCost(recipe);
+      const coinOwned = player.coins || 0;
+      const coinChip = coinCost
+        ? `<div class="craft-chip${coinOwned >= coinCost ? "" : " is-short"}">
+              <div class="craft-chip-art craft-chip-coin" aria-hidden="true">$</div>
+              <div class="craft-chip-meta">
+                <strong>Coins</strong>
+                <span>×${coinCost.toLocaleString()}</span>
+                <span class="craft-chip-have">${coinOwned.toLocaleString()}/${coinCost.toLocaleString()}</span>
+              </div>
+            </div>
+            <span class="craft-op" aria-hidden="true">+</span>`
+        : "";
+      const materialBits = (recipe.materials || [])
+        .map((mat, i) => {
+          const card = CARDS[mat.cardId];
+          const owned = ownedBaseCardCount(mat.cardId);
+          const enough = owned >= mat.count;
+          const plus = i > 0 ? `<span class="craft-op" aria-hidden="true">+</span>` : "";
+          return `
+            ${plus}
+            <div class="craft-chip${enough ? "" : " is-short"}">
+              <div class="craft-chip-art">${card ? cardArtHtml(card) : ""}</div>
+              <div class="craft-chip-meta">
+                <strong>${escapeHtml(card ? card.name : mat.cardId)}</strong>
+                <span>×${mat.count}</span>
+                <span class="craft-chip-have">${owned}/${mat.count}</span>
+              </div>
+            </div>`;
+        })
+        .join("");
+      const canCraft = canAffordRecipe(recipe);
+      const jobRows = jobs.length
+        ? jobs
+            .map((job) => {
+              const def = CRAFT_RECIPES[job.recipeId] || recipe;
+              const ready = craftJobReady(job);
+              const wait = formatCountdown(job.readyAt - Date.now());
+              const pct = Math.round(craftJobProgress(job) * 100);
+              return `
+                <div class="craft-job${ready ? " is-ready" : ""}">
+                  <div class="craft-job-icon" aria-hidden="true">🔥</div>
+                  <div class="craft-job-body">
+                    <div class="craft-job-top">
+                      <strong>${escapeHtml(def.name)}</strong>
+                      <span class="item-note" data-craft-timer="${escapeHtml(job.id)}">${
+                        ready ? "Ready to claim" : wait
+                      }</span>
+                    </div>
+                    <div class="craft-job-track" aria-hidden="true">
+                      <span data-craft-bar="${escapeHtml(job.id)}" style="width:${pct}%"></span>
+                    </div>
+                  </div>
+                  <button type="button" class="btn ${ready ? "btn-primary" : "btn-secondary"}" data-claim-craft="${escapeHtml(job.id)}" ${
+                    ready ? "" : "disabled"
+                  }>Claim</button>
+                </div>`;
+            })
+            .join("")
+        : "";
       els.craftingMain.innerHTML = `
         <h2>Crafting bench</h2>
-        <p class="panel-copy">Recipes will show up here later.</p>
-        <div class="quests-event-empty"><p class="empty-note">Nothing to craft yet.</p></div>
+        <p class="panel-copy">Fuse cards into gems, then claim them from the queue.</p>
+        <article class="craft-recipe">
+          <div class="craft-recipe-head">
+            <div class="craft-gem-mark" aria-hidden="true">🔥</div>
+            <div>
+              <h3>${escapeHtml(recipe.name)}</h3>
+              <p class="craft-recipe-stats">1.8× damage · 0.8× HP · healing unchanged · one mutation per card</p>
+            </div>
+          </div>
+          <div class="craft-flow">
+            ${coinChip}
+            ${materialBits}
+            <span class="craft-op" aria-hidden="true">→</span>
+            <div class="craft-chip craft-chip-out">
+              <div class="craft-chip-art craft-chip-gem" aria-hidden="true">🔥</div>
+              <div class="craft-chip-meta">
+                <strong>Fire Gem</strong>
+                <span>${shop.noCraftWait ? "Instant" : "5 min"}</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary craft-go" id="btn-craft-fire-gem" ${canCraft ? "" : "disabled"}>Craft</button>
+        </article>
+        ${jobRows ? `<div class="craft-jobs">${jobRows}</div>` : ""}
       `;
       return;
     }
@@ -2250,6 +2724,68 @@
     refreshFabs();
   }
 
+  function openFireGemPicker() {
+    if (!(player.items["fire-gem"] > 0)) return;
+    pendingFireCardKey = null;
+    openInventory("mutate");
+  }
+
+  function closeFireConfirm() {
+    pendingFireCardKey = null;
+    if (els.fireMutateModal) els.fireMutateModal.hidden = true;
+    refreshFabs();
+  }
+
+  function cancelFireMutate() {
+    closeFireConfirm();
+    inventoryMode = "browse";
+    inventoryTab = "items";
+    showScreen("inventory");
+    renderInventoryList();
+  }
+
+  function promptFireMutate(cardKeyVal) {
+    if (!(player.items["fire-gem"] > 0)) return;
+    if (!baseCard(cardKeyVal) || parseCardKey(cardKeyVal).mutation) return;
+    if (!(player.cards[cardKeyVal] > 0)) return;
+    pendingFireCardKey = cardKeyVal;
+    if (els.fireMutateCopy) {
+      els.fireMutateCopy.textContent = `Are you sure you want to apply the Fire Mutation to ${cardDisplayName(cardKeyVal)}.`;
+    }
+    if (els.fireMutateModal) els.fireMutateModal.hidden = false;
+    refreshFabs();
+  }
+
+  function confirmFireMutate() {
+    const fromKey = pendingFireCardKey;
+    closeFireConfirm();
+    if (!(player.items["fire-gem"] > 0) || !fromKey || parseCardKey(fromKey).mutation) {
+      cancelFireMutate();
+      return;
+    }
+    if (!(player.cards[fromKey] > 0)) {
+      cancelFireMutate();
+      return;
+    }
+    const parsed = parseCardKey(fromKey);
+    const toKey = cardKey(parsed.baseId, "fire");
+    player.items["fire-gem"] -= 1;
+    if (player.items["fire-gem"] <= 0) delete player.items["fire-gem"];
+    player.cards[fromKey] -= 1;
+    if (player.cards[fromKey] <= 0) delete player.cards[fromKey];
+    player.cards[toKey] = (player.cards[toKey] || 0) + 1;
+    player.sellSlots = (player.sellSlots || []).map((slot) => {
+      if (slot !== fromKey) return slot;
+      return player.cards[fromKey] > 0 ? slot : toKey;
+    });
+    savePlayer();
+    inventoryMode = "browse";
+    inventoryTab = "cards";
+    renderPlayerUi();
+    showScreen("inventory");
+    renderInventoryList();
+  }
+
   function combineMutation() {
     const key = mergerPickKey;
     if (!key || (player.cards[key] || 0) < MERGE_COST) return;
@@ -2280,15 +2816,20 @@
 
   function renderInventoryList() {
     const pickMode =
-      inventoryMode === "trade" || inventoryMode === "sell" || inventoryMode === "battle";
+      inventoryMode === "trade" ||
+      inventoryMode === "sell" ||
+      inventoryMode === "battle" ||
+      inventoryMode === "mutate";
 
     if (pickMode) {
       els.inventoryTitle.textContent =
         inventoryMode === "sell"
           ? "Station a card"
           : inventoryMode === "battle"
-            ? `Choose fighters (${pendingBattleTeam.length + 1} / ${PLAYER_TEAM_SIZE})`
-            : "Select a card";
+            ? `${pendingBattleKind === "trial" ? "Trial team" : pendingBattleKind === "pvp" ? "Battle team" : "Choose fighters"} (${pendingBattleTeam.length + 1} / ${PLAYER_TEAM_SIZE})`
+            : inventoryMode === "mutate"
+              ? "Apply Fire Mutation"
+              : "Select a card";
       els.inventoryCopy.textContent =
         inventoryMode === "sell"
           ? "Pick a card to earn coins every second."
@@ -2297,8 +2838,14 @@
               ? `Picked: ${pendingBattleTeam.map((id) => cardDisplayName(id)).join(", ")}. Pick ${
                   PLAYER_TEAM_SIZE - pendingBattleTeam.length
                 } more.`
-              : "Pick 3 cards for your team."
-            : "Pick a card, then choose how many to offer.";
+              : pendingBattleKind === "trial"
+                ? "Pick 3 cards. They heal after every wave."
+                : pendingBattleKind === "pvp"
+                  ? "Pick 3 cards. The fight starts when both teams are ready."
+                  : "Pick 3 cards for your team."
+            : inventoryMode === "mutate"
+              ? "Click a card to apply mutation."
+              : "Pick a card, then choose how many to offer.";
       document.querySelectorAll(".inv-tab").forEach((tab) => {
         const on = tab.getAttribute("data-inv-tab") === "cards";
         tab.classList.toggle("active", on);
@@ -2337,6 +2884,8 @@
             ? "No cards to station. Open some packs first."
             : inventoryMode === "battle"
               ? "No cards to battle with. Open a pack first."
+              : inventoryMode === "mutate"
+                ? "You need a card with no mutation."
           : inventoryTab === "packs"
             ? "No packs. Visit the Card shop."
             : inventoryTab === "cards"
@@ -2347,10 +2896,26 @@
     }
 
     if (pickMode || inventoryTab === "cards") {
-      els.inventoryList.innerHTML = `<div class="card-grid">${sortCardEntries(activeEntries)
+      const list = sortCardEntries(activeEntries).filter(([id, count]) => {
+        if (!baseCard(id) || count <= 0) return false;
+        if (inventoryMode === "mutate" && parseCardKey(id).mutation) return false;
+        if (inventoryMode === "battle") {
+          return count - pendingBattleTeam.filter((picked) => picked === id).length > 0;
+        }
+        return true;
+      });
+      if (!list.length) {
+        els.inventoryList.innerHTML = `<p class="inventory-empty">${
+          inventoryMode === "mutate"
+            ? "You need a card with no mutation."
+            : inventoryMode === "battle"
+              ? "No cards to battle with. Open a pack first."
+              : "No cards yet. Open a pack!"
+        }</p>`;
+        return;
+      }
+      els.inventoryList.innerHTML = `<div class="card-grid">${list
         .map(([id, count]) => {
-          const card = baseCard(id);
-          if (!card) return "";
           const shown =
             inventoryMode === "battle"
               ? count - pendingBattleTeam.filter((picked) => picked === id).length
@@ -2358,7 +2923,7 @@
           if (shown <= 0) return "";
           const cpsNote =
             inventoryMode === "sell"
-              ? `<div class="card-cps-tag">+${card.cps}/s</div>`
+              ? `<div class="card-cps-tag">+${cardCpsForKey(id)}/s</div>`
               : "";
           return `<button type="button" class="card-pick" data-pick-card="${escapeHtml(id)}">${cardFaceForKey(id, { qty: shown })}${cpsNote}</button>`;
         })
@@ -2427,8 +2992,7 @@
 
   function totalSellCps() {
     return player.sellSlots.reduce((sum, id) => {
-      const card = id ? baseCard(id) : null;
-      return sum + (card ? card.cps : 0);
+      return sum + (id ? cardCpsForKey(id) : 0);
     }, 0);
   }
 
@@ -2442,7 +3006,7 @@
       slotEl.classList.add("filled");
       slotEl.innerHTML = `
         ${cardFaceForKey(cardId, { compact: true })}
-        <div class="slot-meta">+<strong>${card.cps}</strong>/s</div>
+        <div class="slot-meta">+<strong>${cardCpsForKey(cardId)}</strong>/s</div>
       `;
       clearBtn.hidden = false;
     } else {
@@ -2875,6 +3439,9 @@
     els.adminUnkickable.checked = shop.unkickable;
     els.adminInstantQuests.checked = shop.instantQuests;
     els.adminNoQuestCooldown.checked = shop.noQuestCooldown;
+    if (els.adminNoCraftWait) els.adminNoCraftWait.checked = Boolean(shop.noCraftWait);
+    if (els.adminLuck) els.adminLuck.value = String(sanitizeLuck(shop.luck));
+    refreshLuckPreview(shop.luck);
     fillAdminOddsInputs();
     els.adminSettings.hidden = false;
     refreshFabs();
@@ -2888,7 +3455,128 @@
     setError(els.adminGateError, "Wrong password.");
   }
 
+  function formatBattleReward(reward) {
+    if (!reward) return "";
+    const parts = [];
+    if (reward.coins) parts.push(`${reward.coins.toLocaleString()} coins`);
+    if (reward.packs) {
+      for (const [id, count] of Object.entries(reward.packs)) {
+        const pack = PACKS[id];
+        parts.push(`${count}× ${pack ? pack.name : id}`);
+      }
+    }
+    if (reward.items) {
+      for (const [id, count] of Object.entries(reward.items)) {
+        const item = ITEMS[id];
+        parts.push(`${count}× ${item ? item.name : id}`);
+      }
+    }
+    return parts.join(" · ");
+  }
+
+  function battleRewardLines(reward) {
+    if (!reward) return [];
+    const lines = [];
+    if (reward.coins) lines.push(`${reward.coins.toLocaleString()} coins`);
+    if (reward.packs) {
+      for (const [id, count] of Object.entries(reward.packs)) {
+        const pack = PACKS[id];
+        lines.push(`${count}× ${pack ? pack.name : id}`);
+      }
+    }
+    if (reward.items) {
+      for (const [id, count] of Object.entries(reward.items)) {
+        const item = ITEMS[id];
+        lines.push(`${count}× ${item ? item.name : id}`);
+      }
+    }
+    return lines;
+  }
+
+  function grantBattleReward(b) {
+    if (!b || b.rewardGranted) return null;
+    const reward = b.mode === "trial" ? trialWaveReward(b.trialWave) : (NPC_FIGHTERS[b.npcId] && NPC_FIGHTERS[b.npcId].reward);
+    if (!reward) return null;
+    b.rewardGranted = true;
+    if (reward.coins) addEarnedCoins(reward.coins);
+    if (reward.packs) {
+      for (const [id, count] of Object.entries(reward.packs)) {
+        player.packs[id] = (player.packs[id] || 0) + count;
+      }
+    }
+    if (reward.items) {
+      for (const [id, count] of Object.entries(reward.items)) {
+        player.items[id] = (player.items[id] || 0) + count;
+      }
+    }
+    savePlayer();
+    renderPlayerUi();
+    return reward;
+  }
+
+  function showBattleReward(reward, opts = {}) {
+    if (!els.battleReward) return;
+    const lines = battleRewardLines(reward);
+    battleRewardAction = opts.action || "hide";
+    if (els.battleRewardTitle) els.battleRewardTitle.textContent = opts.title || "You win";
+    els.battleRewardCopy.textContent = opts.copy || (lines.length ? "You earned:" : "You win!");
+    els.battleRewardList.innerHTML = lines.map((line) => `<li>${escapeHtml(line)}</li>`).join("");
+    if (els.btnBattleRewardDone) els.btnBattleRewardDone.textContent = opts.doneLabel || "Done";
+    els.battleReward.hidden = false;
+    refreshFabs();
+  }
+
+  function hideBattleReward() {
+    if (!els.battleReward) return;
+    els.battleReward.hidden = true;
+    battleRewardAction = "hide";
+    if (els.battleRewardList) els.battleRewardList.innerHTML = "";
+    if (els.battleRewardTitle) els.battleRewardTitle.textContent = "You win";
+    if (els.btnBattleRewardDone) els.btnBattleRewardDone.textContent = "Done";
+    refreshFabs();
+  }
+
+  function finishBattleReward() {
+    const action = battleRewardAction;
+    const keys = battle && battle.youTeam ? battle.youTeam.map((member) => member.cardKey) : [];
+    const nextWave = battle && battle.trialWave ? battle.trialWave + 1 : 0;
+    hideBattleReward();
+    if (action === "continue-trial") {
+      startTrialWave(keys, nextWave);
+      return;
+    }
+    if (action === "leave-npc" || action === "leave-trial" || action === "leave-pvp") leaveBattle();
+  }
+
+  function hideNpcRewardTip() {
+    if (!els.npcRewardTip) return;
+    els.npcRewardTip.hidden = true;
+    els.npcRewardTip.textContent = "";
+  }
+
+  function showNpcRewardTip(npcId, clientX, clientY) {
+    if (!els.npcRewardTip) return;
+    const npc = NPC_FIGHTERS[npcId];
+    const text = formatBattleReward(npc && npc.reward);
+    if (!text) {
+      hideNpcRewardTip();
+      return;
+    }
+    els.npcRewardTip.textContent = text;
+    els.npcRewardTip.hidden = false;
+    const pad = 10;
+    const tip = els.npcRewardTip;
+    const rect = tip.getBoundingClientRect();
+    let left = clientX + 12;
+    let top = clientY + 12;
+    if (left + rect.width > window.innerWidth - pad) left = clientX - rect.width - 12;
+    if (top + rect.height > window.innerHeight - pad) top = clientY - rect.height - 12;
+    tip.style.left = `${Math.max(pad, left)}px`;
+    tip.style.top = `${Math.max(pad, top)}px`;
+  }
+
   function renderNpcFighters() {
+    hideNpcRewardTip();
     if (!els.npcFighterList) return;
     els.npcFighterList.innerHTML = Object.values(NPC_FIGHTERS)
       .map((npc, i) => {
@@ -2912,19 +3600,35 @@
       return;
     }
     els.npcBattlesMsg.hidden = true;
+    pendingBattleKind = "npc";
     pendingBattleNpc = npcId;
+    pendingBattleTeam = [];
+    openInventory("battle");
+  }
+
+  function openTrialMode() {
+    if (ownedCardTotal() < PLAYER_TEAM_SIZE) {
+      if (els.battlesMsg) {
+        els.battlesMsg.hidden = false;
+        els.battlesMsg.textContent = "You need 3 cards in your backpack first.";
+      }
+      return;
+    }
+    if (els.battlesMsg) els.battlesMsg.hidden = true;
+    pendingBattleKind = "trial";
+    pendingBattleNpc = null;
     pendingBattleTeam = [];
     openInventory("battle");
   }
 
   function makeBattler(card, key) {
     const cardKeyVal = key || card.id;
-    const mult = cardStatMult(cardKeyVal);
-    const hp = Math.max(1, Math.round(card.hp * mult));
+    const hp = Math.max(1, ceilMutationStat(card.hp, cardKeyVal));
     return {
       cardId: card.id,
       cardKey: cardKeyVal,
-      statMult: mult,
+      statMult: mutationDmgMult(cardKeyVal),
+      healMult: mutationHealMult(cardKeyVal),
       hp,
       maxHp: hp,
       healLastTurn: {},
@@ -2944,33 +3648,45 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  function startBattle(playerCardIds, npcId) {
-    const youKeys = (playerCardIds || []).filter((id) => baseCard(id));
-    const npc = NPC_FIGHTERS[npcId];
-    const foeTeam = npc ? npc.team.map((id) => CARDS[id]).filter(Boolean) : [];
-    if (youKeys.length !== PLAYER_TEAM_SIZE || !foeTeam.length) return;
-    const first = foeTeam[0];
+  function startEncounter({ youKeys, foeIds, foeKeys, name, danger, serif, npcId, trialWave, mode }) {
+    const keys = (youKeys || []).filter((id) => baseCard(id));
+    const foeSource = foeKeys && foeKeys.length ? foeKeys : foeIds;
+    const foeTeam = (foeSource || [])
+      .map((id) => {
+        const card = baseCard(id);
+        return card ? makeBattler(card, id) : null;
+      })
+      .filter(Boolean);
+    if (keys.length !== PLAYER_TEAM_SIZE || !foeTeam.length) return;
+    const first = CARDS[foeTeam[0].cardId];
     battleAnimGen += 1;
     battle = {
-      npcId,
-      npcName: npc.name,
-      npcDanger: Boolean(npc.danger),
-      npcSerif: Boolean(npc.serif),
-      foeTeam: foeTeam.map((card) => makeBattler(card)),
+      mode: mode || (trialWave ? "trial" : "npc"),
+      npcId: npcId || "",
+      trialWave: trialWave || 0,
+      npcName: name,
+      npcDanger: Boolean(danger),
+      npcSerif: Boolean(serif),
+      foeTeam,
       foeIndex: 0,
-      youTeam: youKeys.map((key) => makeBattler(baseCard(key), key)),
+      youTeam: keys.map((key) => makeBattler(baseCard(key), key)),
       youIndex: 0,
       turn: 1,
       over: false,
       busy: false,
       mustSwitch: false,
+      waitingFoeSwitch: false,
+      hideYouCard: false,
+      hideFoeCard: false,
       result: "",
-      log: `${npc.name} sends out ${first.name}. Your turn.`,
+      log: `${name} sends out ${first ? first.name : "a fighter"}. Your turn.`,
     };
     pendingBattleNpc = null;
+    pendingBattleKind = null;
     pendingBattleTeam = [];
     inventoryMode = "browse";
     els.battleParty.hidden = true;
+    hideBattleReward();
     showScreen("battle");
     battle.busy = true;
     renderBattle();
@@ -2982,6 +3698,35 @@
     });
   }
 
+  function startBattle(playerCardIds, npcId) {
+    const npc = NPC_FIGHTERS[npcId];
+    if (!npc) return;
+    startEncounter({
+      youKeys: playerCardIds,
+      foeIds: npc.team,
+      name: npc.name,
+      danger: npc.danger,
+      serif: npc.serif,
+      npcId,
+    });
+  }
+
+  function startTrialWave(playerCardIds, waveNumber) {
+    const def = trialWaveDef(waveNumber);
+    if (!def) {
+      leaveBattle();
+      return;
+    }
+    startEncounter({
+      youKeys: playerCardIds,
+      foeIds: def.team,
+      name: def.name,
+      danger: def.danger,
+      serif: def.serif,
+      trialWave: waveNumber,
+    });
+  }
+
   function battleMoveReady(move, battler) {
     if (!move || !battler || !battle) return false;
     if (move.isHeal) return healMoveReady(move, battler.healLastTurn[move.id], battle.turn);
@@ -2990,14 +3735,20 @@
 
   function battleMoveDamage(move, battler) {
     const mult = battler && battler.statMult ? battler.statMult : 1;
-    if (move.isJumpscare) return Math.max(1, Math.round(jumpscareDamage(move, battler.jumpscareUses) * mult));
-    return Math.max(0, Math.round(move.damage * mult));
+    if (move.isJumpscare) return Math.max(1, Math.ceil(jumpscareDamage(move, battler.jumpscareUses) * mult));
+    return Math.max(0, Math.ceil(move.damage * mult));
+  }
+
+  function battleMoveHeal(move, battler) {
+    const mult = battler && battler.healMult != null ? battler.healMult : 1;
+    return Math.max(0, Math.ceil((move.heal || 0) * mult));
   }
 
   function battleMoveStat(move, battler) {
     const dmg = battleMoveDamage(move, battler);
-    if (move.isHybrid) return `Heal ${move.heal} · ${dmg} DMG`;
-    if (move.isHeal) return `Heal ${move.heal}`;
+    const heal = battleMoveHeal(move, battler);
+    if (move.isHybrid) return `Heal ${heal} · ${dmg} DMG`;
+    if (move.isHeal) return `Heal ${heal}`;
     return `${dmg} DMG`;
   }
 
@@ -3031,6 +3782,12 @@
     if (action.missed) {
       return { log: `${moveName} missed!` };
     }
+    if (move && move.isWipe) {
+      const team = action.sideId === "you" ? battle.foeTeam : battle.youTeam;
+      for (const member of team) member.hp = 0;
+      const hitSide = action.sideId === "you" ? "foe" : "you";
+      return { log: `${moveName} hits for ${action.amount}.`, hit: hitSide, amount: action.amount };
+    }
     const target = action.sideId === "you" ? activeFoe() : activeYou();
     if (!target) return null;
     target.hp = Math.max(0, target.hp - action.amount);
@@ -3042,36 +3799,75 @@
     const events = [];
     const you = activeYou();
     const foe = activeFoe();
+    const pvp = battle.mode === "pvp";
     if (foe && foe.hp <= 0) {
-      if (battle.foeIndex < battle.foeTeam.length - 1) {
-        battle.foeIndex += 1;
-        const next = activeFoe();
-        const nextCard = CARDS[next.cardId];
-        events.push({ log: `${battle.npcName} Switched in ${nextCard.name}` });
+      events.push({
+        faint: "foe",
+        stay: true,
+        log: `${cardDisplayName(foe.cardKey || foe.cardId)} fainted.`,
+      });
+      if (pvp) {
+        if (battle.foeTeam.some((member) => member.hp > 0)) {
+          battle.waitingFoeSwitch = true;
+        } else {
+          events.push({ log: "You win!", stay: true, battleOver: "win" });
+          return events;
+        }
+      } else if (battle.foeIndex < battle.foeTeam.length - 1) {
+        const next = battle.foeTeam[battle.foeIndex + 1];
+        events.push({
+          switchFoe: true,
+          stay: true,
+          log: `${battle.npcName} Switched in ${cardDisplayName(next.cardKey || next.cardId)}`,
+        });
       } else {
-        battle.over = true;
-        battle.result = "win";
-        events.push({ log: "You win!", stay: true });
+        events.push({ log: "You win!", stay: true, battleOver: "win" });
         return events;
       }
     }
     if (you && you.hp <= 0) {
+      events.push({
+        faint: "you",
+        stay: true,
+        log: `${cardDisplayName(you.cardKey || you.cardId)} fainted.`,
+      });
       if (battle.youTeam.some((member) => member.hp > 0)) {
-        battle.mustSwitch = true;
         events.push({
-          log: `${cardDisplayName(you.cardKey || you.cardId)} fainted. Choose a card.`,
+          log: "Choose a card.",
           stay: true,
           openParty: true,
+          mustSwitch: true,
         });
         return events;
       }
-      battle.over = true;
-      battle.result = "lose";
-      events.push({ log: "You lose.", stay: true });
+      events.push({ log: "You lose.", stay: true, battleOver: "lose" });
       return events;
     }
-    events.push({ log: "Your turn.", stay: true });
+    if (pvp && battle.waitingFoeSwitch) {
+      events.push({ log: "Opponent is choosing a card.", stay: true });
+      return events;
+    }
+    events.push({ log: pvp && myPvpChoice ? "Waiting for opponent…" : "Your turn.", stay: true });
     return events;
+  }
+
+  async function playCardFaint(side, gen) {
+    const wrap = side === "you" ? els.battleYouCard : els.battleFoe;
+    const card = wrap && wrap.querySelector(".animal-card");
+    if (card) {
+      card.classList.remove("is-hit", "is-heal");
+      void card.offsetWidth;
+      card.classList.add("is-fainting");
+    }
+    await battleSleep(BATTLE_FAINT_MS);
+    if (!battle || gen !== battleAnimGen) return;
+    if (side === "you") {
+      battle.hideYouCard = true;
+      if (els.battleYouCard) els.battleYouCard.innerHTML = "";
+    } else {
+      battle.hideFoeCard = true;
+      if (els.battleFoe) els.battleFoe.innerHTML = "";
+    }
   }
 
   function spawnBattleFloat(side, amount, kind) {
@@ -3091,17 +3887,76 @@
   }
 
   async function presentBattleEvent(event, gen) {
-    if (!event || !event.log) return;
+    if (!event) return;
     if (gen !== battleAnimGen) return;
-    els.battleLog.classList.remove("is-in");
-    await battleSleep(BATTLE_LOG_FADE_MS);
-    if (gen !== battleAnimGen) return;
-    battle.log = event.log;
-    els.battleLog.textContent = event.log;
-    renderBattleCards();
-    els.battleLog.classList.add("is-in");
+    if (event.switchFoe) {
+      battle.foeIndex += 1;
+      battle.hideFoeCard = false;
+    }
+    if (event.mustSwitch) battle.mustSwitch = true;
+    if (event.battleOver) {
+      battle.over = true;
+      battle.result = event.battleOver;
+      if (event.battleOver === "win") {
+        if (battle.mode === "pvp") {
+          showBattleReward(null, {
+            title: "You win",
+            copy: "Your opponent's team fainted.",
+            doneLabel: "Done",
+            action: "leave-pvp",
+          });
+        } else {
+          const reward = grantBattleReward(battle);
+          if (battle.mode === "trial") {
+            const next = trialWaveDef(battle.trialWave + 1);
+            showBattleReward(reward, {
+              title: "You win",
+              copy: `Wave ${battle.trialWave} cleared.`,
+              doneLabel: next ? "Continue" : "Done",
+              action: next ? "continue-trial" : "leave-trial",
+            });
+          } else {
+            showBattleReward(reward, {
+              title: "You win",
+              copy: battleRewardLines(reward).length ? "You earned:" : "You win!",
+              doneLabel: "Done",
+              action: "leave-npc",
+            });
+          }
+        }
+      } else if (event.battleOver === "lose" && battle.mode === "pvp") {
+        showBattleReward(null, {
+          title: "You lose",
+          copy: "Your team fainted.",
+          doneLabel: "Done",
+          action: "leave-pvp",
+        });
+      } else if (event.battleOver === "lose" && battle.mode === "trial") {
+        showBattleReward(null, {
+          title: "Trial over",
+          copy: `You reached wave ${battle.trialWave}.`,
+          doneLabel: "Done",
+          action: "leave-trial",
+        });
+      }
+    }
+    if (event.mustSwitch || event.battleOver) renderBattleHud();
+    if (event.log) {
+      els.battleLog.classList.remove("is-in");
+      await battleSleep(BATTLE_LOG_FADE_MS);
+      if (gen !== battleAnimGen) return;
+      battle.log = event.log;
+      els.battleLog.textContent = event.log;
+    }
+    if (!event.faint) renderBattleCards();
+    if (event.log) els.battleLog.classList.add("is-in");
     if (event.hit) spawnBattleFloat(event.hit, event.amount, "hit");
     if (event.heal) spawnBattleFloat(event.heal, event.amount, "heal");
+    if (event.faint) {
+      await playCardFaint(event.faint, gen);
+      if (gen !== battleAnimGen) return;
+      return;
+    }
     await battleSleep(event.stay ? 420 : BATTLE_LOG_HOLD_MS);
     if (gen !== battleAnimGen) return;
     if (!event.stay) {
@@ -3130,7 +3985,7 @@
     events.push(...finishBattleEvents());
     const gen = await playBattleEvents(events);
     if (gen !== battleAnimGen) return;
-    if (!battle.over && !battle.mustSwitch) battle.turn += 1;
+    if (!battle.over && !battle.mustSwitch && !battle.waitingFoeSwitch) battle.turn += 1;
     battle.busy = false;
     renderBattle();
     const last = events[events.length - 1];
@@ -3139,6 +3994,10 @@
 
   async function playBattleMove(index) {
     if (!battle || battle.over || battle.busy || battle.mustSwitch) return;
+    if (battle.mode === "pvp") {
+      lockInPvpChoice({ type: "move", index });
+      return;
+    }
     const you = activeYou();
     const youCard = you && CARDS[you.cardId];
     const foe = activeFoe();
@@ -3147,8 +4006,8 @@
     if (!youMove || !foeCard || !battleMoveReady(youMove, you)) return;
     const foeMove = pickNpcMove(foeCard, foe);
     const actions = resolveBattleTurn(
-      { id: "you", move: youMove, jumpscareUses: you.jumpscareUses, statMult: you.statMult || 1 },
-      { id: "foe", move: foeMove, jumpscareUses: foe.jumpscareUses, statMult: foe.statMult || 1 }
+      { id: "you", move: youMove, jumpscareUses: you.jumpscareUses, statMult: you.statMult || 1, healMult: you.healMult != null ? you.healMult : 1 },
+      { id: "foe", move: foeMove, jumpscareUses: foe.jumpscareUses, statMult: foe.statMult || 1, healMult: foe.healMult != null ? foe.healMult : 1 }
     );
     if (youMove.isHeal) you.healLastTurn[youMove.id] = battle.turn;
     if (youMove.isJumpscare) you.jumpscareUses += 1;
@@ -3168,26 +4027,28 @@
     }
     const next = battle.youTeam[index];
     if (!next || next.hp <= 0) return;
-    const name = cardDisplayName(next.cardKey || next.cardId);
-    battle.youIndex = index;
-    const forced = battle.mustSwitch;
-    battle.mustSwitch = false;
-    els.battleParty.hidden = true;
-    if (forced) {
-      await playBattleEvents([{ log: `You switched in ${name}. Your turn.`, stay: true }]);
-      if (!battle) return;
-      battle.busy = false;
-      renderBattle();
+    if (battle.mode === "pvp") {
+      if (battle.mustSwitch) {
+        applyPvpLocalSwitch(index);
+        return;
+      }
+      closeBattleParty();
+      lockInPvpChoice({ type: "switch", index });
       return;
     }
+    const name = cardDisplayName(next.cardKey || next.cardId);
+    battle.hideYouCard = false;
+    battle.youIndex = index;
+    battle.mustSwitch = false;
+    els.battleParty.hidden = true;
     const you = activeYou();
     const foe = activeFoe();
     const foeCard = foe && CARDS[foe.cardId];
     if (!you || !foeCard) return;
     const foeMove = pickNpcMove(foeCard, foe);
     const actions = resolveBattleTurn(
-      { id: "you", move: null, jumpscareUses: you.jumpscareUses, statMult: you.statMult || 1 },
-      { id: "foe", move: foeMove, jumpscareUses: foe.jumpscareUses, statMult: foe.statMult || 1 }
+      { id: "you", move: null, jumpscareUses: you.jumpscareUses, statMult: you.statMult || 1, healMult: you.healMult != null ? you.healMult : 1 },
+      { id: "foe", move: foeMove, jumpscareUses: foe.jumpscareUses, statMult: foe.statMult || 1, healMult: foe.healMult != null ? foe.healMult : 1 }
     );
     if (foeMove) {
       if (foeMove.isHeal) foe.healLastTurn[foeMove.id] = battle.turn;
@@ -3202,34 +4063,44 @@
     const youCard = you && CARDS[you.cardId];
     const foe = activeFoe();
     const foeCard = foe && CARDS[foe.cardId];
-    els.battleFoeMeta.textContent = `${battle.npcName} · ${battle.foeIndex + 1} / ${battle.foeTeam.length}`;
+    const waveBit = battle.mode === "trial" && battle.trialWave ? `Wave ${battle.trialWave} · ` : "";
+    els.battleFoeMeta.textContent = `${waveBit}${battle.npcName} · ${battle.foeIndex + 1} / ${battle.foeTeam.length}`;
     els.battleFoeMeta.classList.toggle("is-danger", Boolean(battle.npcDanger));
     els.battleFoeMeta.classList.toggle("is-serif", Boolean(battle.npcSerif));
-    els.battleFoe.innerHTML = foeCard
-      ? cardFaceHtml(foeCard, {
-          compact: true,
-          showValue: false,
-          hp: foe.hp,
-          cardKey: foe.cardKey || foe.cardId,
-        })
-      : "";
-    els.battleYouCard.innerHTML = youCard
-      ? cardFaceHtml(youCard, {
-          compact: true,
-          showValue: false,
-          hp: you.hp,
-          cardKey: you.cardKey || you.cardId,
-        })
-      : "";
+    if (!battle.hideFoeCard) {
+      els.battleFoe.innerHTML = foeCard
+        ? cardFaceHtml(foeCard, {
+            compact: true,
+            showValue: false,
+            hp: foe.hp,
+            cardKey: foe.cardKey || foe.cardId,
+          })
+        : "";
+    }
+    if (!battle.hideYouCard) {
+      els.battleYouCard.innerHTML = youCard
+        ? cardFaceHtml(youCard, {
+            compact: true,
+            showValue: false,
+            hp: you.hp,
+            cardKey: you.cardKey || you.cardId,
+          })
+        : "";
+    }
   }
 
   function renderBattleHud() {
     if (!battle) return;
     const you = activeYou();
     const youCard = you && CARDS[you.cardId];
-    const locked = battle.over || battle.busy || battle.mustSwitch;
+    const locked =
+      battle.over ||
+      battle.busy ||
+      battle.mustSwitch ||
+      battle.waitingFoeSwitch ||
+      Boolean(battle.mode === "pvp" && myPvpChoice);
     els.btnBattleFlee.textContent = battle.over ? "← Leave" : "← Flee";
-    els.btnBattleCards.disabled = battle.over || (battle.busy && !battle.mustSwitch);
+    els.btnBattleCards.disabled = battle.over || (battle.busy && !battle.mustSwitch) || Boolean(battle.mode === "pvp" && myPvpChoice);
     els.btnBattleCards.classList.toggle("need-pick", Boolean(battle.mustSwitch));
     els.battleMoves.innerHTML = (youCard && youCard.moves ? youCard.moves : [])
       .map((move, i) => {
@@ -3238,11 +4109,15 @@
           ? "Battle over"
           : battle.mustSwitch
             ? "Choose a card"
-            : battle.busy
-              ? ""
-              : move.isHeal && !ready
-                ? "Next turn"
-                : "";
+            : battle.waitingFoeSwitch
+              ? "Waiting"
+              : battle.mode === "pvp" && myPvpChoice
+                ? "Waiting"
+                : battle.busy
+                  ? ""
+                  : move.isHeal && !ready
+                    ? "Next turn"
+                    : "";
         return `
           <button type="button" class="battle-move" data-battle-move="${i}" ${ready ? "" : "disabled"}>
             <span class="battle-move-name">${escapeHtml(move.name)}</span>
@@ -3294,14 +4169,31 @@
     els.battleParty.hidden = true;
   }
 
-  function fleeBattle() {
+  function leaveBattle() {
+    const dest =
+      battle && battle.mode === "pvp"
+        ? "battles"
+        : battle && battle.mode === "trial"
+          ? "battles"
+          : "npcBattles";
+    if (battle && battle.mode === "pvp") {
+      if (conn && conn.open && !battle.over) sendPayload({ type: "pvp-flee" });
+      resetPvpMatch();
+      destroySession();
+    }
     battleAnimGen += 1;
     battle = null;
     pendingBattleNpc = null;
+    pendingBattleKind = null;
     pendingBattleTeam = [];
+    hideBattleReward();
     els.battleLog.classList.remove("is-in");
     els.battleParty.hidden = true;
-    showScreen("npcBattles");
+    showScreen(dest);
+  }
+
+  function fleeBattle() {
+    leaveBattle();
   }
 
   function showScreen(name) {
@@ -3316,7 +4208,12 @@
     if (name === "quests") renderQuests();
     if (name === "crafting") renderCrafting();
     if (name === "npcBattles") renderNpcFighters();
-    if (
+    else hideNpcRewardTip();
+    if (name === "battles" && els.battlesMsg) {
+      els.battlesMsg.hidden = true;
+      els.battlesMsg.textContent = "";
+    }
+      if (
       name === "cardShop" ||
       name === "inventory" ||
       name === "room" ||
@@ -3324,12 +4221,14 @@
     ) {
       renderPlayerUi();
     }
+    if (name === "room") renderBattleLobby();
+    if (name === "trade" || name === "join" || name === "quick") syncLobbyMenuUi();
   }
 
   function openInventory(mode = "browse", sellSlotIndex = null) {
     inventoryMode = mode;
     pendingSellSlot = mode === "sell" ? sellSlotIndex : null;
-    if (mode === "trade" || mode === "sell") inventoryTab = "cards";
+    if (mode === "trade" || mode === "sell" || mode === "mutate") inventoryTab = "cards";
     inventoryReturnScreen = currentScreen === "inventory" ? inventoryReturnScreen : currentScreen;
     showScreen("inventory");
     renderInventoryList();
@@ -3484,6 +4383,326 @@
     scheduleOfferSync();
   }
 
+  function resetPvpMatch() {
+    myPvpTeam = null;
+    theirPvpTeam = null;
+    myPvpChoice = null;
+    theirPvpChoice = null;
+  }
+
+  function pvpChoiceFrom(choice, battler) {
+    if (!choice || !battler) return { type: "none" };
+    if (choice.type === "switch") {
+      const idx = Math.max(0, Math.floor(Number(choice.index) || 0));
+      return { type: "switch", index: idx };
+    }
+    if (choice.type === "move") {
+      const card = CARDS[battler.cardId];
+      const idx = Math.max(0, Math.floor(Number(choice.index) || 0));
+      const move = card && card.moves ? card.moves[idx] : null;
+      if (!move) return { type: "none" };
+      return { type: "move", index: idx, move };
+    }
+    return { type: "none" };
+  }
+
+  function resumePvpAfterSwitch() {
+    if (!battle || battle.over) return;
+    if (battle.mustSwitch || battle.waitingFoeSwitch) return;
+    battle.turn += 1;
+    battle.log = "Your turn.";
+    if (els.battleLog) {
+      els.battleLog.textContent = battle.log;
+      els.battleLog.classList.add("is-in");
+    }
+    renderBattle();
+  }
+
+  function applyPvpLocalSwitch(index) {
+    const next = battle.youTeam[index];
+    if (!next || next.hp <= 0) return;
+    battle.hideYouCard = false;
+    battle.youIndex = index;
+    battle.mustSwitch = false;
+    if (els.battleParty) els.battleParty.hidden = true;
+    sendPayload({ type: "pvp-switch", index, turn: battle.turn });
+    const name = cardDisplayName(next.cardKey || next.cardId);
+    battle.log = `You switched in ${name}.`;
+    if (els.battleLog) {
+      els.battleLog.textContent = battle.log;
+      els.battleLog.classList.add("is-in");
+    }
+    renderBattle();
+    resumePvpAfterSwitch();
+  }
+
+  function applyPvpFoeSwitch(index) {
+    if (!battle || battle.mode !== "pvp") return;
+    const next = battle.foeTeam[index];
+    if (!next || next.hp <= 0) return;
+    battle.foeIndex = index;
+    battle.hideFoeCard = false;
+    battle.waitingFoeSwitch = false;
+    const name = cardDisplayName(next.cardKey || next.cardId);
+    battle.log = `${battle.npcName} switched in ${name}.`;
+    if (els.battleLog) {
+      els.battleLog.textContent = battle.log;
+      els.battleLog.classList.add("is-in");
+    }
+    renderBattle();
+    resumePvpAfterSwitch();
+  }
+
+  function lockInPvpChoice(choice) {
+    if (!battle || battle.mode !== "pvp" || battle.over || battle.busy || battle.mustSwitch) return;
+    if (battle.waitingFoeSwitch || myPvpChoice) return;
+    const you = activeYou();
+    if (choice.type === "move") {
+      const card = you && CARDS[you.cardId];
+      const move = card && card.moves ? card.moves[choice.index] : null;
+      if (!move || !battleMoveReady(move, you)) return;
+    }
+    if (choice.type === "switch") {
+      const next = battle.youTeam[choice.index];
+      if (!next || next.hp <= 0 || choice.index === battle.youIndex) return;
+    }
+    myPvpChoice = choice;
+    sendPayload({ type: "pvp-choice", choice, turn: battle.turn });
+    if (els.battleLog) {
+      els.battleLog.textContent = "Waiting for opponent…";
+      els.battleLog.classList.add("is-in");
+    }
+    renderBattle();
+    maybeResolvePvpTurn();
+  }
+
+  function maybeResolvePvpTurn() {
+    if (!battle || battle.mode !== "pvp" || battle.over) return;
+    if (!myPvpChoice || !theirPvpChoice) return;
+    if (role !== "host") return;
+    const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+    const hostChoice = myPvpChoice;
+    const guestChoice = theirPvpChoice;
+    sendPayload({
+      type: "pvp-resolve",
+      turn: battle.turn,
+      hostChoice,
+      guestChoice,
+      seed,
+    });
+    runPvpResolve(hostChoice, guestChoice, seed);
+  }
+
+  async function runPvpResolve(hostChoice, guestChoice, seed) {
+    if (!battle || battle.mode !== "pvp" || battle.over) return;
+    const myChoiceRaw = role === "host" ? hostChoice : guestChoice;
+    const foeChoiceRaw = role === "host" ? guestChoice : hostChoice;
+    myPvpChoice = null;
+    theirPvpChoice = null;
+    const rng = mulberry32(Number(seed) || 1);
+    const prefix = [];
+    if (myChoiceRaw && myChoiceRaw.type === "switch") {
+      const next = battle.youTeam[myChoiceRaw.index];
+      if (next && next.hp > 0) {
+        battle.youIndex = myChoiceRaw.index;
+        battle.hideYouCard = false;
+        prefix.push({
+          log: `You switched in ${cardDisplayName(next.cardKey || next.cardId)}.`,
+          stay: true,
+        });
+      }
+    }
+    if (foeChoiceRaw && foeChoiceRaw.type === "switch") {
+      const next = battle.foeTeam[foeChoiceRaw.index];
+      if (next && next.hp > 0) {
+        battle.foeIndex = foeChoiceRaw.index;
+        battle.hideFoeCard = false;
+        prefix.push({
+          log: `${battle.npcName} switched in ${cardDisplayName(next.cardKey || next.cardId)}.`,
+          stay: true,
+        });
+      }
+    }
+    const you = activeYou();
+    const foe = activeFoe();
+    const myPacked = pvpChoiceFrom(myChoiceRaw, you);
+    const foePacked = pvpChoiceFrom(foeChoiceRaw, foe);
+    const youMove = myPacked.type === "move" ? myPacked.move : null;
+    const foeMove = foePacked.type === "move" ? foePacked.move : null;
+    if (youMove && you) {
+      if (youMove.isHeal) you.healLastTurn[youMove.id] = battle.turn;
+      if (youMove.isJumpscare) you.jumpscareUses += 1;
+    }
+    if (foeMove && foe) {
+      if (foeMove.isHeal) foe.healLastTurn[foeMove.id] = battle.turn;
+      if (foeMove.isJumpscare) foe.jumpscareUses += 1;
+    }
+    const actions = resolveBattleTurn(
+      { id: "you", move: youMove, jumpscareUses: you ? you.jumpscareUses : 0, statMult: you ? you.statMult || 1 : 1, healMult: you && you.healMult != null ? you.healMult : 1 },
+      { id: "foe", move: foeMove, jumpscareUses: foe ? foe.jumpscareUses : 0, statMult: foe ? foe.statMult || 1 : 1, healMult: foe && foe.healMult != null ? foe.healMult : 1 },
+      rng
+    );
+    await resolvePlayedActions(actions, prefix);
+  }
+
+  function maybeStartPvpBattle() {
+    if (netMode !== "battle" || !myPvpTeam || !theirPvpTeam) return;
+    if (battle && battle.mode === "pvp") return;
+    const foeName = partnerUsername || "Opponent";
+    startEncounter({
+      youKeys: myPvpTeam,
+      foeKeys: theirPvpTeam,
+      name: foeName,
+      mode: "pvp",
+    });
+    myPvpChoice = null;
+    theirPvpChoice = null;
+    renderBattleLobby();
+  }
+
+  function submitPvpTeam(keys) {
+    myPvpTeam = keys.slice(0, PLAYER_TEAM_SIZE);
+    inventoryMode = "browse";
+    pendingBattleKind = null;
+    pendingBattleTeam = [];
+    sendPayload({
+      type: "pvp-team",
+      keys: myPvpTeam,
+      username: sessionUser || "Guest",
+    });
+    showScreen("room");
+    renderBattleLobby();
+    maybeStartPvpBattle();
+  }
+
+  function handlePvpMessage(data) {
+    if (!data || typeof data !== "object") return false;
+    if (data.type === "pvp-team" && Array.isArray(data.keys)) {
+      if (battle && battle.mode === "pvp") return true;
+      theirPvpTeam = data.keys.filter((key) => baseCard(key)).slice(0, PLAYER_TEAM_SIZE);
+      if (typeof data.username === "string" && data.username.trim()) {
+        partnerUsername = data.username.trim();
+      }
+      if (myPvpTeam) sendPayload({ type: "pvp-team", keys: myPvpTeam, username: sessionUser || "Guest" });
+      renderBattleLobby();
+      maybeStartPvpBattle();
+      return true;
+    }
+    if (data.type === "pvp-choice" && data.choice) {
+      if (!battle || battle.mode !== "pvp" || battle.over) return true;
+      theirPvpChoice = data.choice;
+      maybeResolvePvpTurn();
+      renderBattle();
+      return true;
+    }
+    if (data.type === "pvp-resolve") {
+      if (!battle || battle.mode !== "pvp" || battle.over) return true;
+      runPvpResolve(data.hostChoice, data.guestChoice, data.seed);
+      return true;
+    }
+    if (data.type === "pvp-switch" && Number.isFinite(Number(data.index))) {
+      applyPvpFoeSwitch(Number(data.index));
+      return true;
+    }
+    if (data.type === "pvp-flee") {
+      if (battle && battle.mode === "pvp" && !battle.over) {
+        battle.over = true;
+        showBattleReward(null, {
+          title: "You win",
+          copy: "Your opponent fled.",
+          doneLabel: "Done",
+          action: "leave-pvp",
+        });
+        renderBattle();
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function renderBattleLobby() {
+    const battleMode = netMode === "battle";
+    if (screens.room) screens.room.classList.toggle("battle-mode", battleMode);
+    if (els.battleLobbyPanel) els.battleLobbyPanel.hidden = !battleMode || currentScreen !== "room";
+    if (!battleMode) return;
+    const linked = Boolean(conn && conn.open);
+    if (els.btnBattlePickTeam) {
+      els.btnBattlePickTeam.disabled = !linked || Boolean(myPvpTeam);
+      els.btnBattlePickTeam.textContent = myPvpTeam ? "Team locked" : "Choose team";
+    }
+    if (els.battleLobbyCopy) {
+      els.battleLobbyCopy.textContent = linked
+        ? "Pick 3 cards. The fight starts when both teams are ready."
+        : "Waiting for a partner to join this battle lobby.";
+    }
+    if (els.battleLobbyReady) {
+      if (!linked) els.battleLobbyReady.textContent = "Waiting for partner…";
+      else if (myPvpTeam && theirPvpTeam) els.battleLobbyReady.textContent = "Starting battle…";
+      else if (myPvpTeam) els.battleLobbyReady.textContent = "Waiting for opponent's team…";
+      else if (theirPvpTeam) els.battleLobbyReady.textContent = "Opponent is ready. Choose your team.";
+      else els.battleLobbyReady.textContent = "Both players need a team of 3.";
+    }
+  }
+
+  function syncLobbyMenuUi() {
+    const battle = netMode === "battle";
+    if (els.lobbyMenuTitle) els.lobbyMenuTitle.textContent = battle ? "Multiplayer Battles" : "Trade";
+    if (els.lobbyMenuCopy) {
+      els.lobbyMenuCopy.textContent = battle
+        ? "Create a lobby, join with a code, or pick an open room. Fight when both players are in."
+        : "Create a lobby, join with a code, or pick an open room.";
+    }
+    if (els.btnCreate) els.btnCreate.textContent = battle ? "Create Battle Space" : "Create Trade Space";
+    if (els.btnJoin) els.btnJoin.textContent = battle ? "Join Battle Space" : "Join Trade Space";
+    if (els.joinMenuTitle) els.joinMenuTitle.textContent = battle ? "Join Battle Space" : "Join Trade Space";
+    if (els.joinMenuCopy) {
+      els.joinMenuCopy.textContent = battle
+        ? "Enter the battle lobby code from the other player."
+        : "Enter the lobby code from the other player.";
+    }
+    if (els.quickMenuTitle) els.quickMenuTitle.textContent = battle ? "Battle Lobbies" : "Quick Lobby";
+    if (els.quickMenuCopy) {
+      els.quickMenuCopy.textContent = battle
+        ? "Open battle lobbies waiting for a partner."
+        : "Open lobbies waiting for a partner. Join with one click.";
+    }
+    if (els.loginRequiredCopy) {
+      els.loginRequiredCopy.textContent = battle
+        ? "You need to log in to play multiplayer battles."
+        : "You need to log in to trade.";
+    }
+    renderBattleLobby();
+  }
+
+  function lobbyHomeScreen() {
+    return netMode === "battle" ? "battles" : "title";
+  }
+
+  function requireOnlineAccount(kind) {
+    if (sessionUser) return true;
+    netMode = kind;
+    syncLobbyMenuUi();
+    els.loginRequiredModal.hidden = false;
+    refreshFabs();
+    return false;
+  }
+
+  function openMultiplayerBattles() {
+    if (ownedCardTotal() < PLAYER_TEAM_SIZE) {
+      if (els.battlesMsg) {
+        els.battlesMsg.hidden = false;
+        els.battlesMsg.textContent = "You need 3 cards in your backpack first.";
+      }
+      return;
+    }
+    if (!requireOnlineAccount("battle")) return;
+    netMode = "battle";
+    resetPvpMatch();
+    setError(els.tradeError, "");
+    syncLobbyMenuUi();
+    showScreen("trade");
+  }
+
   /* ——— Networking (PeerJS) ——— */
 
   function setError(el, message) {
@@ -3496,6 +4715,86 @@
     el.textContent = message;
   }
 
+  function netTag() {
+    const s = `${location.hostname}${location.pathname.replace(/\/[^/]*$/, "/")}`;
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i += 1) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  }
+
+  function boardIds() {
+    const tag = netTag();
+    return [`cgb-${tag}-0`, `cgb-${tag}-1`, `cgb-${tag}-2`];
+  }
+
+  function peerOptions() {
+    return {
+      debug: 0,
+      config: {
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+          { urls: "stun:stun.cloudflare.com:3478" },
+          {
+            urls: [
+              "turn:openrelay.metered.ca:80",
+              "turn:openrelay.metered.ca:443",
+              "turn:openrelay.metered.ca:443?transport=tcp",
+            ],
+            username: "openrelayproject",
+            credential: "openrelayproject",
+          },
+        ],
+      },
+    };
+  }
+
+  function destroyPeerObj(p) {
+    if (!p) return;
+    try {
+      p.destroy();
+    } catch (_) {}
+  }
+
+  function peerOnceOpen(p, timeoutMs = 8000) {
+    return new Promise((resolve, reject) => {
+      if (p.open) {
+        resolve(p.id);
+        return;
+      }
+      let done = false;
+      const timer = setTimeout(() => {
+        if (done) return;
+        done = true;
+        reject(Object.assign(new Error("timeout"), { type: "timeout" }));
+      }, timeoutMs);
+      const finish = (fn, value) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        try {
+          p.off("open", onOpen);
+          p.off("error", onError);
+        } catch (_) {}
+        fn(value);
+      };
+      const onOpen = (id) => finish(resolve, id);
+      const onError = (err) => finish(reject, err);
+      p.on("open", onOpen);
+      p.on("error", onError);
+    });
+  }
+
+  function makePeer(id) {
+    if (typeof Peer !== "function") {
+      throw new Error("PeerJS failed to load");
+    }
+    return id ? new Peer(id, peerOptions()) : new Peer(peerOptions());
+  }
+
   function randomCode(length = 6) {
     let out = "";
     const values = crypto.getRandomValues(new Uint32Array(length));
@@ -3503,8 +4802,9 @@
     return out;
   }
 
-  function peerIdFromCode(code) {
-    return `${PEER_PREFIX}${code.toUpperCase()}`;
+  function peerIdFromCode(code, kind = netMode) {
+    const mode = kind === "battle" ? "b" : "t";
+    return `cg${netTag()}-${mode}-${String(code || "").toUpperCase()}`;
   }
 
   function normalizeCode(raw) {
@@ -3532,7 +4832,7 @@
     return [...lobbyRegistry.values()]
       .filter((entry) => entry.status === "open")
       .sort((a, b) => b.updatedAt - a.updatedAt)
-      .map((entry) => ({ code: entry.code, updatedAt: entry.updatedAt }));
+      .map((entry) => ({ code: entry.code, updatedAt: entry.updatedAt, kind: entry.kind || "trade" }));
   }
 
   function broadcastLobbies() {
@@ -3550,7 +4850,7 @@
   }
 
   function renderLobbyList() {
-    const open = knownLobbies.filter((l) => l && l.code);
+    const open = knownLobbies.filter((l) => l && l.code && (l.kind || "trade") === netMode);
     if (!open.length) {
       els.lobbyList.innerHTML = "";
       els.quickStatus.textContent = "No open lobbies right now. Create one, or refresh.";
@@ -3576,7 +4876,12 @@
         if (code.length === 6) {
           if (data.status === "full") lobbyRegistry.delete(code);
           else {
-            lobbyRegistry.set(code, { code, status: "open", updatedAt: Date.now() });
+            lobbyRegistry.set(code, {
+              code,
+              kind: data.kind === "battle" ? "battle" : "trade",
+              status: "open",
+              updatedAt: Date.now(),
+            });
           }
           broadcastLobbies();
           setKnownLobbies(openLobbiesFromRegistry());
@@ -3602,7 +4907,7 @@
     const onReady = () => {
       connection.send({ type: "list" });
       if (announcedCode) {
-        connection.send({ type: "announce", code: announcedCode, status: "open" });
+        connection.send({ type: "announce", code: announcedCode, status: "open", kind: netMode });
       }
     };
     if (connection.open) onReady();
@@ -3652,48 +4957,46 @@
 
   function ensureBoard() {
     if (boardPeer && !boardPeer.destroyed) return boardReadyPromise || Promise.resolve();
-    boardReadyPromise = new Promise((resolve) => {
-      let settled = false;
-      const finish = () => {
-        if (settled) return;
-        settled = true;
-        resolve();
-      };
-      const hostPeer = new Peer(BOARD_ID, { debug: 0 });
-      boardPeer = hostPeer;
-      hostPeer.on("open", () => {
-        isBoardHost = true;
-        setKnownLobbies(openLobbiesFromRegistry());
-        finish();
-      });
-      hostPeer.on("connection", (connection) => bindBoardHostConnection(connection));
-      hostPeer.on("error", (err) => {
-        if (err?.type === "unavailable-id") {
-          try {
-            hostPeer.destroy();
-          } catch (_) {}
-          isBoardHost = false;
-          const clientPeer = new Peer({ debug: 0 });
-          boardPeer = clientPeer;
-          clientPeer.on("open", () => {
-            const connection = clientPeer.connect(BOARD_ID, { reliable: true });
-            bindBoardClientConnection(connection);
-            const timer = setTimeout(finish, 2500);
+    boardReadyPromise = (async () => {
+      const ids = boardIds();
+      for (const boardId of ids) {
+        const hostPeer = makePeer(boardId);
+        hostPeer.on("connection", (connection) => bindBoardHostConnection(connection));
+        try {
+          await peerOnceOpen(hostPeer, 8000);
+          boardPeer = hostPeer;
+          isBoardHost = true;
+          setKnownLobbies(openLobbiesFromRegistry());
+          return;
+        } catch (err) {
+          destroyPeerObj(hostPeer);
+          if (err?.type !== "unavailable-id") continue;
+        }
+        const clientPeer = makePeer();
+        try {
+          await peerOnceOpen(clientPeer, 8000);
+          const connection = clientPeer.connect(boardId, { reliable: true });
+          const joined = await new Promise((resolve) => {
+            const timer = setTimeout(() => resolve(false), 5000);
             connection.on("open", () => {
               clearTimeout(timer);
-              finish();
+              bindBoardClientConnection(connection);
+              resolve(true);
             });
             connection.on("error", () => {
               clearTimeout(timer);
-              finish();
+              resolve(false);
             });
           });
-          clientPeer.on("error", () => finish());
-          return;
-        }
-        finish();
-      });
-    });
+          if (joined) {
+            boardPeer = clientPeer;
+            isBoardHost = false;
+            return;
+          }
+        } catch (_) {}
+        destroyPeerObj(clientPeer);
+      }
+    })();
     return boardReadyPromise;
   }
 
@@ -3709,7 +5012,7 @@
     if (heartbeatTimer) clearInterval(heartbeatTimer);
     heartbeatTimer = setInterval(() => {
       if (!announcedCode) return;
-      sendBoard({ type: "announce", code: announcedCode, status: "open" });
+      sendBoard({ type: "announce", code: announcedCode, status: "open", kind: netMode });
       if (isBoardHost) setKnownLobbies(openLobbiesFromRegistry());
       else if (boardConn && boardConn.open) boardConn.send({ type: "list" });
     }, HEARTBEAT_MS);
@@ -3718,7 +5021,7 @@
   async function announceLobby(code) {
     announcedCode = code;
     await ensureBoard();
-    sendBoard({ type: "announce", code, status: "open" });
+    sendBoard({ type: "announce", code, status: "open", kind: netMode });
     startHeartbeat();
   }
 
@@ -3765,12 +5068,14 @@
     }
     role = null;
     lobbyCode = null;
+    resetPvpMatch();
     Object.assign(myOffer, emptyOffer());
     Object.assign(theirOffer, emptyOffer());
     resetTradeLockState();
     clearPartnerPresence();
     els.lobbyCode.textContent = "------";
     renderTradeSlots();
+    renderBattleLobby();
     setStatus("Waiting for partner…");
     setError(els.tradeError, "");
     setError(els.joinError, "");
@@ -3835,8 +5140,18 @@
   function bindConnection(connection) {
     conn = connection;
     const onReady = () => {
-      setStatus("Connected — trading live");
       if (role === "host") markLobbyFull();
+      if (netMode === "battle") {
+        setStatus("Connected — pick your team");
+        sendPayload({
+          type: "hello",
+          username: sessionUser || "Guest",
+          unkickable: Boolean(shop.unkickable),
+        });
+        renderBattleLobby();
+        return;
+      }
+      setStatus("Connected — trading live");
       resetTradeLockState();
       sendPayload(currentOfferPayload("hello"));
       renderTradeSlots();
@@ -3859,17 +5174,39 @@
           setError(els.tradeError, "Kick blocked — you are unkickable.");
           return;
         }
+        if (battle && battle.mode === "pvp") {
+          battleAnimGen += 1;
+          battle = null;
+          hideBattleReward();
+          if (els.battleParty) els.battleParty.hidden = true;
+        }
         destroySession();
         showScreen("trade");
-        setError(els.tradeError, "You were kicked from the trade room.");
+        setError(
+          els.tradeError,
+          netMode === "battle" ? "You were kicked from the battle room." : "You were kicked from the trade room."
+        );
         return;
       }
       if (data.type === "kick-denied") {
         kickingPartner = false;
         partnerUnkickable = true;
         updatePartnerChrome();
-        setStatus("Connected — trading live");
+        setStatus(netMode === "battle" ? "Connected — pick your team" : "Connected — trading live");
         setError(els.tradeError, "Kick failed — that player is unkickable.");
+        return;
+      }
+      if (handlePvpMessage(data)) return;
+      if (netMode === "battle") {
+        if (data.type === "hello" || data.type === "offer") {
+          if (typeof data.username === "string" && data.username.trim()) {
+            partnerUsername = data.username.trim();
+          }
+          if (typeof data.unkickable === "boolean") partnerUnkickable = data.unkickable;
+          updatePartnerChrome();
+          setStatus("Connected — pick your team");
+          renderBattleLobby();
+        }
         return;
       }
       if (data.type === "hello" || data.type === "offer") {
@@ -3911,11 +5248,26 @@
       if (conn === connection) conn = null;
       const wasKick = kickingPartner;
       kickingPartner = false;
+      if (netMode === "battle" && battle && battle.mode === "pvp") {
+        if (!battle.over) {
+          battle.over = true;
+          showBattleReward(null, {
+            title: "You win",
+            copy: wasKick ? "You kicked your opponent." : "Your opponent disconnected.",
+            doneLabel: "Done",
+            action: "leave-pvp",
+          });
+          renderBattle();
+        }
+        return;
+      }
+      resetPvpMatch();
       setStatus(wasKick ? "Partner kicked — waiting…" : "Partner disconnected — waiting…");
       Object.assign(theirOffer, emptyOffer());
       resetTradeLockState();
       clearPartnerPresence();
       renderTradeSlots();
+      renderBattleLobby();
       if (role === "host" && lobbyCode) announceLobby(lobbyCode).catch(() => {});
     });
 
@@ -3930,22 +5282,31 @@
     els.lobbyCode.textContent = code;
     showScreen("room");
     renderTradeSlots();
+    renderBattleLobby();
+  }
+
+  function setLobbyMenuBusy(busy) {
+    els.btnCreate.disabled = busy;
+    els.btnJoin.disabled = busy;
+    els.btnQuick.disabled = busy;
   }
 
   function createTradeSpace() {
     setError(els.tradeError, "");
-    els.btnCreate.disabled = true;
-    els.btnJoin.disabled = true;
-    els.btnQuick.disabled = true;
+    setLobbyMenuBusy(true);
     destroySession({ keepBoard: true });
     role = "host";
     const code = randomCode();
-    peer = new Peer(peerIdFromCode(code), { debug: 0 });
+    try {
+      peer = makePeer(peerIdFromCode(code));
+    } catch (_) {
+      setLobbyMenuBusy(false);
+      setError(els.tradeError, "Network library failed to load. Refresh and try again.");
+      return;
+    }
 
     peer.on("open", async () => {
-      els.btnCreate.disabled = false;
-      els.btnJoin.disabled = false;
-      els.btnQuick.disabled = false;
+      setLobbyMenuBusy(false);
       setStatus("Waiting for partner…");
       enterRoom(code);
       try {
@@ -3965,13 +5326,12 @@
     });
 
     peer.on("error", (err) => {
-      els.btnCreate.disabled = false;
-      els.btnJoin.disabled = false;
-      els.btnQuick.disabled = false;
+      setLobbyMenuBusy(false);
+      const kind = netMode === "battle" ? "battle" : "trade";
       const msg =
         err?.type === "unavailable-id"
           ? "That lobby code was taken. Try creating again."
-          : "Could not create a trade space. Check your connection and try again.";
+          : `Could not create a ${kind} space. Check your connection and try again.`;
       destroySession();
       showScreen("trade");
       setError(els.tradeError, msg);
@@ -3994,7 +5354,15 @@
     els.btnJoinConfirm.disabled = true;
     destroySession({ keepBoard: browsingQuick });
     role = "guest";
-    peer = new Peer({ debug: 0 });
+    try {
+      peer = makePeer();
+    } catch (_) {
+      els.btnJoinConfirm.disabled = false;
+      const msg = "Network library failed to load. Refresh and try again.";
+      if (returnScreen === "quick") setError(els.quickError, msg);
+      else setError(els.joinError, msg);
+      return;
+    }
 
     peer.on("open", () => {
       const connection = peer.connect(peerIdFromCode(normalized), { reliable: true });
@@ -4007,7 +5375,7 @@
         const msg = "Could not reach that lobby. It may have closed or already filled.";
         if (returnScreen === "quick") setError(els.quickError, msg);
         else setError(els.joinError, msg);
-      }, 8000);
+      }, JOIN_TIMEOUT_MS);
 
       connection.on("open", () => {
         opened = true;
@@ -4070,18 +5438,17 @@
 
   els.btnPlay.addEventListener("click", () => showScreen("play"));
   els.btnTrade.addEventListener("click", () => {
-    if (!sessionUser) {
-      els.loginRequiredModal.hidden = false;
-      refreshFabs();
-      return;
-    }
+    if (!requireOnlineAccount("trade")) return;
+    netMode = "trade";
+    resetPvpMatch();
     setError(els.tradeError, "");
+    syncLobbyMenuUi();
     showScreen("trade");
   });
   els.btnLoginRequiredOk.addEventListener("click", () => {
     els.loginRequiredModal.hidden = true;
     refreshFabs();
-    showScreen("title");
+    showScreen(lobbyHomeScreen());
   });
   els.btnSettings.addEventListener("click", () => {
     setAccountsMsg("");
@@ -4134,15 +5501,27 @@
   els.btnSellStop.addEventListener("click", () => showScreen("sellStop"));
   els.btnBattles.addEventListener("click", () => showScreen("battles"));
   els.btnNpcBattles.addEventListener("click", () => showScreen("npcBattles"));
+  if (els.btnMultiplayerBattles) {
+    els.btnMultiplayerBattles.addEventListener("click", openMultiplayerBattles);
+  }
+  if (els.btnTrialMode) els.btnTrialMode.addEventListener("click", openTrialMode);
   els.btnCardShopBack.addEventListener("click", () => showScreen("play"));
   els.btnSellStopBack.addEventListener("click", () => showScreen("play"));
   els.btnBattlesBack.addEventListener("click", () => showScreen("play"));
   els.btnNpcBattlesBack.addEventListener("click", () => showScreen("battles"));
   els.npcFighterList.addEventListener("click", (e) => {
+    hideNpcRewardTip();
     const btn = e.target.closest("[data-npc-id]");
     if (!btn) return;
     openNpcBattle(btn.getAttribute("data-npc-id"));
   });
+  els.npcFighterList.addEventListener("contextmenu", (e) => {
+    const btn = e.target.closest("[data-npc-id]");
+    if (!btn) return;
+    e.preventDefault();
+    showNpcRewardTip(btn.getAttribute("data-npc-id"), e.clientX, e.clientY);
+  });
+  els.npcFighterList.addEventListener("scroll", hideNpcRewardTip);
   els.btnBattleFlee.addEventListener("click", fleeBattle);
   els.btnBattleCards.addEventListener("click", () => {
     if (!battle || battle.over) return;
@@ -4162,17 +5541,29 @@
     playBattleMove(Number(btn.getAttribute("data-battle-move")));
   });
   els.btnInventoryBack.addEventListener("click", () => {
+    if (inventoryMode === "mutate") {
+      closeFireConfirm();
+      inventoryMode = "browse";
+      inventoryTab = "items";
+      renderInventoryList();
+      return;
+    }
     const back =
       inventoryMode === "trade"
         ? "room"
         : inventoryMode === "sell"
           ? "sellStop"
           : inventoryMode === "battle"
-            ? "npcBattles"
+            ? pendingBattleKind === "trial"
+              ? "battles"
+              : pendingBattleKind === "pvp"
+                ? "room"
+                : "npcBattles"
             : inventoryReturnScreen || "title";
     inventoryMode = "browse";
     pendingSellSlot = null;
     pendingBattleNpc = null;
+    pendingBattleKind = null;
     pendingBattleTeam = [];
     showScreen(back);
   });
@@ -4204,8 +5595,12 @@
       return;
     }
     if (e.target.closest("#btn-merge-combine")) combineMutation();
+    if (e.target.closest("#btn-craft-fire-gem")) startCraftRecipe("fire-gem");
+    const claim = e.target.closest("[data-claim-craft]");
+    if (claim) claimCraftJob(claim.getAttribute("data-claim-craft"));
   });
   els.btnCraftResultDone.addEventListener("click", hideCraftResult);
+  els.btnBattleRewardDone.addEventListener("click", finishBattleReward);
   document.querySelectorAll("[data-quest-tab]").forEach((tab) => {
     tab.addEventListener("click", () => {
       questTab = tab.getAttribute("data-quest-tab") === "event" ? "event" : "daily";
@@ -4229,6 +5624,8 @@
   els.btnAdminClose.addEventListener("click", closeAdminSettings);
   els.btnRestockTokenNo.addEventListener("click", closeRestockTokenModal);
   els.btnRestockTokenYes.addEventListener("click", confirmRestockToken);
+  if (els.btnFireMutateNo) els.btnFireMutateNo.addEventListener("click", cancelFireMutate);
+  if (els.btnFireMutateYes) els.btnFireMutateYes.addEventListener("click", confirmFireMutate);
   els.adminInfiniteStock.addEventListener("change", () => {
     shop.infiniteStock = els.adminInfiniteStock.checked;
     saveShop();
@@ -4255,6 +5652,18 @@
     savePlayer();
     if (currentScreen === "quests") renderQuests();
   });
+  if (els.adminNoCraftWait) {
+    els.adminNoCraftWait.addEventListener("change", () => {
+      shop.noCraftWait = els.adminNoCraftWait.checked;
+      saveShop();
+      if (currentScreen === "crafting") renderCrafting();
+    });
+  }
+  if (els.adminLuck) {
+    els.adminLuck.addEventListener("input", () => applyLuckFromAdmin(false));
+    els.adminLuck.addEventListener("change", () => applyLuckFromAdmin(true));
+    els.adminLuck.addEventListener("blur", () => applyLuckFromAdmin(true));
+  }
   [
     els.adminOddsNone,
     els.adminOddsShiny,
@@ -4271,6 +5680,7 @@
     if (!els.adminGate.hidden || !els.adminSettings.hidden) return;
     if (!els.qtyModal.hidden || !els.packReveal.hidden || !els.cardSellModal.hidden) return;
     if (els.restockTokenModal && !els.restockTokenModal.hidden) return;
+    if (els.fireMutateModal && !els.fireMutateModal.hidden) return;
     if (els.craftResult && !els.craftResult.hidden) return;
     e.preventDefault();
     openAdminGate();
@@ -4278,12 +5688,12 @@
 
   els.btnTradeBack.addEventListener("click", () => {
     destroySession();
-    showScreen("title");
+    showScreen(lobbyHomeScreen());
   });
 
   document.querySelectorAll(".inv-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
-      if (inventoryMode === "trade" || inventoryMode === "sell" || inventoryMode === "battle") return;
+      if (inventoryMode === "trade" || inventoryMode === "sell" || inventoryMode === "battle" || inventoryMode === "mutate") return;
       inventoryTab = tab.getAttribute("data-inv-tab");
       renderInventoryList();
     });
@@ -4298,6 +5708,7 @@
     const useBtn = e.target.closest("[data-use-item]");
     if (useBtn && inventoryMode === "browse") {
       if (useBtn.getAttribute("data-use-item") === "restock-token") openRestockTokenModal();
+      if (useBtn.getAttribute("data-use-item") === "fire-gem") openFireGemPicker();
       return;
     }
     const cardBtn = e.target.closest("[data-pick-card]");
@@ -4319,10 +5730,17 @@
       if (remaining <= 0) return;
       pendingBattleTeam.push(cardId);
       if (pendingBattleTeam.length >= PLAYER_TEAM_SIZE) {
-        startBattle(pendingBattleTeam.slice(), pendingBattleNpc);
+        const team = pendingBattleTeam.slice();
+        if (pendingBattleKind === "trial") startTrialWave(team, 1);
+        else if (pendingBattleKind === "pvp") submitPvpTeam(team);
+        else startBattle(team, pendingBattleNpc);
       } else {
         renderInventoryList();
       }
+      return;
+    }
+    if (inventoryMode === "mutate") {
+      promptFireMutate(cardId);
     }
   });
 
@@ -4372,6 +5790,15 @@
   els.btnQtyConfirm.addEventListener("click", confirmTradeQty);
 
   els.btnCreate.addEventListener("click", createTradeSpace);
+  if (els.btnBattlePickTeam) {
+    els.btnBattlePickTeam.addEventListener("click", () => {
+      if (!conn || !conn.open || myPvpTeam) return;
+      pendingBattleKind = "pvp";
+      pendingBattleNpc = null;
+      pendingBattleTeam = [];
+      openInventory("battle");
+    });
+  }
   els.btnJoin.addEventListener("click", () => {
     setError(els.joinError, "");
     els.joinInput.value = "";
