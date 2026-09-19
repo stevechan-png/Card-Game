@@ -10,9 +10,9 @@
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260914-healmult" />
+    <link rel="stylesheet" href="styles.css?v=20260919-edx" />
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js" defer></script>
-    <script src="app.js?v=20260914-healmult" defer></script>
+    <script src="app.js?v=20260919-edx" defer></script>
   </head>
   <body>
     <div class="bg-grid" aria-hidden="true"></div>
@@ -431,12 +431,12 @@
         <article class="trade-side mine">
           <header class="side-header">
             <h2>Your offer</h2>
-            <span class="side-hint">Max 4 card types</span>
+            <span class="side-hint">Cards, packs, items, or cash</span>
           </header>
           <div id="my-trade-items" class="trade-items"></div>
           <button type="button" class="trade-add-card" id="btn-add-trade-card">
             <span class="trade-slot-plus">+</span>
-            <span>Add card</span>
+            <span>Add to offer</span>
           </button>
           <label class="field cash-field">
             <span>Cash</span>
@@ -472,6 +472,17 @@
         <button type="button" class="btn btn-primary" id="btn-trade-confirm">Confirm</button>
       </div>
     </section>
+
+    <div id="index-detail-modal" class="overlay" hidden>
+      <div class="overlay-panel qty-panel index-detail-panel">
+        <h2 id="index-detail-title">Card</h2>
+        <div id="index-detail-card" class="qty-preview"></div>
+        <p class="index-detail-pack" id="index-detail-pack">Found in a pack.</p>
+        <h3 class="index-detail-moves-heading">Moves</h3>
+        <ul id="index-detail-moves" class="index-detail-moves"></ul>
+        <button type="button" class="btn btn-primary" id="btn-index-detail-close">Close</button>
+      </div>
+    </div>
 
     <div id="login-required-modal" class="overlay" hidden>
       <div class="overlay-panel qty-panel">
@@ -543,9 +554,22 @@
       </div>
     </div>
 
+    <div id="engine-charge-modal" class="overlay" hidden>
+      <div class="overlay-panel qty-panel engine-charge-panel">
+        <h2>Engine Charge X</h2>
+        <p class="panel-copy" id="engine-charge-copy">Do you want to heal your team or revive one card</p>
+        <div class="cta-row" id="engine-charge-choices">
+          <button type="button" class="btn btn-secondary" id="btn-engine-heal-team">Heal team</button>
+          <button type="button" class="btn btn-primary" id="btn-engine-revive">Revive card</button>
+        </div>
+        <div id="engine-charge-revive-list" class="engine-charge-revive-list" hidden></div>
+        <button type="button" class="btn btn-secondary" id="btn-engine-charge-cancel">Cancel</button>
+      </div>
+    </div>
+
     <div id="fire-mutate-modal" class="overlay" hidden>
       <div class="overlay-panel qty-panel">
-        <h2>Fire Mutation</h2>
+        <h2 id="fire-mutate-title">Fire Mutation</h2>
         <p class="panel-copy" id="fire-mutate-copy">Are you sure you want to apply the Fire Mutation to this card.</p>
         <div class="cta-row">
           <button type="button" class="btn btn-secondary" id="btn-fire-mutate-no">No</button>
@@ -599,6 +623,14 @@
             <span>0 quest cooldown</span>
           </label>
           <p class="admin-hint">Claimed quests reroll instantly.</p>
+          <div class="admin-grant-row">
+            <div>
+              <strong>Electrified Pack</strong>
+              <span class="admin-grant-count" id="admin-event-pack-count">×0</span>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-admin-grant-electrified">+1</button>
+          </div>
+          <p class="admin-hint">Adds one pack to your backpack. Hidden from the card shop.</p>
         </section>
         <section class="admin-section">
           <h3>Crafting</h3>

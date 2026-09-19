@@ -483,6 +483,17 @@ body {
   background: rgba(141, 111, 255, 0.16);
 }
 
+.shop-card-event {
+  border-color: rgba(90, 214, 255, 0.38);
+  background:
+    linear-gradient(135deg, rgba(26, 111, 212, 0.22), transparent 58%),
+    rgba(243, 239, 228, 0.06);
+}
+
+.pack-art-event {
+  background: rgba(90, 214, 255, 0.18);
+}
+
 .shop-card h3 {
   grid-area: title;
   margin: 0;
@@ -528,6 +539,57 @@ body {
   border: 1px solid rgba(243, 239, 228, 0.12);
   background:
     linear-gradient(180deg, rgba(243, 239, 228, 0.05), rgba(8, 12, 10, 0.28));
+}
+
+.admin-grant-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.45rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(243, 239, 228, 0.1);
+}
+
+.admin-grant-row strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.admin-grant-count {
+  display: block;
+  margin-top: 0.12rem;
+  color: #f0d27a;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.engine-charge-panel {
+  width: min(100%, 24rem);
+}
+
+.engine-charge-revive-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 0.55rem;
+}
+
+.engine-charge-revive-list[hidden] {
+  display: none !important;
+}
+
+.engine-charge-revive-pick {
+  appearance: none;
+  border: 1px solid rgba(243, 239, 228, 0.22);
+  background: rgba(8, 12, 10, 0.35);
+  border-radius: 14px;
+  padding: 0.35rem;
+  cursor: pointer;
+  color: inherit;
+}
+
+.engine-charge-revive-pick:hover {
+  border-color: rgba(240, 210, 122, 0.55);
 }
 
 .admin-section h3 {
@@ -990,6 +1052,11 @@ body {
   background: rgba(8, 12, 10, 0.28);
 }
 
+.crafting-panel {
+  max-height: min(90vh, 54rem);
+  overflow-y: auto;
+}
+
 .crafting-panel .quests-side-tab {
   min-height: 3.4rem;
 }
@@ -1047,6 +1114,12 @@ body {
   margin: 0.6rem 0 1rem;
 }
 
+.craft-recipes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
 .craft-recipe {
   border-radius: 18px;
   border: 1px solid rgba(255, 140, 70, 0.22);
@@ -1055,6 +1128,45 @@ body {
     linear-gradient(180deg, rgba(42, 18, 12, 0.72), rgba(8, 12, 10, 0.42));
   padding: 1rem 1.05rem 1.05rem;
   box-shadow: inset 0 1px 0 rgba(255, 190, 120, 0.12);
+}
+
+.craft-recipe-gold {
+  border-color: rgba(240, 210, 122, 0.3);
+  background:
+    radial-gradient(circle at 92% 0%, rgba(240, 210, 122, 0.2), transparent 42%),
+    linear-gradient(180deg, rgba(42, 34, 12, 0.72), rgba(8, 12, 10, 0.42));
+  box-shadow: inset 0 1px 0 rgba(255, 230, 150, 0.12);
+}
+
+.craft-recipe-gold .craft-gem-mark,
+.craft-recipe-gold .craft-chip-gem {
+  background: linear-gradient(160deg, #ffe789, #c9a11e);
+  box-shadow: 0 8px 18px rgba(180, 140, 20, 0.35);
+}
+
+.craft-recipe-gold .craft-chip-out {
+  border-color: rgba(240, 210, 122, 0.42);
+  background: rgba(70, 52, 12, 0.45);
+}
+
+.craft-recipe-diamond {
+  border-color: rgba(140, 210, 255, 0.32);
+  background:
+    radial-gradient(circle at 92% 0%, rgba(140, 220, 255, 0.2), transparent 42%),
+    linear-gradient(180deg, rgba(12, 28, 42, 0.72), rgba(8, 12, 10, 0.42));
+  box-shadow: inset 0 1px 0 rgba(180, 230, 255, 0.12);
+}
+
+.craft-recipe-diamond .craft-gem-mark,
+.craft-recipe-diamond .craft-chip-gem {
+  background: linear-gradient(160deg, #e8fbff, #5ad0ff);
+  color: #123048;
+  box-shadow: 0 8px 18px rgba(40, 140, 200, 0.35);
+}
+
+.craft-recipe-diamond .craft-chip-out {
+  border-color: rgba(140, 210, 255, 0.42);
+  background: rgba(12, 42, 62, 0.5);
 }
 
 .craft-recipe-head {
@@ -1144,6 +1256,17 @@ body {
 .craft-chip-gem {
   background: linear-gradient(160deg, #ffb060, #c42818);
   font-size: 1.15rem;
+}
+
+.craft-chip-mut-shiny {
+  background: linear-gradient(160deg, #fff4b0, #f0b84a);
+  font-size: 1.1rem;
+}
+
+.craft-chip-mut-silver {
+  background: linear-gradient(160deg, #e8eef6, #8ea0b8);
+  color: #1a2430;
+  font-size: 1.1rem;
 }
 
 .craft-chip-coin {
@@ -1427,6 +1550,87 @@ body {
 .index-claim-bar .btn {
   flex-shrink: 0;
   min-width: 6.5rem;
+}
+
+button.index-slot-found {
+  appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 16px;
+}
+
+button.index-slot-found:hover .animal-card,
+button.index-slot-found:focus-visible .animal-card {
+  outline: 2px solid rgba(240, 210, 122, 0.72);
+  outline-offset: 2px;
+}
+
+.index-detail-panel {
+  width: min(100%, 22.5rem);
+}
+
+.index-detail-pack {
+  margin: 0;
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #f0d27a;
+}
+
+.index-detail-moves-heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(243, 239, 228, 0.62);
+}
+
+.index-detail-moves {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.index-detail-move {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.7rem;
+  background: rgba(20, 40, 30, 0.78);
+  border: 1px solid rgba(243, 239, 228, 0.22);
+  border-radius: 14px;
+  padding: 0.52rem 0.8rem;
+}
+
+.index-detail-move.is-empty {
+  justify-content: center;
+  color: rgba(243, 239, 228, 0.55);
+  font-size: 0.88rem;
+}
+
+.index-detail-move-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.index-detail-move-stat {
+  color: #ffe789;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .btn-ghost-slim {
@@ -1776,6 +1980,11 @@ body {
 
 .animal-card .card-rarity.rarity-rare {
   color: #4ea8ff;
+}
+
+.rarity-event,
+.animal-card .card-rarity.rarity-event {
+  color: #ffe566;
 }
 
 .card-art {
@@ -2181,6 +2390,132 @@ body {
   );
 }
 
+.theme-lightning {
+  background:
+    radial-gradient(circle at 72% 18%, rgba(255, 229, 102, 0.55), transparent 42%),
+    linear-gradient(160deg, #102448 0%, #1a6fd4 48%, #ffe566 100%);
+  color: #081018;
+}
+.theme-lightning .card-pattern {
+  background: repeating-linear-gradient(
+    118deg,
+    transparent 0 12px,
+    rgba(255, 255, 255, 0.12) 12px 13px
+  );
+}
+
+.theme-storm {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(90, 214, 255, 0.4), transparent 46%),
+    linear-gradient(160deg, #071226 0%, #274a88 50%, #9ecbff 100%);
+  color: #f4fbff;
+}
+.theme-storm .card-pattern {
+  background: repeating-linear-gradient(
+    20deg,
+    transparent 0 16px,
+    rgba(255, 255, 255, 0.07) 16px 17px
+  );
+}
+
+.theme-thunder-eagle {
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255, 229, 102, 0.4), transparent 40%),
+    linear-gradient(160deg, #1a1630 0%, #3d5aa8 48%, #f0d27a 100%);
+  color: #fff8e8;
+}
+.theme-thunder-eagle .card-pattern {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 14px,
+    rgba(255, 229, 102, 0.1) 14px 15px
+  );
+}
+
+.theme-thunder-snake {
+  background:
+    radial-gradient(circle at 68% 30%, rgba(120, 255, 180, 0.28), transparent 44%),
+    linear-gradient(160deg, #041810 0%, #1a5a48 48%, #7cffd0 100%);
+  color: #e8fff6;
+}
+.theme-thunder-snake .card-pattern {
+  background: repeating-linear-gradient(
+    -18deg,
+    transparent 0 13px,
+    rgba(124, 255, 208, 0.1) 13px 14px
+  );
+}
+
+.theme-electrified-bull {
+  background:
+    radial-gradient(circle at 40% 16%, rgba(255, 210, 80, 0.42), transparent 42%),
+    linear-gradient(160deg, #2a1608 0%, #8a4a12 50%, #ffd56a 100%);
+  color: #1a0c04;
+}
+.theme-electrified-bull .card-pattern {
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 16px,
+    rgba(255, 255, 255, 0.08) 16px 17px
+  );
+}
+
+.theme-electrified-panther {
+  background:
+    radial-gradient(circle at 74% 22%, rgba(180, 140, 255, 0.38), transparent 44%),
+    linear-gradient(160deg, #120818 0%, #4a2a78 50%, #c9b0ff 100%);
+  color: #f6efff;
+}
+.theme-electrified-panther .card-pattern {
+  background: repeating-linear-gradient(
+    32deg,
+    transparent 0 11px,
+    rgba(201, 176, 255, 0.12) 11px 12px
+  );
+}
+
+.theme-miraidon {
+  background:
+    radial-gradient(circle at 50% 8%, rgba(90, 214, 255, 0.5), transparent 42%),
+    linear-gradient(160deg, #041828 0%, #1578c8 48%, #7af0ff 100%);
+  color: #041018;
+}
+.theme-miraidon .card-pattern {
+  background: repeating-linear-gradient(
+    110deg,
+    transparent 0 10px,
+    rgba(122, 240, 255, 0.14) 10px 11px
+  );
+}
+
+.theme-thunder-scylla {
+  background:
+    radial-gradient(circle at 28% 24%, rgba(80, 200, 255, 0.35), transparent 46%),
+    linear-gradient(160deg, #031018 0%, #0e3a58 50%, #4ad0ff 100%);
+  color: #e8f8ff;
+}
+.theme-thunder-scylla .card-pattern {
+  background: repeating-linear-gradient(
+    8deg,
+    transparent 0 18px,
+    rgba(74, 208, 255, 0.1) 18px 19px
+  );
+}
+
+.theme-miraidon-x {
+  background:
+    radial-gradient(circle at 50% 10%, rgba(255, 229, 102, 0.45), transparent 38%),
+    linear-gradient(160deg, #020814 0%, #123888 46%, #5ad6ff 72%, #ffe566 100%);
+  color: #071018;
+}
+.theme-miraidon-x .card-pattern {
+  background: repeating-linear-gradient(
+    125deg,
+    transparent 0 9px,
+    rgba(255, 229, 102, 0.14) 9px 10px
+  );
+}
+
 .theme-unknown {
   background:
     radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.12), transparent 46%),
@@ -2302,6 +2637,27 @@ body {
 .qty-preview .animal-card {
   margin: 0 auto;
   max-width: 180px;
+}
+
+.qty-goods-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: rgba(243, 239, 228, 0.06);
+  border: 1px solid rgba(243, 239, 228, 0.14);
+  text-align: center;
+}
+
+.qty-goods-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.qty-goods-name {
+  font-weight: 700;
 }
 
 .qty-with-keep {
@@ -2756,6 +3112,32 @@ body {
 
 .trade-item-card .card-emoji {
   font-size: 1.6rem;
+}
+
+.trade-goods-face {
+  min-height: 4.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  border-radius: 10px;
+  background: rgba(243, 239, 228, 0.06);
+  border: 1px solid rgba(243, 239, 228, 0.12);
+  text-align: center;
+  padding: 0.35rem;
+}
+
+.trade-goods-face .trade-goods-icon {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.trade-goods-face .trade-goods-kind {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(243, 239, 228, 0.55);
 }
 
 .trade-item-meta {

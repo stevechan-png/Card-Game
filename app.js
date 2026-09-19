@@ -35,6 +35,15 @@
       stockKey: "rareStock",
       canOpen: true,
     },
+    "electrified-pack": {
+      id: "electrified-pack",
+      name: "Electrified Pack",
+      price: 0,
+      pool: "electrified",
+      stockKey: "eventStock",
+      shopSold: false,
+      canOpen: true,
+    },
   };
 
   const ITEMS = {
@@ -53,6 +62,18 @@
       id: "fire-gem",
       name: "Fire Gem",
       note: "Tap to apply Fire Mutation to one card.",
+      usable: true,
+    },
+    "gold-gem": {
+      id: "gold-gem",
+      name: "Gold Gem",
+      note: "Tap to apply Gold Mutation to one card.",
+      usable: true,
+    },
+    "diamond-gem": {
+      id: "diamond-gem",
+      name: "Diamond Gem",
+      note: "Tap to apply Diamond Mutation to one card.",
       usable: true,
     },
   };
@@ -374,6 +395,158 @@
         { id: "force-of-death", name: "Force of Death", damage: 43 },
       ],
     },
+    lightning: {
+      id: "lightning",
+      name: "Lightning",
+      value: 80,
+      hp: 40,
+      oneIn: 2,
+      cps: 2,
+      theme: "lightning",
+      blurb: "Sky spark",
+      emoji: "⚡",
+      moves: [
+        { id: "zap", name: "Zap", damage: 18 },
+        { id: "static-charge", name: "Static Charge", damage: 23 },
+      ],
+    },
+    storm: {
+      id: "storm",
+      name: "Storm",
+      value: 110,
+      hp: 55,
+      oneIn: 5,
+      cps: 4,
+      theme: "storm",
+      blurb: "Rolling thunder",
+      emoji: "🌩️",
+      moves: [
+        { id: "lightning-strike", name: "Lightning Strike", damage: 20 },
+        { id: "fury-of-the-storm", name: "Fury of the Storm", damage: 28 },
+      ],
+    },
+    "thunder-eagle": {
+      id: "thunder-eagle",
+      name: "Thunder Eagle",
+      value: 140,
+      hp: 70,
+      oneIn: 10,
+      cps: 7,
+      theme: "thunder-eagle",
+      blurb: "Stormborn wings",
+      model: "./assets/thunder-eagle-model.png",
+      modelKnockout: true,
+      emoji: "🦅",
+      moves: [
+        { id: "thunder-charge", name: "Thunder Charge", damage: 27 },
+        { id: "electrified-swoop", name: "Electrified Swoop", damage: 32 },
+      ],
+    },
+    "thunder-snake": {
+      id: "thunder-snake",
+      name: "Thunder Snake",
+      value: 180,
+      hp: 90,
+      oneIn: 18,
+      cps: 10,
+      theme: "thunder-snake",
+      blurb: "Voltage coil",
+      model: "./assets/thunder-snake-model.png",
+      modelKnockout: true,
+      emoji: "🐍",
+      moves: [
+        { id: "voltage-blast", name: "Voltage Blast", damage: 29 },
+        { id: "electric-wrap", name: "Electric Wrap", damage: 33 },
+      ],
+    },
+    "electrified-bull": {
+      id: "electrified-bull",
+      name: "Electrified Bull",
+      value: 240,
+      hp: 120,
+      oneIn: 25,
+      cps: 13,
+      theme: "electrified-bull",
+      blurb: "Live-wire charge",
+      model: "./assets/electrified-bull-model.png",
+      modelKnockout: true,
+      emoji: "🐂",
+      moves: [
+        { id: "thunder-stomp", name: "Thunder Stomp", damage: 32 },
+        { id: "electrical-stampede", name: "Electrical Stampede", damage: 35 },
+      ],
+    },
+    "electrified-panther": {
+      id: "electrified-panther",
+      name: "Electrified Panther",
+      value: 310,
+      hp: 155,
+      oneIn: 35,
+      cps: 16,
+      theme: "electrified-panther",
+      blurb: "Static hunter",
+      model: "./assets/electrified-panther-model.png",
+      modelKnockout: true,
+      emoji: "🐆",
+      moves: [
+        { id: "thunder-claw", name: "Thunder Claw", damage: 34 },
+        { id: "electrical-assault", name: "Electrical Assault", damage: 37 },
+      ],
+    },
+    miraidon: {
+      id: "miraidon",
+      name: "Miraidon",
+      value: 380,
+      hp: 190,
+      oneIn: 50,
+      cps: 22,
+      theme: "miraidon",
+      blurb: "Future voltage",
+      model: "./assets/miraidon-model.png",
+      modelKnockout: true,
+      emoji: "⚡",
+      moves: [
+        { id: "engine-charge", name: "Engine Charge", heal: 20 },
+        { id: "thunders-wraith", name: "Thunders Wraith", damage: 42 },
+        { id: "electro-drift", name: "Electro Drift", damage: 45 },
+      ],
+    },
+    "thunder-scylla": {
+      id: "thunder-scylla",
+      name: "Thunder Scylla",
+      value: 460,
+      hp: 230,
+      oneIn: 75,
+      cps: 30,
+      theme: "thunder-scylla",
+      blurb: "Deep-sea thunder",
+      model: "./assets/thunder-scylla-model.png",
+      modelKnockout: true,
+      emoji: "🐙",
+      moves: [
+        { id: "tentacle-shock", name: "Tentacle Shock", damage: 42 },
+        { id: "maelstrom-bolt", name: "Maelstrom Bolt", damage: 45 },
+        { id: "abyssal-thunder", name: "Abyssal Thunder", damage: 49 },
+      ],
+    },
+    "miraidon-x": {
+      id: "miraidon-x",
+      name: "Miraidon X",
+      value: 630,
+      hp: 315,
+      oneIn: 100,
+      cps: 38,
+      theme: "miraidon-x",
+      blurb: "Apex voltage",
+      model: "./assets/miraidon-x-model.png",
+      modelKnockout: true,
+      emoji: "⚡",
+      moves: [
+        { id: "engine-charge-x", name: "Engine Charge X", heal: 30, healTeam: true },
+        { id: "thunders-wraith-x", name: "Thunders Wraith X", damage: 55 },
+        { id: "electro-drift-x", name: "Electro Drift X", damage: 62 },
+      ],
+    },
     unknown: {
       id: "unknown",
       name: "???",
@@ -392,6 +565,7 @@
 
   const SECOND_MOVE_MISS_CHANCE = 0.1;
   const HEAL_MOVE_TURN_GAP = 2;
+  const ENGINE_CHARGE_X_REVIVE_HP = 90;
   const JUMPSCARE_DAMAGE_KEEP = 0.7;
 
   function prepareBattleMove(move, index) {
@@ -413,6 +587,7 @@
     move.cooldownTurns = isHeal && !isJumpscare ? HEAL_MOVE_TURN_GAP : 0;
     move.missChance = isSecond ? SECOND_MOVE_MISS_CHANCE : 0;
     move.isWipe = Boolean(move.isWipe);
+    move.healTeam = Boolean(move.healTeam) && isHeal;
     move.alwaysFirst = isJumpscare || isHeal || slot === 1 || move.isWipe;
     move.alwaysLast = isThird;
     return move;
@@ -501,6 +676,9 @@
           type: "heal",
           amount: Math.max(0, Math.ceil(move.heal * healMult)),
           moveId: move.id,
+          healTeam: Boolean(move.healTeam),
+          engineChargeMode: side.engineChargeMode === "revive" ? "revive" : "heal",
+          reviveIndex: Number.isInteger(side.reviveIndex) ? side.reviveIndex : null,
         });
       }
       if (move.damage > 0) {
@@ -530,7 +708,7 @@
   }
 
   for (const card of Object.values(CARDS)) {
-    card.hp = card.value;
+    if (card.hp == null) card.hp = card.value;
     if (!Array.isArray(card.moves)) card.moves = [];
     card.moves.forEach((move, i) => prepareBattleMove(move, i));
   }
@@ -564,11 +742,29 @@
     { id: "grim-reaper", oneIn: 80 },
   ];
 
+  const ELECTRIFIED_POOL = [
+    CARDS.lightning,
+    CARDS.storm,
+    CARDS["thunder-eagle"],
+    CARDS["thunder-snake"],
+    CARDS["electrified-bull"],
+    CARDS["electrified-panther"],
+    CARDS.miraidon,
+    CARDS["thunder-scylla"],
+    CARDS["miraidon-x"],
+  ];
+
   const COMMON_CARD_IDS = new Set(COMMON_POOL.map((c) => c.id));
   const RARE_CARD_IDS = new Set(RARE_POOL.map((c) => c.id));
+  const EVENT_CARD_IDS = new Set(ELECTRIFIED_POOL.map((c) => c.id));
+  for (const id of EVENT_CARD_IDS) {
+    const card = CARDS[id];
+    if (card && card.hp != null) card.value = card.hp * 2;
+  }
   const AUTO_SELL_ORDER = [
     ...COMMON_POOL.map((c) => c.id),
     ...RARE_POOL.map((entry) => entry.id).filter((id) => id !== "shark"),
+    ...ELECTRIFIED_POOL.map((c) => c.id),
   ];
 
   const MERGE_COST = 3;
@@ -589,6 +785,11 @@
   };
   const MUTATION_RANK = { "": 0, shiny: 1, silver: 2, gold: 3, diamond: 4, fire: 5 };
   const FIRE_GEM_CRAFT_MS = 5 * 60 * 1000;
+  const GEM_ITEMS = {
+    "fire-gem": { itemId: "fire-gem", mutation: "fire", title: "Fire Mutation" },
+    "gold-gem": { itemId: "gold-gem", mutation: "gold", title: "Gold Mutation" },
+    "diamond-gem": { itemId: "diamond-gem", mutation: "diamond", title: "Diamond Mutation" },
+  };
   const CRAFT_RECIPES = {
     "fire-gem": {
       id: "fire-gem",
@@ -597,10 +798,37 @@
       craftMs: FIRE_GEM_CRAFT_MS,
       blurb: "3 Demons, 1 Kitsune, and 10,000 coins. 5 minutes to finish.",
       coins: 10000,
+      theme: "fire",
+      mark: "🔥",
+      stats: "1.8× damage · 0.8× HP · healing unchanged · one mutation per card",
       materials: [
         { cardId: "demon", count: 3 },
         { cardId: "kitsune", count: 1 },
       ],
+    },
+    "gold-gem": {
+      id: "gold-gem",
+      name: "Gold Gem",
+      itemId: "gold-gem",
+      craftMs: FIRE_GEM_CRAFT_MS,
+      blurb: "5 Shiny cards and 10,000 coins. 5 minutes to finish.",
+      coins: 10000,
+      theme: "gold",
+      mark: "🥇",
+      stats: "1.4× HP · 1.4× damage · 1.4× healing · one mutation per card",
+      pick: { mutation: "shiny", count: 5 },
+    },
+    "diamond-gem": {
+      id: "diamond-gem",
+      name: "Diamond Gem",
+      itemId: "diamond-gem",
+      craftMs: FIRE_GEM_CRAFT_MS,
+      blurb: "10 Silver cards and 20,000 coins. 5 minutes to finish.",
+      coins: 20000,
+      theme: "diamond",
+      mark: "💎",
+      stats: "1.6× HP · 1.6× damage · 1.6× healing · one mutation per card",
+      pick: { mutation: "silver", count: 10 },
     },
   };
 
@@ -758,7 +986,10 @@
     if (card.model) {
       const src = escapeHtml(resolveAssetUrl(card.model));
       const knockout = card.modelKnockout ? " card-model-knockout" : "";
-      return `<img class="card-model${knockout}" src="${src}" alt="${escapeHtml(card.name)}" draggable="false" decoding="async" />`;
+      const fallback = card.emoji
+        ? `<span class="card-emoji" hidden role="img" aria-label="${escapeHtml(card.name)}">${card.emoji}</span>`
+        : `<span class="card-emoji card-emoji-empty" hidden aria-hidden="true"></span>`;
+      return `<img class="card-model${knockout}" src="${src}" alt="${escapeHtml(card.name)}" draggable="false" decoding="async" onerror="this.hidden=true; const n=this.nextElementSibling; if(n) n.hidden=false;" />${fallback}`;
     }
     if (card.emoji) {
       return `<span class="card-emoji" role="img" aria-label="${escapeHtml(card.name)}">${card.emoji}</span>`;
@@ -852,6 +1083,12 @@
     indexCopy: document.getElementById("index-copy"),
     indexClaimHint: document.getElementById("index-claim-hint"),
     indexCount: document.getElementById("index-count"),
+    indexDetailModal: document.getElementById("index-detail-modal"),
+    indexDetailTitle: document.getElementById("index-detail-title"),
+    indexDetailCard: document.getElementById("index-detail-card"),
+    indexDetailPack: document.getElementById("index-detail-pack"),
+    indexDetailMoves: document.getElementById("index-detail-moves"),
+    btnIndexDetailClose: document.getElementById("btn-index-detail-close"),
     btnQuests: document.getElementById("btn-quests"),
     btnQuestsBack: document.getElementById("btn-quests-back"),
     btnCrafting: document.getElementById("btn-crafting"),
@@ -922,8 +1159,18 @@
     adminOddsGold: document.getElementById("admin-odds-gold"),
     adminOddsDiamond: document.getElementById("admin-odds-diamond"),
     btnAdminClose: document.getElementById("btn-admin-close"),
+    adminEventPackCount: document.getElementById("admin-event-pack-count"),
+    btnAdminGrantElectrified: document.getElementById("btn-admin-grant-electrified"),
+    engineChargeModal: document.getElementById("engine-charge-modal"),
+    engineChargeCopy: document.getElementById("engine-charge-copy"),
+    engineChargeChoices: document.getElementById("engine-charge-choices"),
+    engineChargeReviveList: document.getElementById("engine-charge-revive-list"),
+    btnEngineHealTeam: document.getElementById("btn-engine-heal-team"),
+    btnEngineRevive: document.getElementById("btn-engine-revive"),
+    btnEngineChargeCancel: document.getElementById("btn-engine-charge-cancel"),
     restockTokenModal: document.getElementById("restock-token-modal"),
     fireMutateModal: document.getElementById("fire-mutate-modal"),
+    fireMutateTitle: document.getElementById("fire-mutate-title"),
     fireMutateCopy: document.getElementById("fire-mutate-copy"),
     btnFireMutateNo: document.getElementById("btn-fire-mutate-no"),
     btnFireMutateYes: document.getElementById("btn-fire-mutate-yes"),
@@ -1008,6 +1255,9 @@
   let craftTab = "bench";
   let mergerPickKey = null;
   let pendingFireCardKey = null;
+  let pendingGemItemId = null;
+  let pendingCraftRecipeId = null;
+  let pendingCraftPicks = [];
   let questPlaySaveAcc = 0;
   let questClaimFlash = "";
   let questClaimFlashUntil = 0;
@@ -1019,6 +1269,7 @@
   let pendingBattleNpc = null;
   let pendingBattleKind = null;
   let pendingBattleTeam = [];
+  let pendingEngineCharge = null;
   let battleAnimGen = 0;
   let battleRewardAction = "hide";
 
@@ -1180,10 +1431,16 @@
     return RARE_STOCK_MIN + Math.floor(Math.random() * (RARE_STOCK_MAX - RARE_STOCK_MIN + 1));
   }
 
+  function randomEventStockAmount() {
+    if (Math.random() < RARE_MISS_CHANCE) return 0;
+    return RARE_STOCK_MIN + Math.floor(Math.random() * (RARE_STOCK_MAX - RARE_STOCK_MIN + 1));
+  }
+
   function freshShopState() {
     return {
       stock: randomStockAmount(),
       rareStock: randomRareStockAmount(),
+      eventStock: randomEventStockAmount(),
       nextRestockAt: Date.now() + RESTOCK_MS,
       infiniteStock: false,
       unkickable: false,
@@ -1206,6 +1463,10 @@
           data.rareStock == null
             ? randomRareStockAmount()
             : Math.max(0, Math.floor(Number(data.rareStock) || 0)),
+        eventStock:
+          data.eventStock == null
+            ? randomEventStockAmount()
+            : Math.max(0, Math.floor(Number(data.eventStock) || 0)),
         nextRestockAt: Number(data.nextRestockAt) || Date.now() + RESTOCK_MS,
         infiniteStock: Boolean(data.infiniteStock),
         unkickable: Boolean(data.unkickable),
@@ -1228,6 +1489,7 @@
       JSON.stringify({
         stock: shop.stock,
         rareStock: shop.rareStock,
+        eventStock: shop.eventStock,
         nextRestockAt: shop.nextRestockAt,
         infiniteStock: shop.infiniteStock,
         unkickable: shop.unkickable,
@@ -1254,12 +1516,15 @@
     shop.nextRestockAt += cycles * RESTOCK_MS;
     shop.stock = randomStockAmount();
     shop.rareStock = randomRareStockAmount();
+    shop.eventStock = randomEventStockAmount();
     saveShop();
   }
 
   function forceShopRestock() {
     shop.stock = randomStockAmount();
     shop.rareStock =
+      RARE_STOCK_MIN + Math.floor(Math.random() * (RARE_STOCK_MAX - RARE_STOCK_MIN + 1));
+    shop.eventStock =
       RARE_STOCK_MIN + Math.floor(Math.random() * (RARE_STOCK_MAX - RARE_STOCK_MIN + 1));
     shop.nextRestockAt = Date.now() + RESTOCK_MS;
     saveShop();
@@ -1305,13 +1570,19 @@
     return `${m}:${String(s).padStart(2, "0")}`;
   }
 
+  function packHasInfiniteStock(pack) {
+    return Boolean(pack && pack.infiniteStock) || shop.infiniteStock;
+  }
+
   function packStockCount(pack) {
-    return pack.stockKey === "rareStock" ? shop.rareStock : shop.stock;
+    if (packHasInfiniteStock(pack)) return Infinity;
+    return Math.max(0, Math.floor(Number(shop[pack.stockKey]) || 0));
   }
 
   function consumePackStock(pack) {
-    if (pack.stockKey === "rareStock") shop.rareStock -= 1;
-    else shop.stock -= 1;
+    if (packHasInfiniteStock(pack)) return;
+    const key = pack.stockKey;
+    shop[key] = Math.max(0, Math.floor(Number(shop[key]) || 0) - 1);
   }
 
   function formatStockLabel(count) {
@@ -1348,8 +1619,9 @@
     shopUiTimer = setInterval(() => {
       const before = shop.stock;
       const beforeRare = shop.rareStock;
+      const beforeEvent = shop.eventStock;
       applyDueRestocks();
-      const changed = before !== shop.stock || beforeRare !== shop.rareStock;
+      const changed = before !== shop.stock || beforeRare !== shop.rareStock || beforeEvent !== shop.eventStock;
       if (currentScreen === "cardShop" || changed) {
         if (currentScreen === "cardShop") renderShopStock();
         else if (changed) saveShop();
@@ -1378,7 +1650,8 @@
       }
     }, 250);
   }
-  let pendingTradeCardId = null;
+  let pendingTradeKind = null;
+  let pendingTradeId = null;
   let pendingSellCardId = null;
   let accountFormMode = "register"; // register | login
   let myConfirmed = false;
@@ -1389,9 +1662,11 @@
   let tradeExecuting = false;
 
   const MAX_TRADE_CARD_TYPES = 4;
+  const MAX_TRADE_PACK_TYPES = 4;
+  const MAX_TRADE_ITEM_TYPES = 4;
 
-  const myOffer = { cards: [], cash: 0 };
-  const theirOffer = { cards: [], cash: 0 };
+  const myOffer = { cards: [], packs: [], items: [], cash: 0 };
+  const theirOffer = { cards: [], packs: [], items: [], cash: 0 };
   let partnerUsername = null;
   let partnerUnkickable = false;
 
@@ -1791,6 +2066,9 @@
     if (card.battleOnly) {
       return `<span class="card-rarity">???</span>`;
     }
+    if (EVENT_CARD_IDS.has(card.id)) {
+      return `<span class="card-rarity rarity-event">1/${formatOneIn(card.oneIn)}</span>`;
+    }
     if (fromRare) {
       return `<span class="card-rarity rarity-rare">1/${formatOneIn(card.oneIn)}</span>`;
     }
@@ -1888,6 +2166,7 @@
 
   function poolForPack(pack) {
     if (pack.pool === "rare") return RARE_POOL;
+    if (pack.pool === "electrified") return ELECTRIFIED_POOL;
     return COMMON_POOL;
   }
 
@@ -1983,17 +2262,65 @@
     return player.cards[cardId] || 0;
   }
 
+  function ownedMutationCardCount(mutation) {
+    let n = 0;
+    for (const [key, count] of Object.entries(player.cards || {})) {
+      if (count > 0 && parseCardKey(key).mutation === mutation) n += Number(count) || 0;
+    }
+    return n;
+  }
+
+  function takeOwnedCardCopy(key) {
+    if (!(player.cards[key] > 0)) return false;
+    player.cards[key] -= 1;
+    if (player.cards[key] <= 0) delete player.cards[key];
+    player.sellSlots = (player.sellSlots || []).map((slot) => {
+      if (slot !== key) return slot;
+      return player.cards[key] > 0 ? slot : null;
+    });
+    return true;
+  }
+
   function recipeCoinCost(recipe) {
     const n = Number(recipe && recipe.coins);
     return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
   }
 
+  function formatCraftWait(recipe) {
+    if (shop.noCraftWait) return "Instant";
+    const mins = Math.max(1, Math.round((recipe && recipe.craftMs ? recipe.craftMs : FIRE_GEM_CRAFT_MS) / 60000));
+    return `${mins} min`;
+  }
+
   function canAffordRecipe(recipe) {
+    if (!recipe) return false;
     if ((player.coins || 0) < recipeCoinCost(recipe)) return false;
+    if (recipe.pick) {
+      return ownedMutationCardCount(recipe.pick.mutation) >= recipe.pick.count;
+    }
     return (recipe.materials || []).every((mat) => ownedBaseCardCount(mat.cardId) >= mat.count);
   }
 
-  function consumeRecipeMaterials(recipe) {
+  function canConsumePicks(recipe, picks) {
+    if (!recipe || !recipe.pick || !Array.isArray(picks) || picks.length !== recipe.pick.count) return false;
+    if ((player.coins || 0) < recipeCoinCost(recipe)) return false;
+    const used = {};
+    for (const key of picks) {
+      if (!baseCard(key) || parseCardKey(key).mutation !== recipe.pick.mutation) return false;
+      used[key] = (used[key] || 0) + 1;
+      if ((player.cards[key] || 0) < used[key]) return false;
+    }
+    return true;
+  }
+
+  function consumeRecipeMaterials(recipe, picks) {
+    if (recipe && recipe.pick) {
+      if (!canConsumePicks(recipe, picks)) return false;
+      const coins = recipeCoinCost(recipe);
+      if (coins) player.coins -= coins;
+      for (const key of picks) takeOwnedCardCopy(key);
+      return true;
+    }
     if (!canAffordRecipe(recipe)) return false;
     const coins = recipeCoinCost(recipe);
     if (coins) player.coins -= coins;
@@ -2004,10 +2331,7 @@
     return true;
   }
 
-  function startCraftRecipe(recipeId) {
-    const recipe = CRAFT_RECIPES[recipeId];
-    if (!recipe) return;
-    if (!consumeRecipeMaterials(recipe)) return;
+  function enqueueCraftJob(recipe) {
     if (!Array.isArray(player.craftJobs)) player.craftJobs = [];
     const wait = shop.noCraftWait ? 0 : recipe.craftMs;
     player.craftJobs.push({
@@ -2018,6 +2342,45 @@
     savePlayer();
     renderPlayerUi();
     renderCrafting();
+  }
+
+  function clearCraftPicks() {
+    pendingCraftRecipeId = null;
+    pendingCraftPicks = [];
+  }
+
+  function openCraftMaterialPicker(recipeId) {
+    const recipe = CRAFT_RECIPES[recipeId];
+    if (!recipe || !recipe.pick) return;
+    if (!canAffordRecipe(recipe)) return;
+    pendingCraftRecipeId = recipeId;
+    pendingCraftPicks = [];
+    openInventory("craft");
+  }
+
+  function finishCraftMaterialPicks() {
+    const recipe = CRAFT_RECIPES[pendingCraftRecipeId];
+    const picks = pendingCraftPicks.slice();
+    clearCraftPicks();
+    inventoryMode = "browse";
+    if (!recipe || !consumeRecipeMaterials(recipe, picks)) {
+      showScreen("crafting");
+      renderCrafting();
+      return;
+    }
+    enqueueCraftJob(recipe);
+    showScreen("crafting");
+  }
+
+  function startCraftRecipe(recipeId) {
+    const recipe = CRAFT_RECIPES[recipeId];
+    if (!recipe) return;
+    if (recipe.pick) {
+      openCraftMaterialPicker(recipeId);
+      return;
+    }
+    if (!consumeRecipeMaterials(recipe)) return;
+    enqueueCraftJob(recipe);
   }
 
   function craftJobReady(job) {
@@ -2400,6 +2763,7 @@
       els.loginRequiredModal,
       els.restockTokenModal,
       els.fireMutateModal,
+      els.engineChargeModal,
       els.craftResult,
       els.battleReward,
     ].some((el) => el && !el.hidden);
@@ -2536,9 +2900,46 @@
         `;
       }
       const qty = ownedCardCount(id);
-      return `<div class="index-slot">${cardFaceHtml(card, { qty, compact: true })}</div>`;
+      return `<button type="button" class="index-slot index-slot-found" data-index-card="${escapeHtml(id)}" aria-label="View ${escapeHtml(card.name)} stats">${cardFaceHtml(card, { qty, compact: true })}</button>`;
     }).join("");
     updateIndexBadge();
+  }
+
+  function packNamesForCard(id) {
+    const names = [];
+    if (COMMON_CARD_IDS.has(id)) names.push(PACKS["common-pack"].name);
+    if (RARE_CARD_IDS.has(id)) names.push(PACKS["rare-pack"].name);
+    if (EVENT_CARD_IDS.has(id)) names.push(PACKS["electrified-pack"].name);
+    return names;
+  }
+
+  function hideIndexDetail() {
+    if (els.indexDetailModal) els.indexDetailModal.hidden = true;
+  }
+
+  function openIndexDetail(id) {
+    const card = CARDS[id];
+    if (!card || !els.indexDetailModal) return;
+    if (!(player.indexFound && player.indexFound[id])) return;
+    els.indexDetailTitle.textContent = card.name;
+    els.indexDetailCard.innerHTML = cardFaceHtml(card, { qty: ownedCardCount(id) });
+    const packs = packNamesForCard(id);
+    els.indexDetailPack.textContent = packs.length
+      ? `Found in ${packs.join(" · ")}`
+      : "Not found in a pack.";
+    const moves = Array.isArray(card.moves) ? card.moves : [];
+    els.indexDetailMoves.innerHTML = moves.length
+      ? moves
+          .map(
+            (move) => `
+        <li class="index-detail-move">
+          <span class="index-detail-move-name">${escapeHtml(move.name)}</span>
+          <span class="index-detail-move-stat">${escapeHtml(battleMoveStat(move, null))}</span>
+        </li>`
+          )
+          .join("")
+      : `<li class="index-detail-move is-empty">No moves.</li>`;
+    els.indexDetailModal.hidden = false;
   }
 
   function claimIndexRewards() {
@@ -2585,12 +2986,13 @@
       tab.classList.toggle("active", tab.getAttribute("data-craft-tab") === craftTab);
     });
     if (craftTab === "bench") {
-      const recipe = CRAFT_RECIPES["fire-gem"];
       const jobs = Array.isArray(player.craftJobs) ? player.craftJobs : [];
-      const coinCost = recipeCoinCost(recipe);
-      const coinOwned = player.coins || 0;
-      const coinChip = coinCost
-        ? `<div class="craft-chip${coinOwned >= coinCost ? "" : " is-short"}">
+      const recipeCards = Object.values(CRAFT_RECIPES)
+        .map((recipe) => {
+          const coinCost = recipeCoinCost(recipe);
+          const coinOwned = player.coins || 0;
+          const coinChip = coinCost
+            ? `<div class="craft-chip${coinOwned >= coinCost ? "" : " is-short"}">
               <div class="craft-chip-art craft-chip-coin" aria-hidden="true">$</div>
               <div class="craft-chip-meta">
                 <strong>Coins</strong>
@@ -2599,14 +3001,32 @@
               </div>
             </div>
             <span class="craft-op" aria-hidden="true">+</span>`
-        : "";
-      const materialBits = (recipe.materials || [])
-        .map((mat, i) => {
-          const card = CARDS[mat.cardId];
-          const owned = ownedBaseCardCount(mat.cardId);
-          const enough = owned >= mat.count;
-          const plus = i > 0 ? `<span class="craft-op" aria-hidden="true">+</span>` : "";
-          return `
+            : "";
+          let materialBits = "";
+          if (recipe.pick) {
+            const spec = MUTATION_SPECS[recipe.pick.mutation];
+            const owned = ownedMutationCardCount(recipe.pick.mutation);
+            const enough = owned >= recipe.pick.count;
+            const label = spec ? `${spec.label} card` : "Mutated card";
+            materialBits = `
+            <div class="craft-chip${enough ? "" : " is-short"}">
+              <div class="craft-chip-art craft-chip-mut craft-chip-mut-${escapeHtml(recipe.pick.mutation)}" aria-hidden="true">${
+                recipe.pick.mutation === "silver" ? "🥈" : "✨"
+              }</div>
+              <div class="craft-chip-meta">
+                <strong>${escapeHtml(label)}</strong>
+                <span>×${recipe.pick.count}</span>
+                <span class="craft-chip-have">${owned}/${recipe.pick.count}</span>
+              </div>
+            </div>`;
+          } else {
+            materialBits = (recipe.materials || [])
+              .map((mat, i) => {
+                const card = CARDS[mat.cardId];
+                const owned = ownedBaseCardCount(mat.cardId);
+                const enough = owned >= mat.count;
+                const plus = i > 0 ? `<span class="craft-op" aria-hidden="true">+</span>` : "";
+                return `
             ${plus}
             <div class="craft-chip${enough ? "" : " is-short"}">
               <div class="craft-chip-art">${card ? cardArtHtml(card) : ""}</div>
@@ -2616,19 +3036,47 @@
                 <span class="craft-chip-have">${owned}/${mat.count}</span>
               </div>
             </div>`;
+              })
+              .join("");
+          }
+          const canCraft = canAffordRecipe(recipe);
+          return `
+        <article class="craft-recipe craft-recipe-${escapeHtml(recipe.theme || "fire")}">
+          <div class="craft-recipe-head">
+            <div class="craft-gem-mark" aria-hidden="true">${recipe.mark || "🔥"}</div>
+            <div>
+              <h3>${escapeHtml(recipe.name)}</h3>
+              <p class="craft-recipe-stats">${escapeHtml(recipe.stats || recipe.blurb || "")}</p>
+            </div>
+          </div>
+          <div class="craft-flow">
+            ${coinChip}
+            ${materialBits}
+            <span class="craft-op" aria-hidden="true">→</span>
+            <div class="craft-chip craft-chip-out">
+              <div class="craft-chip-art craft-chip-gem" aria-hidden="true">${recipe.mark || "🔥"}</div>
+              <div class="craft-chip-meta">
+                <strong>${escapeHtml(recipe.name)}</strong>
+                <span>${formatCraftWait(recipe)}</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary craft-go" data-craft-recipe="${escapeHtml(recipe.id)}" ${
+            canCraft ? "" : "disabled"
+          }>Craft</button>
+        </article>`;
         })
         .join("");
-      const canCraft = canAffordRecipe(recipe);
       const jobRows = jobs.length
         ? jobs
             .map((job) => {
-              const def = CRAFT_RECIPES[job.recipeId] || recipe;
+              const def = CRAFT_RECIPES[job.recipeId] || CRAFT_RECIPES["fire-gem"];
               const ready = craftJobReady(job);
               const wait = formatCountdown(job.readyAt - Date.now());
               const pct = Math.round(craftJobProgress(job) * 100);
               return `
                 <div class="craft-job${ready ? " is-ready" : ""}">
-                  <div class="craft-job-icon" aria-hidden="true">🔥</div>
+                  <div class="craft-job-icon" aria-hidden="true">${def.mark || "🔥"}</div>
                   <div class="craft-job-body">
                     <div class="craft-job-top">
                       <strong>${escapeHtml(def.name)}</strong>
@@ -2650,28 +3098,7 @@
       els.craftingMain.innerHTML = `
         <h2>Crafting bench</h2>
         <p class="panel-copy">Fuse cards into gems, then claim them from the queue.</p>
-        <article class="craft-recipe">
-          <div class="craft-recipe-head">
-            <div class="craft-gem-mark" aria-hidden="true">🔥</div>
-            <div>
-              <h3>${escapeHtml(recipe.name)}</h3>
-              <p class="craft-recipe-stats">1.8× damage · 0.8× HP · healing unchanged · one mutation per card</p>
-            </div>
-          </div>
-          <div class="craft-flow">
-            ${coinChip}
-            ${materialBits}
-            <span class="craft-op" aria-hidden="true">→</span>
-            <div class="craft-chip craft-chip-out">
-              <div class="craft-chip-art craft-chip-gem" aria-hidden="true">🔥</div>
-              <div class="craft-chip-meta">
-                <strong>Fire Gem</strong>
-                <span>${shop.noCraftWait ? "Instant" : "5 min"}</span>
-              </div>
-            </div>
-          </div>
-          <button type="button" class="btn btn-primary craft-go" id="btn-craft-fire-gem" ${canCraft ? "" : "disabled"}>Craft</button>
-        </article>
+        <div class="craft-recipes">${recipeCards}</div>
         ${jobRows ? `<div class="craft-jobs">${jobRows}</div>` : ""}
       `;
       return;
@@ -2724,8 +3151,13 @@
     refreshFabs();
   }
 
-  function openFireGemPicker() {
-    if (!(player.items["fire-gem"] > 0)) return;
+  function gemItemDef(itemId = pendingGemItemId) {
+    return itemId ? GEM_ITEMS[itemId] || null : null;
+  }
+
+  function openGemPicker(itemId) {
+    if (!(player.items[itemId] > 0) || !GEM_ITEMS[itemId]) return;
+    pendingGemItemId = itemId;
     pendingFireCardKey = null;
     openInventory("mutate");
   }
@@ -2740,26 +3172,30 @@
     closeFireConfirm();
     inventoryMode = "browse";
     inventoryTab = "items";
+    pendingGemItemId = null;
     showScreen("inventory");
     renderInventoryList();
   }
 
   function promptFireMutate(cardKeyVal) {
-    if (!(player.items["fire-gem"] > 0)) return;
+    const gem = gemItemDef();
+    if (!gem || !(player.items[gem.itemId] > 0)) return;
     if (!baseCard(cardKeyVal) || parseCardKey(cardKeyVal).mutation) return;
     if (!(player.cards[cardKeyVal] > 0)) return;
     pendingFireCardKey = cardKeyVal;
+    if (els.fireMutateTitle) els.fireMutateTitle.textContent = gem.title;
     if (els.fireMutateCopy) {
-      els.fireMutateCopy.textContent = `Are you sure you want to apply the Fire Mutation to ${cardDisplayName(cardKeyVal)}.`;
+      els.fireMutateCopy.textContent = `Are you sure you want to apply the ${gem.title} to ${cardDisplayName(cardKeyVal)}.`;
     }
     if (els.fireMutateModal) els.fireMutateModal.hidden = false;
     refreshFabs();
   }
 
   function confirmFireMutate() {
+    const gem = gemItemDef();
     const fromKey = pendingFireCardKey;
     closeFireConfirm();
-    if (!(player.items["fire-gem"] > 0) || !fromKey || parseCardKey(fromKey).mutation) {
+    if (!gem || !(player.items[gem.itemId] > 0) || !fromKey || parseCardKey(fromKey).mutation) {
       cancelFireMutate();
       return;
     }
@@ -2768,9 +3204,9 @@
       return;
     }
     const parsed = parseCardKey(fromKey);
-    const toKey = cardKey(parsed.baseId, "fire");
-    player.items["fire-gem"] -= 1;
-    if (player.items["fire-gem"] <= 0) delete player.items["fire-gem"];
+    const toKey = cardKey(parsed.baseId, gem.mutation);
+    player.items[gem.itemId] -= 1;
+    if (player.items[gem.itemId] <= 0) delete player.items[gem.itemId];
     player.cards[fromKey] -= 1;
     if (player.cards[fromKey] <= 0) delete player.cards[fromKey];
     player.cards[toKey] = (player.cards[toKey] || 0) + 1;
@@ -2778,12 +3214,17 @@
       if (slot !== fromKey) return slot;
       return player.cards[fromKey] > 0 ? slot : toKey;
     });
+    pendingGemItemId = null;
     savePlayer();
     inventoryMode = "browse";
     inventoryTab = "cards";
     renderPlayerUi();
     showScreen("inventory");
     renderInventoryList();
+  }
+
+  function openFireGemPicker() {
+    openGemPicker("fire-gem");
   }
 
   function combineMutation() {
@@ -2815,20 +3256,45 @@
   }
 
   function renderInventoryList() {
-    const pickMode =
-      inventoryMode === "trade" ||
+    const craftRecipe = inventoryMode === "craft" ? CRAFT_RECIPES[pendingCraftRecipeId] : null;
+    const craftNeed = craftRecipe && craftRecipe.pick ? craftRecipe.pick.count : 0;
+    const craftLabel =
+      craftRecipe && craftRecipe.pick && MUTATION_SPECS[craftRecipe.pick.mutation]
+        ? MUTATION_SPECS[craftRecipe.pick.mutation].label
+        : "mutated";
+    const gem = gemItemDef();
+    const cardOnlyPick =
       inventoryMode === "sell" ||
       inventoryMode === "battle" ||
-      inventoryMode === "mutate";
+      inventoryMode === "mutate" ||
+      inventoryMode === "craft";
+    const tradePick = inventoryMode === "trade";
+    const pickMode = cardOnlyPick || tradePick;
 
-    if (pickMode) {
+    if (tradePick) {
+      els.inventoryTitle.textContent = "Add to offer";
+      els.inventoryCopy.textContent =
+        inventoryTab === "packs"
+          ? "Pick a pack, then choose how many to offer."
+          : inventoryTab === "items"
+            ? "Pick an item, then choose how many to offer."
+            : "Pick a card, then choose how many to offer.";
+      document.querySelectorAll(".inv-tab").forEach((tab) => {
+        tab.hidden = false;
+        tab.classList.toggle("active", tab.getAttribute("data-inv-tab") === inventoryTab);
+      });
+    } else if (pickMode) {
       els.inventoryTitle.textContent =
         inventoryMode === "sell"
           ? "Station a card"
           : inventoryMode === "battle"
             ? `${pendingBattleKind === "trial" ? "Trial team" : pendingBattleKind === "pvp" ? "Battle team" : "Choose fighters"} (${pendingBattleTeam.length + 1} / ${PLAYER_TEAM_SIZE})`
+            : inventoryMode === "craft"
+              ? `Choose cards (${pendingCraftPicks.length + 1} / ${craftNeed})`
             : inventoryMode === "mutate"
-              ? "Apply Fire Mutation"
+              ? gem
+                ? `Apply ${gem.title}`
+                : "Apply mutation"
               : "Select a card";
       els.inventoryCopy.textContent =
         inventoryMode === "sell"
@@ -2843,6 +3309,12 @@
                 : pendingBattleKind === "pvp"
                   ? "Pick 3 cards. The fight starts when both teams are ready."
                   : "Pick 3 cards for your team."
+            : inventoryMode === "craft"
+              ? pendingCraftPicks.length
+                ? `Picked: ${pendingCraftPicks.map((id) => cardDisplayName(id)).join(", ")}. Pick ${
+                    craftNeed - pendingCraftPicks.length
+                  } more.`
+                : `Pick ${craftNeed} ${craftLabel} cards.`
             : inventoryMode === "mutate"
               ? "Click a card to apply mutation."
               : "Pick a card, then choose how many to offer.";
@@ -2867,7 +3339,7 @@
     }
 
     const activeBag =
-      pickMode
+      pickMode && !tradePick
         ? player.cards
         : inventoryTab === "packs"
           ? player.packs
@@ -2879,11 +3351,17 @@
     if (!activeEntries.length) {
       const emptyMsg =
         inventoryMode === "trade"
-          ? "No cards to offer yet. Open some packs first."
+          ? inventoryTab === "packs"
+            ? "No packs to offer."
+            : inventoryTab === "items"
+              ? "No items to offer."
+              : "No cards to offer yet. Open some packs first."
           : inventoryMode === "sell"
             ? "No cards to station. Open some packs first."
             : inventoryMode === "battle"
               ? "No cards to battle with. Open a pack first."
+              : inventoryMode === "craft"
+                ? `You need ${craftNeed} ${craftLabel} cards.`
               : inventoryMode === "mutate"
                 ? "You need a card with no mutation."
           : inventoryTab === "packs"
@@ -2895,10 +3373,63 @@
       return;
     }
 
+    if (tradePick && inventoryTab === "packs") {
+      const list = activeEntries.filter(([id, count]) => count > 0 && canTradePack(id));
+      if (!list.length) {
+        els.inventoryList.innerHTML = `<p class="inventory-empty">No packs to offer.</p>`;
+        return;
+      }
+      els.inventoryList.innerHTML = list
+        .map(
+          ([id, count]) => `
+            <button type="button" class="inventory-row pack-row" data-pick-pack="${escapeHtml(id)}">
+              <div>
+                <div class="item-name">${escapeHtml(goodsDisplayName("pack", id))}</div>
+                <span class="item-note">Tap to offer this pack</span>
+              </div>
+              <div class="item-count">×${count}</div>
+            </button>
+          `
+        )
+        .join("");
+      return;
+    }
+
+    if (tradePick && inventoryTab === "items") {
+      const list = activeEntries.filter(([id, count]) => count > 0 && canTradeItem(id));
+      if (!list.length) {
+        els.inventoryList.innerHTML = `<p class="inventory-empty">No items to offer.</p>`;
+        return;
+      }
+      els.inventoryList.innerHTML = list
+        .map(([id, count]) => {
+          const item = ITEMS[id] || { name: id, note: "" };
+          const note = item.note
+            ? `<span class="item-note">${escapeHtml(item.note)}</span>`
+            : `<span class="item-note">Tap to offer this item</span>`;
+          return `
+            <button type="button" class="inventory-row pack-row" data-pick-item="${escapeHtml(id)}">
+              <div>
+                <div class="item-name">${escapeHtml(item.name)}</div>
+                ${note}
+              </div>
+              <div class="item-count">×${count}</div>
+            </button>
+          `;
+        })
+        .join("");
+      return;
+    }
+
     if (pickMode || inventoryTab === "cards") {
       const list = sortCardEntries(activeEntries).filter(([id, count]) => {
         if (!baseCard(id) || count <= 0) return false;
         if (inventoryMode === "mutate" && parseCardKey(id).mutation) return false;
+        if (inventoryMode === "craft") {
+          if (!craftRecipe || !craftRecipe.pick) return false;
+          if (parseCardKey(id).mutation !== craftRecipe.pick.mutation) return false;
+          return count - pendingCraftPicks.filter((picked) => picked === id).length > 0;
+        }
         if (inventoryMode === "battle") {
           return count - pendingBattleTeam.filter((picked) => picked === id).length > 0;
         }
@@ -2908,8 +3439,12 @@
         els.inventoryList.innerHTML = `<p class="inventory-empty">${
           inventoryMode === "mutate"
             ? "You need a card with no mutation."
+            : inventoryMode === "craft"
+              ? `You need ${craftNeed} ${craftLabel} cards.`
             : inventoryMode === "battle"
               ? "No cards to battle with. Open a pack first."
+              : inventoryMode === "trade"
+                ? "No cards to offer yet. Open some packs first."
               : "No cards yet. Open a pack!"
         }</p>`;
         return;
@@ -2919,6 +3454,8 @@
           const shown =
             inventoryMode === "battle"
               ? count - pendingBattleTeam.filter((picked) => picked === id).length
+              : inventoryMode === "craft"
+                ? count - pendingCraftPicks.filter((picked) => picked === id).length
               : count;
           if (shown <= 0) return "";
           const cpsNote =
@@ -3075,76 +3612,197 @@
   }
 
   function emptyOffer() {
-    return { cards: [], cash: 0 };
+    return { cards: [], packs: [], items: [], cash: 0 };
+  }
+
+  function canTradePack(packId) {
+    const pack = PACKS[packId];
+    return Boolean(pack && pack.shopSold !== false);
+  }
+
+  function canTradeItem(itemId) {
+    return Boolean(ITEMS[itemId]);
+  }
+
+  function maxTradeTypes(kind) {
+    if (kind === "card") return MAX_TRADE_CARD_TYPES;
+    if (kind === "pack") return MAX_TRADE_PACK_TYPES;
+    return MAX_TRADE_ITEM_TYPES;
+  }
+
+  function offerCollection(offer, kind) {
+    if (kind === "card") return offer.cards;
+    if (kind === "pack") return offer.packs;
+    return offer.items;
+  }
+
+  function offerRowIdKey(kind) {
+    if (kind === "card") return "cardId";
+    if (kind === "pack") return "packId";
+    return "itemId";
+  }
+
+  function findOfferRow(offer, kind, id) {
+    const key = offerRowIdKey(kind);
+    return offerCollection(offer, kind).find((row) => row[key] === id);
+  }
+
+  function playerBagForKind(kind) {
+    if (kind === "card") return player.cards;
+    if (kind === "pack") return player.packs;
+    return player.items;
+  }
+
+  function goodsOwned(kind, id) {
+    return playerBagForKind(kind)[id] || 0;
+  }
+
+  function goodsDisplayName(kind, id) {
+    if (kind === "card") return cardDisplayName(id);
+    if (kind === "pack") return (PACKS[id] && PACKS[id].name) || id;
+    return (ITEMS[id] && ITEMS[id].name) || id;
+  }
+
+  function goodsUnitValue(kind, id) {
+    if (kind === "card") return cardValueForKey(id);
+    if (kind === "pack") return Number(PACKS[id] && PACKS[id].price) || 0;
+    return 0;
+  }
+
+  function goodsKindLabel(kind) {
+    if (kind === "card") return "Card";
+    if (kind === "pack") return "Pack";
+    return "Item";
+  }
+
+  function goodsIcon(kind) {
+    if (kind === "pack") return "📦";
+    if (kind === "item") return "✦";
+    return "";
+  }
+
+  function goodsFaceHtml(kind, id, qty) {
+    if (kind === "card") return cardFaceForKey(id, { qty: qty || 1, compact: true });
+    return `
+      <div class="trade-goods-face">
+        <span class="trade-goods-icon">${goodsIcon(kind)}</span>
+        <span class="trade-goods-kind">${goodsKindLabel(kind)}</span>
+      </div>
+    `;
+  }
+
+  function normalizeOfferRows(raw, idKey, isAllowed, limit) {
+    const rows = [];
+    const list = Array.isArray(raw) ? raw : [];
+    for (const row of list) {
+      if (!row || typeof row[idKey] !== "string" || !isAllowed(row[idKey])) continue;
+      const qty = Math.max(0, Math.floor(Number(row.qty) || 0));
+      if (qty <= 0) continue;
+      if (rows.some((existing) => existing[idKey] === row[idKey])) continue;
+      rows.push({ [idKey]: row[idKey], qty });
+      if (rows.length >= limit) break;
+    }
+    return rows;
   }
 
   function normalizeOffer(data) {
-    const cards = [];
-    const rawCards = Array.isArray(data?.cards) ? data.cards : [];
-    for (const row of rawCards) {
-      if (!row || typeof row.cardId !== "string" || !baseCard(row.cardId)) continue;
-      const qty = Math.max(0, Math.floor(Number(row.qty) || 0));
-      if (qty <= 0) continue;
-      if (cards.some((c) => c.cardId === row.cardId)) continue;
-      cards.push({ cardId: row.cardId, qty });
-      if (cards.length >= MAX_TRADE_CARD_TYPES) break;
-    }
-    const cash = Math.max(0, Math.floor(Number(data?.cash) || 0));
-    return { cards, cash };
+    return {
+      cards: normalizeOfferRows(data?.cards, "cardId", (id) => Boolean(baseCard(id)), MAX_TRADE_CARD_TYPES),
+      packs: normalizeOfferRows(data?.packs, "packId", canTradePack, MAX_TRADE_PACK_TYPES),
+      items: normalizeOfferRows(data?.items, "itemId", canTradeItem, MAX_TRADE_ITEM_TYPES),
+      cash: Math.max(0, Math.floor(Number(data?.cash) || 0)),
+    };
+  }
+
+  function copyNormalizedOffer(target, data) {
+    const next = normalizeOffer(data);
+    target.cards = next.cards;
+    target.packs = next.packs;
+    target.items = next.items;
+    target.cash = next.cash;
   }
 
   function offerHasContent(offer) {
-    return offer.cash > 0 || offer.cards.some((c) => c.qty > 0);
+    return (
+      offer.cash > 0 ||
+      offer.cards.some((c) => c.qty > 0) ||
+      offer.packs.some((p) => p.qty > 0) ||
+      offer.items.some((i) => i.qty > 0)
+    );
   }
 
   function offerTotalValue(offer) {
     let total = offer.cash || 0;
-    for (const row of offer.cards) {
-      const card = baseCard(row.cardId);
-      if (card) total += cardValueForKey(row.cardId) * row.qty;
-    }
+    for (const row of offer.cards) total += goodsUnitValue("card", row.cardId) * row.qty;
+    for (const row of offer.packs) total += goodsUnitValue("pack", row.packId) * row.qty;
     return total;
+  }
+
+  function canAffordOfferRows(bag, rows, idKey) {
+    for (const row of rows) {
+      if ((bag[row[idKey]] || 0) < row.qty) return false;
+    }
+    return true;
   }
 
   function canAffordMyOffer() {
     if (myOffer.cash > player.coins) return false;
-    for (const row of myOffer.cards) {
-      if ((player.cards[row.cardId] || 0) < row.qty) return false;
-    }
-    return true;
+    return (
+      canAffordOfferRows(player.cards, myOffer.cards, "cardId") &&
+      canAffordOfferRows(player.packs, myOffer.packs, "packId") &&
+      canAffordOfferRows(player.items, myOffer.items, "itemId")
+    );
   }
 
   function snapshotOffer(offer) {
     return {
       cards: offer.cards.map((c) => ({ cardId: c.cardId, qty: c.qty })),
+      packs: offer.packs.map((p) => ({ packId: p.packId, qty: p.qty })),
+      items: offer.items.map((i) => ({ itemId: i.itemId, qty: i.qty })),
       cash: offer.cash || 0,
     };
   }
 
-  function offerCardsHtml(offer, editable) {
-    if (!offer.cards.length) {
-      return `<p class="trade-empty">${editable ? "No cards yet." : "Waiting…"}</p>`;
+  function takeOfferRows(bag, rows, idKey) {
+    for (const row of rows) {
+      bag[row[idKey]] -= row.qty;
+      if (bag[row[idKey]] <= 0) delete bag[row[idKey]];
     }
-    return offer.cards
-      .map((row) => {
-        const card = baseCard(row.cardId);
-        if (!card) return "";
-        const lineValue = cardValueForKey(row.cardId) * row.qty;
-        const removeBtn = editable
-          ? `<button type="button" class="btn-remove-trade" data-remove-trade="${escapeHtml(row.cardId)}" title="Remove">×</button>`
-          : "";
-        return `
-          <div class="trade-item-row">
-            <div class="trade-item-card">${cardFaceForKey(row.cardId, { qty: row.qty, compact: true })}</div>
-            <div class="trade-item-meta">
-              <div>${escapeHtml(cardDisplayName(row.cardId))} ×${row.qty}</div>
-              <div class="trade-item-value">$${lineValue}</div>
-            </div>
-            ${removeBtn}
-          </div>
-        `;
-      })
-      .join("");
+  }
+
+  function giveOfferRows(bag, rows, idKey) {
+    for (const row of rows) {
+      bag[row[idKey]] = (bag[row[idKey]] || 0) + row.qty;
+    }
+  }
+
+  function offerLineHtml(kind, id, qty, editable) {
+    const lineValue = goodsUnitValue(kind, id) * qty;
+    const removeBtn = editable
+      ? `<button type="button" class="btn-remove-trade" data-remove-kind="${escapeHtml(kind)}" data-remove-id="${escapeHtml(id)}" title="Remove">×</button>`
+      : "";
+    return `
+      <div class="trade-item-row">
+        <div class="trade-item-card">${goodsFaceHtml(kind, id, qty)}</div>
+        <div class="trade-item-meta">
+          <div>${escapeHtml(goodsDisplayName(kind, id))} ×${qty}</div>
+          <div class="trade-item-value">$${lineValue}</div>
+        </div>
+        ${removeBtn}
+      </div>
+    `;
+  }
+
+  function offerGoodsHtml(offer, editable) {
+    const rows = [
+      ...offer.cards.map((row) => offerLineHtml("card", row.cardId, row.qty, editable)),
+      ...offer.packs.map((row) => offerLineHtml("pack", row.packId, row.qty, editable)),
+      ...offer.items.map((row) => offerLineHtml("item", row.itemId, row.qty, editable)),
+    ].join("");
+    if (!rows) {
+      return `<p class="trade-empty">${editable ? "Nothing offered yet." : "Waiting…"}</p>`;
+    }
+    return rows;
   }
 
   function updatePartnerChrome() {
@@ -3173,18 +3831,18 @@
 
   function renderTradeSlots() {
     const locked = myConfirmed;
-    els.btnAddTradeCard.disabled = locked || myOffer.cards.length >= MAX_TRADE_CARD_TYPES;
-    els.btnAddTradeCard.hidden = locked ? false : myOffer.cards.length >= MAX_TRADE_CARD_TYPES;
+    els.btnAddTradeCard.disabled = locked;
+    els.btnAddTradeCard.hidden = false;
     els.myTradeCash.disabled = locked;
     els.btnClearOffer.disabled = locked;
     els.btnAddTradeCard.classList.toggle("trade-locked", locked);
 
-    els.myTradeItems.innerHTML = offerCardsHtml(myOffer, !locked);
+    els.myTradeItems.innerHTML = offerGoodsHtml(myOffer, !locked);
     els.myTradeCash.value = String(myOffer.cash || 0);
     els.myTradeTotal.textContent = `$${offerTotalValue(myOffer)}`;
     els.btnClearOffer.hidden = !offerHasContent(myOffer);
 
-    els.theirTradeItems.innerHTML = offerCardsHtml(theirOffer, false);
+    els.theirTradeItems.innerHTML = offerGoodsHtml(theirOffer, false);
     els.theirTradeCashLine.textContent = `Cash: $${theirOffer.cash || 0}`;
     els.theirTradeTotal.textContent = `$${offerTotalValue(theirOffer)}`;
 
@@ -3274,11 +3932,11 @@
       return;
     }
     if (!myConfirmed && !offerHasContent(myOffer) && !offerHasContent(theirOffer)) {
-      els.tradeConfirmStatus.textContent = "Add cards or cash (or wait for theirs) before confirming.";
+      els.tradeConfirmStatus.textContent = "Add cards, packs, items, or cash (or wait for theirs) before confirming.";
       return;
     }
     if (!myConfirmed && !canAffordMyOffer()) {
-      els.tradeConfirmStatus.textContent = "You don't have enough cards or cash for this offer.";
+      els.tradeConfirmStatus.textContent = "You don't have enough cards, packs, items, or cash for this offer.";
       return;
     }
     setMyConfirmed(!myConfirmed);
@@ -3302,21 +3960,20 @@
         ...snapshotOffer(myOffer),
       });
       renderTradeSlots();
-      els.tradeConfirmStatus.textContent = "Trade failed — not enough cards or cash.";
+      els.tradeConfirmStatus.textContent = "Trade failed — not enough cards, packs, items, or cash.";
       sendPayload({ type: "trade-fail", reason: "missing-cards" });
       return;
     }
 
-    for (const row of myOffer.cards) {
-      player.cards[row.cardId] -= row.qty;
-      if (player.cards[row.cardId] <= 0) delete player.cards[row.cardId];
-    }
+    takeOfferRows(player.cards, myOffer.cards, "cardId");
+    takeOfferRows(player.packs, myOffer.packs, "packId");
+    takeOfferRows(player.items, myOffer.items, "itemId");
     if (myOffer.cash > 0) player.coins -= myOffer.cash;
 
-    for (const row of theirOffer.cards) {
-      player.cards[row.cardId] = (player.cards[row.cardId] || 0) + row.qty;
-      markIndexFound(row.cardId);
-    }
+    giveOfferRows(player.cards, theirOffer.cards, "cardId");
+    giveOfferRows(player.packs, theirOffer.packs, "packId");
+    giveOfferRows(player.items, theirOffer.items, "itemId");
+    for (const row of theirOffer.cards) markIndexFound(row.cardId);
     if (theirOffer.cash > 0) addEarnedCoins(theirOffer.cash);
     progressQuests({ cardIds: theirOffer.cards.map((row) => row.cardId) });
 
@@ -3373,9 +4030,9 @@
 
   function buyPack(packId) {
     const pack = PACKS[packId];
-    if (!pack) return;
+    if (!pack || pack.shopSold === false) return;
     applyDueRestocks();
-    if (!shop.infiniteStock && packStockCount(pack) <= 0) {
+    if (!packHasInfiniteStock(pack) && packStockCount(pack) <= 0) {
       setShopMessage("Sold out. Wait for the restock timer.", true);
       renderShopStock();
       return;
@@ -3385,7 +4042,7 @@
       return;
     }
     player.coins -= pack.price;
-    if (!shop.infiniteStock) {
+    if (!packHasInfiniteStock(pack)) {
       consumePackStock(pack);
       saveShop();
     }
@@ -3443,8 +4100,21 @@
     if (els.adminLuck) els.adminLuck.value = String(sanitizeLuck(shop.luck));
     refreshLuckPreview(shop.luck);
     fillAdminOddsInputs();
+    refreshAdminEventPackCount();
     els.adminSettings.hidden = false;
     refreshFabs();
+  }
+
+  function refreshAdminEventPackCount() {
+    if (!els.adminEventPackCount) return;
+    els.adminEventPackCount.textContent = `×${player.packs["electrified-pack"] || 0}`;
+  }
+
+  function grantElectrifiedPack() {
+    player.packs["electrified-pack"] = (player.packs["electrified-pack"] || 0) + 1;
+    savePlayer();
+    renderPlayerUi();
+    refreshAdminEventPackCount();
   }
 
   function tryAdminLogin() {
@@ -3747,6 +4417,7 @@
   function battleMoveStat(move, battler) {
     const dmg = battleMoveDamage(move, battler);
     const heal = battleMoveHeal(move, battler);
+    if (move.healTeam) return `Heal team ${heal}`;
     if (move.isHybrid) return `Heal ${heal} · ${dmg} DMG`;
     if (move.isHeal) return `Heal ${heal}`;
     return `${dmg} DMG`;
@@ -3776,8 +4447,34 @@
     const move = (card.moves || []).find((m) => m.id === action.moveId);
     const moveName = move ? move.name : "A move";
     if (action.type === "heal") {
-      battler.hp = Math.min(battler.maxHp, battler.hp + action.amount);
-      return { log: `${cardDisplayName(battler.cardKey || battler.cardId)} heals ${action.amount}.`, heal: action.sideId, amount: action.amount };
+      const team = action.healTeam
+        ? action.sideId === "you"
+          ? battle.youTeam
+          : battle.foeTeam
+        : [battler];
+      if (action.healTeam && action.engineChargeMode === "revive") {
+        const idx = Number(action.reviveIndex);
+        const target = Number.isInteger(idx) ? team[idx] : null;
+        if (target && target.hp <= 0) {
+          target.hp = Math.min(target.maxHp, ENGINE_CHARGE_X_REVIVE_HP);
+          return {
+            log: `${moveName} revives ${cardDisplayName(target.cardKey || target.cardId)} to ${target.hp} HP.`,
+            heal: action.sideId,
+            amount: target.hp,
+          };
+        }
+      }
+      for (const member of team || []) {
+        if (!member || member.hp <= 0) continue;
+        member.hp = Math.min(member.maxHp, member.hp + action.amount);
+      }
+      return {
+        log: action.healTeam
+          ? `${cardDisplayName(battler.cardKey || battler.cardId)} heals the team ${action.amount}.`
+          : `${cardDisplayName(battler.cardKey || battler.cardId)} heals ${action.amount}.`,
+        heal: action.sideId,
+        amount: action.amount,
+      };
     }
     if (action.missed) {
       return { log: `${moveName} missed!` };
@@ -3992,22 +4689,143 @@
     if (last && last.openParty) openBattleParty();
   }
 
+  function faintedTeamMembers(team) {
+    return (team || [])
+      .map((member, index) => ({ member, index }))
+      .filter((entry) => entry.member && entry.member.hp <= 0);
+  }
+
+  function autoEngineChargeExtras(move, team) {
+    if (!move || !move.healTeam) return {};
+    const dead = faintedTeamMembers(team);
+    if (!dead.length) return { engineChargeMode: "heal" };
+    return { engineChargeMode: "revive", reviveIndex: dead[0].index };
+  }
+
+  function hideEngineChargeModal() {
+    pendingEngineCharge = null;
+    if (els.engineChargeModal) els.engineChargeModal.hidden = true;
+    if (els.engineChargeReviveList) {
+      els.engineChargeReviveList.hidden = true;
+      els.engineChargeReviveList.innerHTML = "";
+    }
+    if (els.engineChargeChoices) els.engineChargeChoices.hidden = false;
+    if (els.engineChargeCopy) {
+      els.engineChargeCopy.textContent = "Do you want to heal your team or revive one card";
+    }
+    refreshFabs();
+  }
+
+  function showEngineChargePrompt(index) {
+    pendingEngineCharge = { index };
+    if (els.engineChargeCopy) {
+      els.engineChargeCopy.textContent = "Do you want to heal your team or revive one card";
+    }
+    if (els.engineChargeChoices) els.engineChargeChoices.hidden = false;
+    if (els.engineChargeReviveList) {
+      els.engineChargeReviveList.hidden = true;
+      els.engineChargeReviveList.innerHTML = "";
+    }
+    if (els.engineChargeModal) els.engineChargeModal.hidden = false;
+    refreshFabs();
+  }
+
+  function showEngineChargeRevivePicks() {
+    if (!battle || !pendingEngineCharge) return;
+    const dead = faintedTeamMembers(battle.youTeam);
+    if (!dead.length) {
+      confirmEngineChargeHeal();
+      return;
+    }
+    if (els.engineChargeCopy) els.engineChargeCopy.textContent = "Choose one card to revive to 90 HP.";
+    if (els.engineChargeChoices) els.engineChargeChoices.hidden = true;
+    if (!els.engineChargeReviveList) return;
+    els.engineChargeReviveList.innerHTML = dead
+      .map(
+        ({ member, index }) => `
+        <button type="button" class="engine-charge-revive-pick" data-engine-revive="${index}">
+          ${cardFaceHtml(CARDS[member.cardId], {
+            compact: true,
+            showValue: false,
+            hp: 0,
+            cardKey: member.cardKey || member.cardId,
+          })}
+        </button>`
+      )
+      .join("");
+    els.engineChargeReviveList.hidden = false;
+  }
+
+  function confirmEngineChargeHeal() {
+    const pending = pendingEngineCharge;
+    hideEngineChargeModal();
+    if (!pending) return;
+    commitBattleMove(pending.index, { engineChargeMode: "heal" });
+  }
+
+  function confirmEngineChargeRevive(reviveIndex) {
+    const pending = pendingEngineCharge;
+    hideEngineChargeModal();
+    if (!pending) return;
+    commitBattleMove(pending.index, { engineChargeMode: "revive", reviveIndex });
+  }
+
+  function battleSideExtras(sideId, move, extras) {
+    const team = sideId === "you" ? battle.youTeam : battle.foeTeam;
+    if (!move || !move.healTeam) return {};
+    if (extras && extras.engineChargeMode === "revive") {
+      const idx = Math.floor(Number(extras.reviveIndex));
+      const target = team[idx];
+      if (target && target.hp <= 0) return { engineChargeMode: "revive", reviveIndex: idx };
+    }
+    return { engineChargeMode: "heal" };
+  }
+
   async function playBattleMove(index) {
     if (!battle || battle.over || battle.busy || battle.mustSwitch) return;
+    const you = activeYou();
+    const youCard = you && CARDS[you.cardId];
+    const youMove = youCard && youCard.moves ? youCard.moves[index] : null;
+    if (!youMove || !battleMoveReady(youMove, you)) return;
+    if (youMove.healTeam && faintedTeamMembers(battle.youTeam).length) {
+      showEngineChargePrompt(index);
+      return;
+    }
+    commitBattleMove(index, youMove.healTeam ? { engineChargeMode: "heal" } : {});
+  }
+
+  async function commitBattleMove(index, extras = {}) {
+    if (!battle || battle.over || battle.busy || battle.mustSwitch) return;
     if (battle.mode === "pvp") {
-      lockInPvpChoice({ type: "move", index });
+      lockInPvpChoice({ type: "move", index, ...extras });
       return;
     }
     const you = activeYou();
     const youCard = you && CARDS[you.cardId];
     const foe = activeFoe();
     const foeCard = foe && CARDS[foe.cardId];
-    const youMove = (youCard.moves || [])[index];
+    const youMove = youCard && youCard.moves ? youCard.moves[index] : null;
     if (!youMove || !foeCard || !battleMoveReady(youMove, you)) return;
     const foeMove = pickNpcMove(foeCard, foe);
+    const youExtras = battleSideExtras("you", youMove, extras);
+    const foeExtras = autoEngineChargeExtras(foeMove, battle.foeTeam);
     const actions = resolveBattleTurn(
-      { id: "you", move: youMove, jumpscareUses: you.jumpscareUses, statMult: you.statMult || 1, healMult: you.healMult != null ? you.healMult : 1 },
-      { id: "foe", move: foeMove, jumpscareUses: foe.jumpscareUses, statMult: foe.statMult || 1, healMult: foe.healMult != null ? foe.healMult : 1 }
+      {
+        id: "you",
+        move: youMove,
+        jumpscareUses: you.jumpscareUses,
+        statMult: you.statMult || 1,
+        healMult: you.healMult != null ? you.healMult : 1,
+        ...youExtras,
+      },
+      {
+        id: "foe",
+        move: foeMove,
+        jumpscareUses: foe.jumpscareUses,
+        statMult: foe.statMult || 1,
+        healMult: foe.healMult != null ? foe.healMult : 1,
+        ...foeExtras,
+      }
     );
     if (youMove.isHeal) you.healLastTurn[youMove.id] = battle.turn;
     if (youMove.isJumpscare) you.jumpscareUses += 1;
@@ -4046,9 +4864,10 @@
     const foeCard = foe && CARDS[foe.cardId];
     if (!you || !foeCard) return;
     const foeMove = pickNpcMove(foeCard, foe);
+    const foeExtras = autoEngineChargeExtras(foeMove, battle.foeTeam);
     const actions = resolveBattleTurn(
       { id: "you", move: null, jumpscareUses: you.jumpscareUses, statMult: you.statMult || 1, healMult: you.healMult != null ? you.healMult : 1 },
-      { id: "foe", move: foeMove, jumpscareUses: foe.jumpscareUses, statMult: foe.statMult || 1, healMult: foe.healMult != null ? foe.healMult : 1 }
+      { id: "foe", move: foeMove, jumpscareUses: foe.jumpscareUses, statMult: foe.statMult || 1, healMult: foe.healMult != null ? foe.healMult : 1, ...foeExtras }
     );
     if (foeMove) {
       if (foeMove.isHeal) foe.healLastTurn[foeMove.id] = battle.turn;
@@ -4187,6 +5006,7 @@
     pendingBattleKind = null;
     pendingBattleTeam = [];
     hideBattleReward();
+    hideEngineChargeModal();
     els.battleLog.classList.remove("is-in");
     els.battleParty.hidden = true;
     showScreen(dest);
@@ -4205,6 +5025,7 @@
     if (name === "settings") renderSettingsToggles();
     if (name === "autoSell") renderAutoSellList();
     if (name === "index") renderIndex();
+    else hideIndexDetail();
     if (name === "quests") renderQuests();
     if (name === "crafting") renderCrafting();
     if (name === "npcBattles") renderNpcFighters();
@@ -4228,27 +5049,35 @@
   function openInventory(mode = "browse", sellSlotIndex = null) {
     inventoryMode = mode;
     pendingSellSlot = mode === "sell" ? sellSlotIndex : null;
-    if (mode === "trade" || mode === "sell" || mode === "mutate") inventoryTab = "cards";
+    if (mode === "sell" || mode === "mutate" || mode === "craft") inventoryTab = "cards";
+    if (mode === "trade") inventoryTab = "cards";
+    if (mode !== "craft") clearCraftPicks();
+    if (mode !== "mutate") pendingGemItemId = null;
     inventoryReturnScreen = currentScreen === "inventory" ? inventoryReturnScreen : currentScreen;
     showScreen("inventory");
     renderInventoryList();
   }
 
-  function openQtyModal(cardId) {
-    const card = baseCard(cardId);
-    const owned = player.cards[cardId] || 0;
-    if (!card || owned < 1) return;
-    const existing = myOffer.cards.find((c) => c.cardId === cardId);
-    if (!existing && myOffer.cards.length >= MAX_TRADE_CARD_TYPES) {
-      els.tradeConfirmStatus.textContent = "You can only add 4 different card types.";
+  function openQtyModal(kind, id) {
+    const owned = goodsOwned(kind, id);
+    if (owned < 1) return;
+    if (kind === "card" && !baseCard(id)) return;
+    if (kind === "pack" && !canTradePack(id)) return;
+    if (kind === "item" && !canTradeItem(id)) return;
+    const existing = findOfferRow(myOffer, kind, id);
+    if (!existing && offerCollection(myOffer, kind).length >= maxTradeTypes(kind)) {
+      els.tradeConfirmStatus.textContent = `You can only add 4 different ${kind} types.`;
       showScreen("room");
       return;
     }
-    pendingTradeCardId = cardId;
-    els.qtyTitle.textContent = existing
-      ? `Update ${cardDisplayName(cardId)}`
-      : `Offer ${cardDisplayName(cardId)}`;
-    els.qtyPreview.innerHTML = cardFaceForKey(cardId, { qty: owned, compact: true });
+    pendingTradeKind = kind;
+    pendingTradeId = id;
+    const name = goodsDisplayName(kind, id);
+    els.qtyTitle.textContent = existing ? `Update ${name}` : `Offer ${name}`;
+    els.qtyPreview.innerHTML =
+      kind === "card"
+        ? cardFaceForKey(id, { qty: owned, compact: true })
+        : `<div class="qty-goods-preview"><div class="qty-goods-icon">${goodsIcon(kind)}</div><div class="qty-goods-name">${escapeHtml(name)}</div></div>`;
     els.qtyInput.max = String(owned);
     els.qtyInput.value = String(existing ? existing.qty : 1);
     updateQtyTotal();
@@ -4257,18 +5086,18 @@
   }
 
   function updateQtyTotal() {
-    const card = baseCard(pendingTradeCardId);
-    if (!card) return;
-    const owned = player.cards[pendingTradeCardId] || 0;
+    if (!pendingTradeKind || !pendingTradeId) return;
+    const owned = goodsOwned(pendingTradeKind, pendingTradeId);
     let qty = Math.floor(Number(els.qtyInput.value) || 0);
     qty = Math.max(1, Math.min(owned, qty));
     els.qtyInput.value = String(qty);
-    els.qtyTotalValue.textContent = `$${cardValueForKey(pendingTradeCardId) * qty}`;
+    els.qtyTotalValue.textContent = `$${goodsUnitValue(pendingTradeKind, pendingTradeId) * qty}`;
   }
 
   function closeQtyModal() {
     els.qtyModal.hidden = true;
-    pendingTradeCardId = null;
+    pendingTradeKind = null;
+    pendingTradeId = null;
     refreshFabs();
   }
 
@@ -4332,24 +5161,29 @@
 
   function confirmTradeQty() {
     if (myConfirmed) return;
-    const cardId = pendingTradeCardId;
-    const card = baseCard(cardId);
-    const owned = player.cards[cardId] || 0;
+    const kind = pendingTradeKind;
+    const id = pendingTradeId;
+    const owned = goodsOwned(kind, id);
     let qty = Math.floor(Number(els.qtyInput.value) || 0);
     qty = Math.max(1, Math.min(owned, qty));
-    if (!card || qty < 1) return;
+    if (!kind || !id || qty < 1) return;
+    if (kind === "card" && !baseCard(id)) return;
+    if (kind === "pack" && !canTradePack(id)) return;
+    if (kind === "item" && !canTradeItem(id)) return;
 
-    const existing = myOffer.cards.find((c) => c.cardId === cardId);
+    const existing = findOfferRow(myOffer, kind, id);
+    const rows = offerCollection(myOffer, kind);
+    const idKey = offerRowIdKey(kind);
     if (existing) {
       existing.qty = qty;
     } else {
-      if (myOffer.cards.length >= MAX_TRADE_CARD_TYPES) {
+      if (rows.length >= maxTradeTypes(kind)) {
         closeQtyModal();
         showScreen("room");
-        els.tradeConfirmStatus.textContent = "You can only add 4 different card types.";
+        els.tradeConfirmStatus.textContent = `You can only add 4 different ${kind} types.`;
         return;
       }
-      myOffer.cards.push({ cardId, qty });
+      rows.push({ [idKey]: id, qty });
     }
     closeQtyModal();
     inventoryMode = "browse";
@@ -4365,9 +5199,12 @@
     scheduleOfferSync();
   }
 
-  function removeTradeCard(cardId) {
+  function removeTradeGood(kind, id) {
     if (myConfirmed) return;
-    myOffer.cards = myOffer.cards.filter((c) => c.cardId !== cardId);
+    const idKey = offerRowIdKey(kind);
+    if (kind === "card") myOffer.cards = myOffer.cards.filter((row) => row[idKey] !== id);
+    else if (kind === "pack") myOffer.packs = myOffer.packs.filter((row) => row[idKey] !== id);
+    else myOffer.items = myOffer.items.filter((row) => row[idKey] !== id);
     renderTradeSlots();
     scheduleOfferSync();
   }
@@ -4390,6 +5227,12 @@
     theirPvpChoice = null;
   }
 
+  function packedReviveIndex(raw) {
+    if (raw == null || raw === "") return null;
+    const idx = Math.floor(Number(raw));
+    return Number.isFinite(idx) ? idx : null;
+  }
+
   function pvpChoiceFrom(choice, battler) {
     if (!choice || !battler) return { type: "none" };
     if (choice.type === "switch") {
@@ -4401,7 +5244,13 @@
       const idx = Math.max(0, Math.floor(Number(choice.index) || 0));
       const move = card && card.moves ? card.moves[idx] : null;
       if (!move) return { type: "none" };
-      return { type: "move", index: idx, move };
+      return {
+        type: "move",
+        index: idx,
+        move,
+        engineChargeMode: choice.engineChargeMode === "revive" ? "revive" : "heal",
+        reviveIndex: packedReviveIndex(choice.reviveIndex),
+      };
     }
     return { type: "none" };
   }
@@ -4537,9 +5386,11 @@
       if (foeMove.isHeal) foe.healLastTurn[foeMove.id] = battle.turn;
       if (foeMove.isJumpscare) foe.jumpscareUses += 1;
     }
+    const youExtras = battleSideExtras("you", youMove, myPacked);
+    const foeExtras = battleSideExtras("foe", foeMove, foePacked);
     const actions = resolveBattleTurn(
-      { id: "you", move: youMove, jumpscareUses: you ? you.jumpscareUses : 0, statMult: you ? you.statMult || 1 : 1, healMult: you && you.healMult != null ? you.healMult : 1 },
-      { id: "foe", move: foeMove, jumpscareUses: foe ? foe.jumpscareUses : 0, statMult: foe ? foe.statMult || 1 : 1, healMult: foe && foe.healMult != null ? foe.healMult : 1 },
+      { id: "you", move: youMove, jumpscareUses: you ? you.jumpscareUses : 0, statMult: you ? you.statMult || 1 : 1, healMult: you && you.healMult != null ? you.healMult : 1, ...youExtras },
+      { id: "foe", move: foeMove, jumpscareUses: foe ? foe.jumpscareUses : 0, statMult: foe ? foe.statMult || 1 : 1, healMult: foe && foe.healMult != null ? foe.healMult : 1, ...foeExtras },
       rng
     );
     await resolvePlayedActions(actions, prefix);
@@ -5107,9 +5958,7 @@
   }
 
   function applyTheirOffer(data) {
-    const next = normalizeOffer(data);
-    theirOffer.cards = next.cards;
-    theirOffer.cash = next.cash;
+    copyNormalizedOffer(theirOffer, data);
     if (typeof data.confirmed === "boolean") {
       theirConfirmed = data.confirmed;
       if (!theirConfirmed) clearTradeArmedTimer();
@@ -5219,9 +6068,7 @@
       }
       if (data.type === "confirm") {
         theirConfirmed = Boolean(data.confirmed);
-        const next = normalizeOffer(data);
-        theirOffer.cards = next.cards;
-        theirOffer.cash = next.cash;
+        copyNormalizedOffer(theirOffer, data);
         if (typeof data.username === "string" && data.username.trim()) {
           partnerUsername = data.username.trim();
         }
@@ -5543,9 +6390,17 @@
   els.btnInventoryBack.addEventListener("click", () => {
     if (inventoryMode === "mutate") {
       closeFireConfirm();
+      pendingGemItemId = null;
       inventoryMode = "browse";
       inventoryTab = "items";
       renderInventoryList();
+      return;
+    }
+    if (inventoryMode === "craft") {
+      clearCraftPicks();
+      inventoryMode = "browse";
+      showScreen("crafting");
+      renderCrafting();
       return;
     }
     const back =
@@ -5573,6 +6428,15 @@
     showScreen(indexReturnScreen || "title");
   });
   els.btnIndexClaim.addEventListener("click", claimIndexRewards);
+  els.indexGrid.addEventListener("click", (e) => {
+    const slot = e.target.closest("[data-index-card]");
+    if (!slot || !els.indexGrid.contains(slot)) return;
+    openIndexDetail(slot.getAttribute("data-index-card"));
+  });
+  els.btnIndexDetailClose.addEventListener("click", hideIndexDetail);
+  els.indexDetailModal.addEventListener("click", (e) => {
+    if (e.target === els.indexDetailModal) hideIndexDetail();
+  });
   els.btnQuests.addEventListener("click", openQuests);
   els.btnQuestsBack.addEventListener("click", () => {
     showScreen(questsReturnScreen || "title");
@@ -5595,7 +6459,8 @@
       return;
     }
     if (e.target.closest("#btn-merge-combine")) combineMutation();
-    if (e.target.closest("#btn-craft-fire-gem")) startCraftRecipe("fire-gem");
+    const craftBtn = e.target.closest("[data-craft-recipe]");
+    if (craftBtn) startCraftRecipe(craftBtn.getAttribute("data-craft-recipe"));
     const claim = e.target.closest("[data-claim-craft]");
     if (claim) claimCraftJob(claim.getAttribute("data-claim-craft"));
   });
@@ -5614,6 +6479,27 @@
   });
   els.btnBuyCommonPack.addEventListener("click", () => buyPack("common-pack"));
   els.btnBuyRarePack.addEventListener("click", () => buyPack("rare-pack"));
+  if (els.btnAdminGrantElectrified) {
+    els.btnAdminGrantElectrified.addEventListener("click", grantElectrifiedPack);
+  }
+  if (els.btnEngineHealTeam) els.btnEngineHealTeam.addEventListener("click", confirmEngineChargeHeal);
+  if (els.btnEngineRevive) els.btnEngineRevive.addEventListener("click", showEngineChargeRevivePicks);
+  if (els.btnEngineChargeCancel) {
+    els.btnEngineChargeCancel.addEventListener("click", () => {
+      if (pendingEngineCharge && els.engineChargeReviveList && !els.engineChargeReviveList.hidden) {
+        showEngineChargePrompt(pendingEngineCharge.index);
+        return;
+      }
+      hideEngineChargeModal();
+    });
+  }
+  if (els.engineChargeReviveList) {
+    els.engineChargeReviveList.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-engine-revive]");
+      if (!btn) return;
+      confirmEngineChargeRevive(Number(btn.getAttribute("data-engine-revive")));
+    });
+  }
   els.btnRevealDone.addEventListener("click", hidePackReveal);
 
   els.btnAdminGateCancel.addEventListener("click", closeAdminGate);
@@ -5693,7 +6579,7 @@
 
   document.querySelectorAll(".inv-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
-      if (inventoryMode === "trade" || inventoryMode === "sell" || inventoryMode === "battle" || inventoryMode === "mutate") return;
+      if (inventoryMode === "sell" || inventoryMode === "battle" || inventoryMode === "mutate" || inventoryMode === "craft") return;
       inventoryTab = tab.getAttribute("data-inv-tab");
       renderInventoryList();
     });
@@ -5707,8 +6593,21 @@
     }
     const useBtn = e.target.closest("[data-use-item]");
     if (useBtn && inventoryMode === "browse") {
-      if (useBtn.getAttribute("data-use-item") === "restock-token") openRestockTokenModal();
-      if (useBtn.getAttribute("data-use-item") === "fire-gem") openFireGemPicker();
+      const itemId = useBtn.getAttribute("data-use-item");
+      if (itemId === "restock-token") openRestockTokenModal();
+      else if (GEM_ITEMS[itemId]) openGemPicker(itemId);
+      return;
+    }
+    const packPick = e.target.closest("[data-pick-pack]");
+    if (packPick && inventoryMode === "trade") {
+      if (myConfirmed) return;
+      openQtyModal("pack", packPick.getAttribute("data-pick-pack"));
+      return;
+    }
+    const itemPick = e.target.closest("[data-pick-item]");
+    if (itemPick && inventoryMode === "trade") {
+      if (myConfirmed) return;
+      openQtyModal("item", itemPick.getAttribute("data-pick-item"));
       return;
     }
     const cardBtn = e.target.closest("[data-pick-card]");
@@ -5716,7 +6615,7 @@
     const cardId = cardBtn.getAttribute("data-pick-card");
     if (inventoryMode === "trade") {
       if (myConfirmed) return;
-      openQtyModal(cardId);
+      openQtyModal("card", cardId);
       return;
     }
     if (inventoryMode === "sell" && pendingSellSlot !== null) {
@@ -5739,6 +6638,19 @@
       }
       return;
     }
+    if (inventoryMode === "craft") {
+      const recipe = CRAFT_RECIPES[pendingCraftRecipeId];
+      if (!recipe || !recipe.pick) return;
+      if (parseCardKey(cardId).mutation !== recipe.pick.mutation) return;
+      const remaining =
+        (player.cards[cardId] || 0) -
+        pendingCraftPicks.filter((picked) => picked === cardId).length;
+      if (remaining <= 0) return;
+      pendingCraftPicks.push(cardId);
+      if (pendingCraftPicks.length >= recipe.pick.count) finishCraftMaterialPicks();
+      else renderInventoryList();
+      return;
+    }
     if (inventoryMode === "mutate") {
       promptFireMutate(cardId);
     }
@@ -5758,16 +6670,12 @@
   els.btnCardSellConfirm.addEventListener("click", confirmCardSell);
 
   els.myTradeItems.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-remove-trade]");
+    const btn = e.target.closest("[data-remove-kind]");
     if (!btn || myConfirmed) return;
-    removeTradeCard(btn.getAttribute("data-remove-trade"));
+    removeTradeGood(btn.getAttribute("data-remove-kind"), btn.getAttribute("data-remove-id"));
   });
   els.btnAddTradeCard.addEventListener("click", () => {
     if (myConfirmed) return;
-    if (myOffer.cards.length >= MAX_TRADE_CARD_TYPES) {
-      els.tradeConfirmStatus.textContent = "You can only add 4 different card types.";
-      return;
-    }
     openInventory("trade");
   });
   els.myTradeCash.addEventListener("input", syncMyTradeCashFromInput);
