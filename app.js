@@ -76,6 +76,52 @@
       note: "Tap to apply Diamond Mutation to one card.",
       usable: true,
     },
+    "luck-i-potion": {
+      id: "luck-i-potion",
+      name: "Luck I Potion",
+      note: "Tap to double pack luck for 1 minute. Extra uses add 1 minute.",
+      usable: true,
+    },
+    "healing-gem": {
+      id: "healing-gem",
+      name: "Healing Gem",
+      note: "Tap to apply Healing Mutation to one card.",
+      usable: true,
+    },
+    "clear-gem": {
+      id: "clear-gem",
+      name: "Clear Gem",
+      note: "Tap to remove a card's mutation. The gem is not returned.",
+      usable: true,
+    },
+    "clear-crystal": {
+      id: "clear-crystal",
+      name: "Clear Crystal",
+      note: "Tap to remove a card's mutation and return its gem.",
+      usable: true,
+    },
+    "shiny-gem": {
+      id: "shiny-gem",
+      name: "Shiny Gem",
+      note: "Tap to apply Shiny Mutation. Only from Clear Crystal.",
+      usable: true,
+    },
+    "silver-gem": {
+      id: "silver-gem",
+      name: "Silver Gem",
+      note: "Tap to apply Silver Mutation. Only from Clear Crystal.",
+      usable: true,
+    },
+    potion: {
+      id: "potion",
+      name: "Potion",
+      note: "Use in battle to heal one living card 30 HP. Costs a turn.",
+    },
+    revive: {
+      id: "revive",
+      name: "Revive",
+      note: "Use in battle to revive one card to half HP. Once every 3 turns.",
+    },
   };
 
   const CARDS = {
@@ -646,12 +692,23 @@
 
   function resolveBattleTurn(left, right, rng = Math.random) {
     const actions = [];
+    const items = [];
     const jumpscares = [];
     const heals = [];
     const strikes = [];
 
     function consider(side) {
-      if (!side || !side.move) return;
+      if (!side) return;
+      if (side.item === "potion" || side.item === "revive") {
+        items.push({
+          sideId: side.id,
+          type: "item",
+          itemId: side.item,
+          targetIndex: Math.floor(Number(side.targetIndex)),
+        });
+        return;
+      }
+      if (!side.move) return;
       const move = side.move;
       const dmgMult = side.statMult || 1;
       const healMult = side.healMult != null ? side.healMult : 1;
@@ -694,6 +751,8 @@
 
     consider(left);
     consider(right);
+    if (items.length === 2 && rng() < 0.5) items.reverse();
+    actions.push(...items);
     if (jumpscares.length === 2 && rng() < 0.5) jumpscares.reverse();
     for (const scare of jumpscares) actions.push(strikeAction(scare, rng));
     if (heals.length === 2 && rng() < 0.5) heals.reverse();
@@ -782,14 +841,102 @@
     gold: { id: "gold", label: "Gold", prefix: "Gold", hpMult: 1.4, dmgMult: 1.4, healMult: 1.4, className: "mutation-gold" },
     diamond: { id: "diamond", label: "Diamond", prefix: "Diamond", hpMult: 1.6, dmgMult: 1.6, healMult: 1.6, className: "mutation-diamond" },
     fire: { id: "fire", label: "Fire", prefix: "Fire", hpMult: 0.8, dmgMult: 1.8, healMult: 1, econMult: 1, className: "mutation-fire", crafted: true },
+    healing: { id: "healing", label: "Healing", prefix: "Healing", hpMult: 2, dmgMult: 1, healMult: 2.5, econMult: 1, className: "mutation-heal", crafted: true },
   };
-  const MUTATION_RANK = { "": 0, shiny: 1, silver: 2, gold: 3, diamond: 4, fire: 5 };
+  const MUTATION_RANK = { "": 0, shiny: 1, silver: 2, gold: 3, diamond: 4, fire: 5, healing: 6 };
   const FIRE_GEM_CRAFT_MS = 5 * 60 * 1000;
+  const LUCK_I_POTION_MS = 60 * 1000;
+  const LUCK_I_POTION_MULT = 2;
+  const LUCK_I_POTION_PRICE = 20000;
+  const LUCK_I_POTION_JACKPOT_ONE_IN = 200;
+  const LUCK_I_POTION_CRAFT_MS = 10 * 60 * 1000;
+  const HEALING_GEM_PRICE = 60000;
+  const CLEAR_GEM_PRICE = 10000;
+  const CLEAR_CRYSTAL_PRICE = 90000;
+  const HEALING_GEM_STOCK_CHANCE = 0.3;
+  const CLEAR_GEM_STOCK_CHANCE = 0.6;
+  const CLEAR_CRYSTAL_STOCK_CHANCE = 0.3;
+  const POTION_PRICE = 10000;
+  const BATTLE_POTION_HEAL = 30;
+  const REVIVE_ITEM_TURN_GAP = 3;
+  const REVIVE_CRAFT_MS = 5 * 60 * 1000;
   const GEM_ITEMS = {
     "fire-gem": { itemId: "fire-gem", mutation: "fire", title: "Fire Mutation" },
     "gold-gem": { itemId: "gold-gem", mutation: "gold", title: "Gold Mutation" },
     "diamond-gem": { itemId: "diamond-gem", mutation: "diamond", title: "Diamond Mutation" },
+    "healing-gem": { itemId: "healing-gem", mutation: "healing", title: "Healing Mutation" },
+    "shiny-gem": { itemId: "shiny-gem", mutation: "shiny", title: "Shiny Mutation" },
+    "silver-gem": { itemId: "silver-gem", mutation: "silver", title: "Silver Mutation" },
   };
+  const CLEAR_ITEMS = {
+    "clear-gem": {
+      itemId: "clear-gem",
+      refund: false,
+      title: "Clear Gem",
+      copy: "Remove this mutation. The gem is not returned.",
+    },
+    "clear-crystal": {
+      itemId: "clear-crystal",
+      refund: true,
+      title: "Clear Crystal",
+      copy: "Remove this mutation and return the gem if it has one.",
+    },
+  };
+  const MUTATION_RETURN_GEM = {
+    fire: "fire-gem",
+    gold: "gold-gem",
+    diamond: "diamond-gem",
+    healing: "healing-gem",
+    shiny: "shiny-gem",
+    silver: "silver-gem",
+  };
+  const CRAFTER_SHOP_GOODS = [
+    {
+      id: "potion",
+      name: "Potion",
+      mark: "🧪",
+      theme: "potion",
+      price: POTION_PRICE,
+      blurb: "Battle item. Heal one living card 30 HP. Costs a turn.",
+      stockKey: "potionStock",
+    },
+    {
+      id: "luck-i-potion",
+      name: "Luck I Potion",
+      mark: "🍀",
+      theme: "luck",
+      price: LUCK_I_POTION_PRICE,
+      blurb: "Doubles pack luck for 1 minute. Extra uses add 1 minute.",
+      stockKey: "luckPotionStock",
+    },
+    {
+      id: "healing-gem",
+      name: "Healing Gem",
+      mark: "💚",
+      theme: "heal",
+      price: HEALING_GEM_PRICE,
+      blurb: "Applies Healing Mutation: 2× HP and 2.5× healing.",
+      stockKey: "healingGemStock",
+    },
+    {
+      id: "clear-gem",
+      name: "Clear Gem",
+      mark: "⚪",
+      theme: "clear",
+      price: CLEAR_GEM_PRICE,
+      blurb: "Removes a mutation. Does not return a gem.",
+      stockKey: "clearGemStock",
+    },
+    {
+      id: "clear-crystal",
+      name: "Clear Crystal",
+      mark: "💠",
+      theme: "crystal",
+      price: CLEAR_CRYSTAL_PRICE,
+      blurb: "Removes a mutation and returns the gem.",
+      stockKey: "clearCrystalStock",
+    },
+  ];
   const CRAFT_RECIPES = {
     "fire-gem": {
       id: "fire-gem",
@@ -829,6 +976,33 @@
       mark: "💎",
       stats: "1.6× HP · 1.6× damage · 1.6× healing · one mutation per card",
       pick: { mutation: "silver", count: 10 },
+    },
+    "luck-i-potion": {
+      id: "luck-i-potion",
+      name: "Luck I Potion",
+      itemId: "luck-i-potion",
+      craftMs: LUCK_I_POTION_CRAFT_MS,
+      blurb: "5 Kitsunes. 10 minutes to finish.",
+      coins: 0,
+      theme: "luck",
+      mark: "🍀",
+      stats: "2× pack luck for 1 minute · extra uses add 1 minute",
+      materials: [{ cardId: "kitsune", count: 5 }],
+    },
+    revive: {
+      id: "revive",
+      name: "Revive",
+      itemId: "revive",
+      craftMs: REVIVE_CRAFT_MS,
+      blurb: "10 Potions, 8 T-Rex, and 15,000 coins. 5 minutes to finish.",
+      coins: 15000,
+      theme: "revive",
+      mark: "💗",
+      stats: "Battle revive to half HP · once every 3 turns · costs a turn",
+      materials: [
+        { itemId: "potion", count: 10 },
+        { cardId: "trex", count: 8 },
+      ],
     },
   };
 
@@ -953,6 +1127,7 @@
   }
 
   const QUEST_SLOT_COUNT = 3;
+  const EVENT_QUEST_SLOT_COUNT = 5;
   const QUEST_PLAY_TARGET_SEC = 30 * 60;
   const QUEST_COOLDOWN_MS = 30 * 60 * 1000;
   const QUEST_TYPES = [
@@ -973,6 +1148,91 @@
     "open-rare-10": { type: "open-rare-10", target: 10, title: "Open 10 Rare Packs" },
     obtain: { type: "obtain", target: 1, title: "Obtain a card" },
   };
+  const EVENT_QUEST_DEFS = {
+    "eq-collect-chicken": {
+      type: "eq-collect-chicken",
+      title: "Collect 40 Chickens",
+      target: 40,
+      packs: 6,
+      collectBaseId: "chicken",
+    },
+    "eq-beat-demon-boss": {
+      type: "eq-beat-demon-boss",
+      title: "Beat Demon Boss",
+      target: 1,
+      packs: 4,
+    },
+    "eq-open-common-5": {
+      type: "eq-open-common-5",
+      title: "Open 5 Common Packs",
+      target: 5,
+      packs: 1,
+    },
+    "eq-open-rare-3": {
+      type: "eq-open-rare-3",
+      title: "Open 3 Rare Packs",
+      target: 3,
+      packs: 1,
+    },
+    "eq-trial-8": {
+      type: "eq-trial-8",
+      title: "Reach Trial Mode Trial 8",
+      target: 8,
+      packs: 6,
+      trialReach: true,
+    },
+    "eq-trial-4": {
+      type: "eq-trial-4",
+      title: "Reach Trial Mode Trial 4",
+      target: 4,
+      packs: 3,
+      trialReach: true,
+    },
+    "eq-mutate-10": {
+      type: "eq-mutate-10",
+      title: "Mutate 10 cards",
+      target: 10,
+      packs: 3,
+    },
+    "eq-beat-bosses-3": {
+      type: "eq-beat-bosses-3",
+      title: "Beat 3 Bosses",
+      target: 3,
+      packs: 4,
+    },
+    "eq-collect-cow": {
+      type: "eq-collect-cow",
+      title: "Collect 20 Cows",
+      target: 20,
+      packs: 4,
+      collectBaseId: "cow",
+    },
+    "eq-sell-100": {
+      type: "eq-sell-100",
+      title: "Sell 100 Cards",
+      target: 100,
+      packs: 5,
+    },
+    "eq-sell-30": {
+      type: "eq-sell-30",
+      title: "Sell 30 Cards",
+      target: 30,
+      packs: 2,
+    },
+    "eq-craft-fire-gem": {
+      type: "eq-craft-fire-gem",
+      title: "Craft a Fire Gem",
+      target: 1,
+      packs: 2,
+    },
+    "eq-mutate-diamond": {
+      type: "eq-mutate-diamond",
+      title: "Mutate a Diamond Card",
+      target: 1,
+      packs: 5,
+    },
+  };
+  const EVENT_QUEST_ORDER = Object.keys(EVENT_QUEST_DEFS);
 
   function resolveAssetUrl(relPath) {
     try {
@@ -1094,6 +1354,8 @@
     btnCrafting: document.getElementById("btn-crafting"),
     btnCraftingBack: document.getElementById("btn-crafting-back"),
     craftingMain: document.getElementById("crafting-main"),
+    luckBoostHud: document.getElementById("luck-boost-hud"),
+    luckBoostTime: document.getElementById("luck-boost-time"),
     craftResult: document.getElementById("craft-result"),
     craftResultCopy: document.getElementById("craft-result-copy"),
     craftResultCard: document.getElementById("craft-result-card"),
@@ -1140,6 +1402,13 @@
     btnSellKeepOne: document.getElementById("btn-sell-keep-one"),
     btnCardSellCancel: document.getElementById("btn-card-sell-cancel"),
     btnCardSellConfirm: document.getElementById("btn-card-sell-confirm"),
+    itemDiscardModal: document.getElementById("item-discard-modal"),
+    itemDiscardName: document.getElementById("item-discard-name"),
+    itemDiscardQty: document.getElementById("item-discard-qty"),
+    itemDiscardHint: document.getElementById("item-discard-hint"),
+    btnDiscardKeepOne: document.getElementById("btn-discard-keep-one"),
+    btnItemDiscardCancel: document.getElementById("btn-item-discard-cancel"),
+    btnItemDiscardConfirm: document.getElementById("btn-item-discard-confirm"),
     adminGate: document.getElementById("admin-gate"),
     adminSettings: document.getElementById("admin-settings"),
     adminPassword: document.getElementById("admin-password"),
@@ -1168,6 +1437,12 @@
     btnEngineHealTeam: document.getElementById("btn-engine-heal-team"),
     btnEngineRevive: document.getElementById("btn-engine-revive"),
     btnEngineChargeCancel: document.getElementById("btn-engine-charge-cancel"),
+    battleItemDock: document.getElementById("battle-item-dock"),
+    battleItemModal: document.getElementById("battle-item-modal"),
+    battleItemTitle: document.getElementById("battle-item-title"),
+    battleItemCopy: document.getElementById("battle-item-copy"),
+    battleItemList: document.getElementById("battle-item-list"),
+    btnBattleItemCancel: document.getElementById("btn-battle-item-cancel"),
     restockTokenModal: document.getElementById("restock-token-modal"),
     fireMutateModal: document.getElementById("fire-mutate-modal"),
     fireMutateTitle: document.getElementById("fire-mutate-title"),
@@ -1253,9 +1528,11 @@
   let inventoryTab = "packs";
   let questTab = "daily";
   let craftTab = "bench";
+  let selectedCraftRecipeId = null;
   let mergerPickKey = null;
   let pendingFireCardKey = null;
   let pendingGemItemId = null;
+  let pendingClearItemId = null;
   let pendingCraftRecipeId = null;
   let pendingCraftPicks = [];
   let questPlaySaveAcc = 0;
@@ -1265,11 +1542,13 @@
   let pendingSellSlot = null;
   let sellTickTimer = null;
   let shopUiTimer = null;
+  let luckBoostHudTimer = null;
   let battle = null;
   let pendingBattleNpc = null;
   let pendingBattleKind = null;
   let pendingBattleTeam = [];
   let pendingEngineCharge = null;
+  let pendingBattleItem = null;
   let battleAnimGen = 0;
   let battleRewardAction = "hide";
 
@@ -1431,9 +1710,39 @@
     return RARE_STOCK_MIN + Math.floor(Math.random() * (RARE_STOCK_MAX - RARE_STOCK_MIN + 1));
   }
 
-  function randomEventStockAmount() {
-    if (Math.random() < RARE_MISS_CHANCE) return 0;
-    return RARE_STOCK_MIN + Math.floor(Math.random() * (RARE_STOCK_MAX - RARE_STOCK_MIN + 1));
+  function randomLuckPotionStock() {
+    if (Math.random() < 1 / LUCK_I_POTION_JACKPOT_ONE_IN) return 50;
+    return 1 + Math.floor(Math.random() * 3);
+  }
+
+  function randomChanceStock(chance) {
+    return Math.random() < chance ? 1 : 0;
+  }
+
+  function randomPotionStock() {
+    const roll = Math.random();
+    if (roll < 0.5) return 2;
+    if (roll < 0.79) return 3;
+    if (roll < 0.99) return 4;
+    return 5;
+  }
+
+  function crafterStockSnapshot() {
+    return {
+      potionStock: shop.potionStock,
+      luckPotionStock: shop.luckPotionStock,
+      healingGemStock: shop.healingGemStock,
+      clearGemStock: shop.clearGemStock,
+      clearCrystalStock: shop.clearCrystalStock,
+    };
+  }
+
+  function restockCrafterGoods() {
+    shop.potionStock = randomPotionStock();
+    shop.luckPotionStock = randomLuckPotionStock();
+    shop.healingGemStock = randomChanceStock(HEALING_GEM_STOCK_CHANCE);
+    shop.clearGemStock = randomChanceStock(CLEAR_GEM_STOCK_CHANCE);
+    shop.clearCrystalStock = randomChanceStock(CLEAR_CRYSTAL_STOCK_CHANCE);
   }
 
   function freshShopState() {
@@ -1441,6 +1750,11 @@
       stock: randomStockAmount(),
       rareStock: randomRareStockAmount(),
       eventStock: randomEventStockAmount(),
+      luckPotionStock: randomLuckPotionStock(),
+      potionStock: randomPotionStock(),
+      healingGemStock: randomChanceStock(HEALING_GEM_STOCK_CHANCE),
+      clearGemStock: randomChanceStock(CLEAR_GEM_STOCK_CHANCE),
+      clearCrystalStock: randomChanceStock(CLEAR_CRYSTAL_STOCK_CHANCE),
       nextRestockAt: Date.now() + RESTOCK_MS,
       infiniteStock: false,
       unkickable: false,
@@ -1467,6 +1781,26 @@
           data.eventStock == null
             ? randomEventStockAmount()
             : Math.max(0, Math.floor(Number(data.eventStock) || 0)),
+        luckPotionStock:
+          data.luckPotionStock == null
+            ? randomLuckPotionStock()
+            : Math.max(0, Math.floor(Number(data.luckPotionStock) || 0)),
+        potionStock:
+          data.potionStock == null
+            ? randomPotionStock()
+            : Math.max(0, Math.floor(Number(data.potionStock) || 0)),
+        healingGemStock:
+          data.healingGemStock == null
+            ? randomChanceStock(HEALING_GEM_STOCK_CHANCE)
+            : Math.min(1, Math.max(0, Math.floor(Number(data.healingGemStock) || 0))),
+        clearGemStock:
+          data.clearGemStock == null
+            ? randomChanceStock(CLEAR_GEM_STOCK_CHANCE)
+            : Math.min(1, Math.max(0, Math.floor(Number(data.clearGemStock) || 0))),
+        clearCrystalStock:
+          data.clearCrystalStock == null
+            ? randomChanceStock(CLEAR_CRYSTAL_STOCK_CHANCE)
+            : Math.min(1, Math.max(0, Math.floor(Number(data.clearCrystalStock) || 0))),
         nextRestockAt: Number(data.nextRestockAt) || Date.now() + RESTOCK_MS,
         infiniteStock: Boolean(data.infiniteStock),
         unkickable: Boolean(data.unkickable),
@@ -1490,6 +1824,11 @@
         stock: shop.stock,
         rareStock: shop.rareStock,
         eventStock: shop.eventStock,
+        luckPotionStock: shop.luckPotionStock,
+        potionStock: shop.potionStock,
+        healingGemStock: shop.healingGemStock,
+        clearGemStock: shop.clearGemStock,
+        clearCrystalStock: shop.clearCrystalStock,
         nextRestockAt: shop.nextRestockAt,
         infiniteStock: shop.infiniteStock,
         unkickable: shop.unkickable,
@@ -1517,6 +1856,7 @@
     shop.stock = randomStockAmount();
     shop.rareStock = randomRareStockAmount();
     shop.eventStock = randomEventStockAmount();
+    restockCrafterGoods();
     saveShop();
   }
 
@@ -1526,9 +1866,11 @@
       RARE_STOCK_MIN + Math.floor(Math.random() * (RARE_STOCK_MAX - RARE_STOCK_MIN + 1));
     shop.eventStock =
       RARE_STOCK_MIN + Math.floor(Math.random() * (RARE_STOCK_MAX - RARE_STOCK_MIN + 1));
+    restockCrafterGoods();
     shop.nextRestockAt = Date.now() + RESTOCK_MS;
     saveShop();
     renderShopStock();
+    if (currentScreen === "crafting" && craftTab === "shop") renderCrafting();
   }
 
   function openRestockTokenModal() {
@@ -1620,12 +1962,20 @@
       const before = shop.stock;
       const beforeRare = shop.rareStock;
       const beforeEvent = shop.eventStock;
+      const beforeCrafter = crafterStockSnapshot();
       applyDueRestocks();
-      const changed = before !== shop.stock || beforeRare !== shop.rareStock || beforeEvent !== shop.eventStock;
+      const afterCrafter = crafterStockSnapshot();
+      const crafterChanged = Object.keys(beforeCrafter).some((key) => beforeCrafter[key] !== afterCrafter[key]);
+      const changed =
+        before !== shop.stock ||
+        beforeRare !== shop.rareStock ||
+        beforeEvent !== shop.eventStock ||
+        crafterChanged;
       if (currentScreen === "cardShop" || changed) {
         if (currentScreen === "cardShop") renderShopStock();
         else if (changed) saveShop();
       }
+      if (currentScreen === "crafting" && craftTab === "shop" && changed) renderCrafting();
       if (currentScreen === "crafting" && craftTab === "bench") {
         const timers = document.querySelectorAll("[data-craft-timer]");
         if (timers.length) {
@@ -1648,11 +1998,22 @@
           if (needsRefresh) renderCrafting();
         }
       }
+      if (currentScreen === "crafting" && craftTab === "shop") {
+        const timer = document.getElementById("crafter-shop-timer");
+        if (timer) {
+          applyDueRestocks();
+          const remaining = Math.max(0, shop.nextRestockAt - Date.now());
+          timer.textContent = shop.infiniteStock
+            ? "Infinite stock enabled"
+            : `Restock in ${formatCountdown(remaining)}`;
+        }
+      }
     }, 250);
   }
   let pendingTradeKind = null;
   let pendingTradeId = null;
   let pendingSellCardId = null;
+  let pendingDiscardItemId = null;
   let accountFormMode = "register"; // register | login
   let myConfirmed = false;
   let theirConfirmed = false;
@@ -1691,7 +2052,11 @@
       indexClaimed: {},
       quests: [],
       questLocks: [],
+      eventQuests: [],
+      eventQuestLocks: [],
       craftJobs: [],
+      luckBoostUntil: 0,
+      luckBoostMult: 1,
       settings: defaultSettings(),
     };
   }
@@ -1756,7 +2121,18 @@
 
     bags.quests = sanitizeQuests(data.quests);
     bags.questLocks = sanitizeQuestLocks(data.questLocks);
+    bags.eventQuests = sanitizeEventQuests(data.eventQuests);
+    bags.eventQuestLocks = sanitizeQuestLocks(data.eventQuestLocks, EVENT_QUEST_SLOT_COUNT);
+    fillEventQuestSlots(bags.eventQuests, bags.eventQuestLocks);
+    applyInstantQuests(bags.eventQuests);
     bags.craftJobs = sanitizeCraftJobs(data.craftJobs);
+    const boostUntil = Number(data.luckBoostUntil);
+    bags.luckBoostUntil = Number.isFinite(boostUntil) && boostUntil > Date.now() ? boostUntil : 0;
+    const boostMult = Number(data.luckBoostMult);
+    bags.luckBoostMult =
+      bags.luckBoostUntil > 0 && Number.isFinite(boostMult) && boostMult > 1
+        ? boostMult
+        : 1;
     fillQuestSlots(bags.quests, bags.questLocks);
     applyInstantQuests(bags.quests);
     bags.settings = sanitizeSettings(data.settings);
@@ -1776,7 +2152,11 @@
       indexClaimed: { ...(p.indexClaimed || {}) },
       quests: snapshotQuests(p.quests),
       questLocks: [...(p.questLocks || [])],
+      eventQuests: snapshotEventQuests(p.eventQuests),
+      eventQuestLocks: [...(p.eventQuestLocks || [])],
       craftJobs: snapshotCraftJobs(p.craftJobs),
+      luckBoostUntil: p.luckBoostUntil || 0,
+      luckBoostMult: p.luckBoostMult || 1,
       settings: sanitizeSettings(p.settings),
     };
   }
@@ -1793,8 +2173,13 @@
     player.indexClaimed = next.indexClaimed;
     player.quests = next.quests;
     player.questLocks = next.questLocks;
+    player.eventQuests = next.eventQuests;
+    player.eventQuestLocks = next.eventQuestLocks;
     player.craftJobs = next.craftJobs;
+    player.luckBoostUntil = next.luckBoostUntil;
+    player.luckBoostMult = next.luckBoostMult;
     player.settings = next.settings;
+    renderLuckBoostHud();
   }
 
   function loadAccountsDb() {
@@ -2020,6 +2405,79 @@
     return n;
   }
 
+  function luckBoostRemaining() {
+    const until = Number(player && player.luckBoostUntil);
+    if (!Number.isFinite(until) || until <= 0) return 0;
+    return Math.max(0, until - Date.now());
+  }
+
+  function playerLuckMult() {
+    return luckBoostRemaining() > 0 ? sanitizeLuck(player.luckBoostMult || LUCK_I_POTION_MULT) : 1;
+  }
+
+  function effectiveLuck() {
+    return sanitizeLuck(shop.luck) * playerLuckMult();
+  }
+
+  function luckBoostHudEl() {
+    let el = document.getElementById("luck-boost-hud");
+    if (el) return el;
+    el = document.createElement("div");
+    el.id = "luck-boost-hud";
+    el.className = "luck-boost-hud";
+    el.setAttribute("aria-live", "polite");
+    document.body.appendChild(el);
+    if (els) els.luckBoostHud = el;
+    return el;
+  }
+
+  function expireLuckBoost() {
+    if (!(player.luckBoostUntil > 0)) return;
+    player.luckBoostUntil = 0;
+    player.luckBoostMult = 1;
+    savePlayer();
+  }
+
+  function renderLuckBoostHud() {
+    const el = luckBoostHudEl();
+    const remain = luckBoostRemaining();
+    if (remain <= 0) {
+      expireLuckBoost();
+      el.classList.remove("is-on");
+      el.removeAttribute("hidden");
+      el.innerHTML = "";
+      return;
+    }
+    const mult = sanitizeLuck(player.luckBoostMult || LUCK_I_POTION_MULT);
+    el.innerHTML = `<span class="luck-boost-label">${mult}× Luck</span><strong id="luck-boost-time">${formatCountdown(
+      remain
+    )}</strong>`;
+    el.removeAttribute("hidden");
+    el.classList.add("is-on");
+    if (els) {
+      els.luckBoostHud = el;
+      els.luckBoostTime = document.getElementById("luck-boost-time");
+    }
+  }
+
+  function startLuckBoostHudTimer() {
+    if (luckBoostHudTimer) return;
+    luckBoostHudTimer = setInterval(renderLuckBoostHud, 250);
+  }
+
+  function useLuckIPotion() {
+    if (!(player.items["luck-i-potion"] > 0)) return;
+    player.items["luck-i-potion"] -= 1;
+    if (player.items["luck-i-potion"] <= 0) delete player.items["luck-i-potion"];
+    const now = Date.now();
+    const remain = luckBoostRemaining();
+    player.luckBoostUntil = now + remain + LUCK_I_POTION_MS;
+    player.luckBoostMult = LUCK_I_POTION_MULT;
+    savePlayer();
+    renderLuckBoostHud();
+    renderPlayerUi();
+  }
+
   function formatOneIn(oneIn) {
     const n = Number(oneIn);
     if (!Number.isFinite(n) || n <= 0) return "1";
@@ -2099,6 +2557,8 @@
       spec && spec.id === "diamond" ? `<div class="card-crystal" aria-hidden="true"></div>` : "";
     const flame =
       spec && spec.id === "fire" ? `<div class="card-flame" aria-hidden="true"><span>🔥</span></div>` : "";
+    const healAura =
+      spec && spec.id === "healing" ? `<div class="card-heal" aria-hidden="true"><span>💚</span></div>` : "";
     return `
       <article class="animal-card theme-${card.theme} ${compact ? "compact" : ""} ${mutClass}" data-card-id="${escapeHtml(key)}">
         <div class="card-texture" aria-hidden="true"></div>
@@ -2108,6 +2568,7 @@
         ${sparkles}
         ${crystal}
         ${flame}
+        ${healAura}
         <div class="card-top">
           ${rarityHtml(card)}
           <span class="card-top-right">${hpHtml}${valueHtml}</span>
@@ -2148,7 +2609,7 @@
   }
 
   function drawablePool(pool) {
-    const luck = sanitizeLuck(shop.luck);
+    const luck = effectiveLuck();
     const kept = pool.filter((entry) => {
       const oneIn = poolEntryOneIn(entry);
       return oneIn / luck > 1;
@@ -2198,6 +2659,64 @@
     }));
   }
 
+  function snapshotEventQuests(list) {
+    return (Array.isArray(list) ? list : []).slice(0, EVENT_QUEST_SLOT_COUNT).map((q) => ({
+      uid: q.uid,
+      type: q.type,
+      progress: q.progress || 0,
+    }));
+  }
+
+  function sanitizeEventQuests(raw) {
+    if (!Array.isArray(raw)) return [];
+    const seen = new Set();
+    const out = [];
+    for (const q of raw) {
+      if (!q || !EVENT_QUEST_DEFS[q.type] || seen.has(q.type)) continue;
+      seen.add(q.type);
+      const def = EVENT_QUEST_DEFS[q.type];
+      out.push({
+        uid: typeof q.uid === "string" && q.uid ? q.uid : newQuestUid(),
+        type: q.type,
+        progress: Math.max(0, Math.min(def.target, Math.floor(Number(q.progress) || 0))),
+      });
+      if (out.length >= EVENT_QUEST_SLOT_COUNT) break;
+    }
+    return out;
+  }
+
+  function unusedEventQuestTypes(existing) {
+    const used = new Set(existing.map((q) => q.type));
+    return EVENT_QUEST_ORDER.filter((type) => !used.has(type));
+  }
+
+  function createEventQuest(type) {
+    return { uid: newQuestUid(), type, progress: 0 };
+  }
+
+  function fillEventQuestSlots(quests, locks = []) {
+    const pending = pruneQuestLocks(locks);
+    if (locks) {
+      locks.length = 0;
+      locks.push(...pending);
+    }
+    while (quests.length + pending.length < EVENT_QUEST_SLOT_COUNT) {
+      const types = unusedEventQuestTypes(quests);
+      if (!types.length) break;
+      quests.push(createEventQuest(pickRandom(types)));
+    }
+    return quests;
+  }
+
+  function ensureEventQuests() {
+    if (!Array.isArray(player.eventQuests)) player.eventQuests = [];
+    if (!Array.isArray(player.eventQuestLocks)) player.eventQuestLocks = [];
+    player.eventQuests = sanitizeEventQuests(player.eventQuests);
+    player.eventQuestLocks = pruneQuestLocks(player.eventQuestLocks).slice(0, EVENT_QUEST_SLOT_COUNT);
+    fillEventQuestSlots(player.eventQuests, player.eventQuestLocks);
+    applyInstantQuests(player.eventQuests);
+  }
+
   function sanitizeQuests(raw) {
     if (!Array.isArray(raw)) return [];
     const seen = new Set();
@@ -2218,13 +2737,13 @@
     return out;
   }
 
-  function sanitizeQuestLocks(raw) {
+  function sanitizeQuestLocks(raw, max = QUEST_SLOT_COUNT) {
     if (!Array.isArray(raw)) return [];
     const now = Date.now();
     return raw
       .map((n) => Number(n))
       .filter((n) => Number.isFinite(n) && n > now)
-      .slice(0, QUEST_SLOT_COUNT);
+      .slice(0, max);
   }
 
   function pruneQuestLocks(locks) {
@@ -2292,13 +2811,20 @@
     return `${mins} min`;
   }
 
+  function recipeMatOwned(mat) {
+    if (!mat) return 0;
+    if (mat.itemId) return Math.max(0, Math.floor(Number(player.items[mat.itemId]) || 0));
+    if (mat.cardId) return ownedBaseCardCount(mat.cardId);
+    return 0;
+  }
+
   function canAffordRecipe(recipe) {
     if (!recipe) return false;
     if ((player.coins || 0) < recipeCoinCost(recipe)) return false;
     if (recipe.pick) {
       return ownedMutationCardCount(recipe.pick.mutation) >= recipe.pick.count;
     }
-    return (recipe.materials || []).every((mat) => ownedBaseCardCount(mat.cardId) >= mat.count);
+    return (recipe.materials || []).every((mat) => recipeMatOwned(mat) >= mat.count);
   }
 
   function canConsumePicks(recipe, picks) {
@@ -2325,8 +2851,13 @@
     const coins = recipeCoinCost(recipe);
     if (coins) player.coins -= coins;
     for (const mat of recipe.materials) {
-      player.cards[mat.cardId] -= mat.count;
-      if (player.cards[mat.cardId] <= 0) delete player.cards[mat.cardId];
+      if (mat.itemId) {
+        player.items[mat.itemId] = Math.max(0, (player.items[mat.itemId] || 0) - mat.count);
+        if (player.items[mat.itemId] <= 0) delete player.items[mat.itemId];
+      } else if (mat.cardId) {
+        player.cards[mat.cardId] -= mat.count;
+        if (player.cards[mat.cardId] <= 0) delete player.cards[mat.cardId];
+      }
     }
     return true;
   }
@@ -2364,10 +2895,14 @@
     clearCraftPicks();
     inventoryMode = "browse";
     if (!recipe || !consumeRecipeMaterials(recipe, picks)) {
+      selectedCraftRecipeId = recipe ? recipe.id : selectedCraftRecipeId;
+      craftTab = "bench";
       showScreen("crafting");
       renderCrafting();
       return;
     }
+    selectedCraftRecipeId = recipe.id;
+    craftTab = "bench";
     enqueueCraftJob(recipe);
     showScreen("crafting");
   }
@@ -2375,6 +2910,7 @@
   function startCraftRecipe(recipeId) {
     const recipe = CRAFT_RECIPES[recipeId];
     if (!recipe) return;
+    selectedCraftRecipeId = recipe.id;
     if (recipe.pick) {
       openCraftMaterialPicker(recipeId);
       return;
@@ -2412,6 +2948,7 @@
     }
     player.craftJobs.splice(idx, 1);
     player.items[recipe.itemId] = (player.items[recipe.itemId] || 0) + 1;
+    progressQuests({ craftItem: recipe.itemId });
     savePlayer();
     renderPlayerUi();
     renderCrafting();
@@ -2460,10 +2997,17 @@
     player.questLocks = pruneQuestLocks(player.questLocks);
     fillQuestSlots(player.quests, player.questLocks);
     applyInstantQuests(player.quests);
+    ensureEventQuests();
+  }
+
+  function questDef(quest) {
+    if (!quest) return null;
+    return EVENT_QUEST_DEFS[quest.type] || QUEST_DEFS[quest.type] || null;
   }
 
   function questTarget(quest) {
-    return QUEST_DEFS[quest.type] ? QUEST_DEFS[quest.type].target : 1;
+    const def = questDef(quest);
+    return def ? def.target : 1;
   }
 
   function questTitle(quest) {
@@ -2471,7 +3015,8 @@
       const card = CARDS[quest.cardId];
       return card ? `Obtain a ${card.name}` : "Obtain a card";
     }
-    return QUEST_DEFS[quest.type] ? QUEST_DEFS[quest.type].title : "Quest";
+    const def = questDef(quest);
+    return def ? def.title : "Quest";
   }
 
   function formatQuestClock(totalSec) {
@@ -2497,8 +3042,18 @@
     return Boolean(card && card.oneIn >= 30);
   }
 
+  function electrifiedPackReward(count) {
+    const n = Math.max(0, Math.floor(Number(count) || 0));
+    return {
+      packs: n ? { "electrified-pack": n } : undefined,
+      label: n === 1 ? "1 Electrified Pack" : `${n} Electrified Packs`,
+    };
+  }
+
   function questReward(quest) {
     if (!quest) return { label: "" };
+    const eventDef = EVENT_QUEST_DEFS[quest.type];
+    if (eventDef) return electrifiedPackReward(eventDef.packs);
     if (quest.type === "play-30") return { coins: 20000, label: "20,000 coins" };
     if (quest.type === "earn-10000") return { packs: { "rare-pack": 2 }, label: "2 Rare Packs" };
     if (quest.type === "earn-30000") return { packs: { "rare-pack": 6 }, label: "6 Rare Packs" };
@@ -2536,7 +3091,9 @@
 
   function readyQuestCount() {
     ensureQuestBoard();
-    return player.quests.filter(isQuestReady).length;
+    const daily = player.quests.filter(isQuestReady).length;
+    const event = (player.eventQuests || []).filter(isQuestReady).length;
+    return daily + event;
   }
 
   function updateQuestBadge() {
@@ -2559,10 +3116,37 @@
     return true;
   }
 
+  function setQuestProgressAtLeast(quest, value) {
+    if (!quest || isQuestReady(quest)) return false;
+    const n = Math.max(0, Math.floor(Number(value) || 0));
+    const next = Math.min(questTarget(quest), Math.max(quest.progress, n));
+    if (next === quest.progress) return false;
+    quest.progress = next;
+    return true;
+  }
+
+  function cardGainQty(update, predicate) {
+    let n = 0;
+    if (Array.isArray(update.cardGains)) {
+      for (const row of update.cardGains) {
+        if (!row || !predicate(row.cardId)) continue;
+        n += Math.max(0, Math.floor(Number(row.qty) || 0));
+      }
+      return n;
+    }
+    if (!Array.isArray(update.cardIds)) return 0;
+    for (const id of update.cardIds) {
+      if (predicate(id)) n += 1;
+    }
+    return n;
+  }
+
   function progressQuests(update) {
     ensureQuestBoard();
     let changed = false;
-    for (const quest of player.quests) {
+    const quests = [...player.quests, ...(player.eventQuests || [])];
+    for (const quest of quests) {
+      const def = questDef(quest);
       if (update.playSec && quest.type === "play-30") {
         changed = bumpQuestProgress(quest, update.playSec) || changed;
       }
@@ -2575,14 +3159,42 @@
       }
       if (update.packId) {
         if (quest.type === "open-20") changed = bumpQuestProgress(quest, 1) || changed;
-        if (update.packId === "common-pack" && quest.type === "open-common-30") {
+        if (update.packId === "common-pack" && (quest.type === "open-common-30" || quest.type === "eq-open-common-5")) {
           changed = bumpQuestProgress(quest, 1) || changed;
         }
-        if (update.packId === "rare-pack" && quest.type === "open-rare-10") {
+        if (update.packId === "rare-pack" && (quest.type === "open-rare-10" || quest.type === "eq-open-rare-3")) {
           changed = bumpQuestProgress(quest, 1) || changed;
         }
       }
       if (update.cardIds && quest.type === "obtain" && update.cardIds.includes(quest.cardId)) {
+        changed = bumpQuestProgress(quest, 1) || changed;
+      }
+      if (def && def.collectBaseId) {
+        const gained = cardGainQty(
+          update,
+          (id) => id && parseCardKey(id).baseId === def.collectBaseId
+        );
+        if (gained) changed = bumpQuestProgress(quest, gained) || changed;
+      }
+      if (update.soldCards && (quest.type === "eq-sell-100" || quest.type === "eq-sell-30")) {
+        changed = bumpQuestProgress(quest, update.soldCards) || changed;
+      }
+      if (update.mutate && quest.type === "eq-mutate-10") {
+        changed = bumpQuestProgress(quest, update.mutate) || changed;
+      }
+      if (update.diamondMutate && quest.type === "eq-mutate-diamond") {
+        changed = bumpQuestProgress(quest, 1) || changed;
+      }
+      if (update.craftItem === "fire-gem" && quest.type === "eq-craft-fire-gem") {
+        changed = bumpQuestProgress(quest, 1) || changed;
+      }
+      if (update.trialWave && def && def.trialReach) {
+        changed = setQuestProgressAtLeast(quest, update.trialWave) || changed;
+      }
+      if (update.npcWin === "demonBoss" && quest.type === "eq-beat-demon-boss") {
+        changed = bumpQuestProgress(quest, 1) || changed;
+      }
+      if (update.npcDanger && quest.type === "eq-beat-bosses-3") {
         changed = bumpQuestProgress(quest, 1) || changed;
       }
     }
@@ -2620,20 +3232,106 @@
   function tickQuestCooldowns() {
     if (!Array.isArray(player.questLocks)) player.questLocks = [];
     if (!Array.isArray(player.quests)) player.quests = [];
+    if (!Array.isArray(player.eventQuestLocks)) player.eventQuestLocks = [];
+    if (!Array.isArray(player.eventQuests)) player.eventQuests = [];
     const beforeLocks = player.questLocks.length;
     const beforeQuests = player.quests.length;
+    const beforeEventLocks = player.eventQuestLocks.length;
+    const beforeEventQuests = player.eventQuests.length;
     player.questLocks = pruneQuestLocks(player.questLocks);
     fillQuestSlots(player.quests, player.questLocks);
     applyInstantQuests(player.quests);
+    player.eventQuestLocks = pruneQuestLocks(player.eventQuestLocks).slice(0, EVENT_QUEST_SLOT_COUNT);
+    fillEventQuestSlots(player.eventQuests, player.eventQuestLocks);
+    applyInstantQuests(player.eventQuests);
     const rolled =
-      player.questLocks.length !== beforeLocks || player.quests.length !== beforeQuests;
+      player.questLocks.length !== beforeLocks ||
+      player.quests.length !== beforeQuests ||
+      player.eventQuestLocks.length !== beforeEventLocks ||
+      player.eventQuests.length !== beforeEventQuests;
     if (rolled) {
       savePlayer();
       updateQuestBadge();
     }
-    if (currentScreen === "quests" && questTab === "daily" && (rolled || player.questLocks.length)) {
+    if (
+      currentScreen === "quests" &&
+      ((questTab === "daily" && (rolled || player.questLocks.length)) ||
+        (questTab === "event" && (rolled || player.eventQuestLocks.length)))
+    ) {
       renderQuests();
     }
+  }
+
+  function questThumbHtml(quest) {
+    if (quest.type === "obtain") {
+      const card = CARDS[quest.cardId];
+      return card ? `<span class="quest-thumb">${cardArtHtml(card)}</span>` : "";
+    }
+    const def = questDef(quest);
+    const collectId = def && def.collectBaseId;
+    if (collectId && CARDS[collectId]) {
+      return `<span class="quest-thumb">${cardArtHtml(CARDS[collectId])}</span>`;
+    }
+    return "";
+  }
+
+  function questCardHtml(quest, { refreshable = false } = {}) {
+    const ready = isQuestReady(quest);
+    const pct = Math.round((quest.progress / questTarget(quest)) * 100);
+    const reward = questReward(quest);
+    const thumb = questThumbHtml(quest);
+    const refreshBtn = refreshable
+      ? `<button type="button" class="quest-refresh" data-refresh-quest="${escapeHtml(quest.uid)}" title="Refresh quest" aria-label="Refresh quest">↻</button>`
+      : "";
+    const status = ready
+      ? `<button type="button" class="btn btn-primary" data-claim-quest="${escapeHtml(quest.uid)}">Claim</button>`
+      : `<span class="quest-pending">In progress</span>`;
+    return `
+      <article class="quest-card${ready ? " is-ready" : ""}">
+        <div class="quest-card-copy">
+          <h3 class="quest-title">${escapeHtml(questTitle(quest))}</h3>
+          <span class="quest-reward">Reward: ${escapeHtml(reward.label)}</span>
+          <div class="quest-meta">
+            ${thumb}
+            <div class="quest-progress-wrap">
+              <span class="quest-progress-text">${escapeHtml(questProgressLabel(quest))}</span>
+              <div class="quest-bar" aria-hidden="true"><span style="width:${pct}%"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="quest-card-actions">
+          ${refreshBtn}
+          ${status}
+        </div>
+      </article>
+    `;
+  }
+
+  function cooldownQuestCardHtml(readyAt) {
+    const remain = formatCountdown(readyAt - Date.now());
+    return `
+      <article class="quest-card is-cooldown">
+        <div class="quest-card-copy">
+          <h3 class="quest-title">New quest</h3>
+          <span class="quest-reward">Rolling in ${remain}</span>
+          <div class="quest-meta">
+            <div class="quest-progress-wrap">
+              <span class="quest-progress-text">Cooldown</span>
+              <div class="quest-bar" aria-hidden="true"><span style="width:0%"></span></div>
+            </div>
+          </div>
+        </div>
+        <span class="quest-pending">${remain}</span>
+      </article>
+    `;
+  }
+
+  function renderQuestLockCards(locks) {
+    const now = Date.now();
+    return (locks || [])
+      .filter((t) => t > now)
+      .map((readyAt) => cooldownQuestCardHtml(readyAt))
+      .join("");
   }
 
   function renderQuests() {
@@ -2641,73 +3339,89 @@
     const eventMode = questTab === "event";
     els.questsHeading.textContent = eventMode ? "Event Quests" : "Quests";
     els.questsCopy.textContent = eventMode
-      ? "Limited events will show up here."
+      ? questClaimFlash && Date.now() < questClaimFlashUntil
+        ? questClaimFlash
+        : shop.noQuestCooldown
+          ? "Five random event quests. Claim or refresh to roll a new one."
+          : "Five random event quests. Claim or refresh, then wait 30 minutes for a new one."
       : questClaimFlash && Date.now() < questClaimFlashUntil
         ? questClaimFlash
         : shop.noQuestCooldown
           ? "Three active quests. Claim a finished one to roll a new task."
           : "Three active quests. After a claim, a new quest rolls in 30 minutes.";
-    els.questsEventEmpty.hidden = !eventMode;
-    els.questsList.hidden = eventMode;
     document.querySelectorAll("[data-quest-tab]").forEach((tab) => {
       tab.classList.toggle("active", tab.getAttribute("data-quest-tab") === questTab);
     });
+    els.questsEventEmpty.hidden = true;
+    els.questsList.hidden = false;
     if (eventMode) {
-      els.questsList.innerHTML = "";
+      const questCards = (player.eventQuests || []).map((quest) =>
+        questCardHtml(quest, { refreshable: true })
+      );
+      const lockCards = renderQuestLockCards(player.eventQuestLocks);
+      const html = `${questCards.join("")}${lockCards}`;
+      if (!html) {
+        els.questsList.hidden = true;
+        els.questsEventEmpty.hidden = false;
+        els.questsList.innerHTML = "";
+      } else {
+        els.questsList.innerHTML = html;
+      }
       updateQuestBadge();
       return;
     }
-    const now = Date.now();
-    const lockCards = (player.questLocks || [])
-      .filter((t) => t > now)
-      .map((readyAt) => {
-        const remain = formatCountdown(readyAt - now);
-        return `
-          <article class="quest-card is-cooldown">
-            <div class="quest-card-copy">
-              <h3 class="quest-title">New quest</h3>
-              <span class="quest-reward">Rolling in ${remain}</span>
-              <div class="quest-meta">
-                <div class="quest-progress-wrap">
-                  <span class="quest-progress-text">Cooldown</span>
-                  <div class="quest-bar" aria-hidden="true"><span style="width:0%"></span></div>
-                </div>
-              </div>
-            </div>
-            <span class="quest-pending">${remain}</span>
-          </article>
-        `;
-      });
-    const questCards = player.quests.map((quest) => {
-      const ready = isQuestReady(quest);
-      const pct = Math.round((quest.progress / questTarget(quest)) * 100);
-      const card = quest.type === "obtain" ? CARDS[quest.cardId] : null;
-      const thumb = card ? `<span class="quest-thumb">${cardArtHtml(card)}</span>` : "";
-      const reward = questReward(quest);
-      return `
-        <article class="quest-card${ready ? " is-ready" : ""}">
-          <div class="quest-card-copy">
-            <h3 class="quest-title">${escapeHtml(questTitle(quest))}</h3>
-            <span class="quest-reward">Reward: ${escapeHtml(reward.label)}</span>
-            <div class="quest-meta">
-              ${thumb}
-              <div class="quest-progress-wrap">
-                <span class="quest-progress-text">${escapeHtml(questProgressLabel(quest))}</span>
-                <div class="quest-bar" aria-hidden="true"><span style="width:${pct}%"></span></div>
-              </div>
-            </div>
-          </div>
-          ${ready
-            ? `<button type="button" class="btn btn-primary" data-claim-quest="${escapeHtml(quest.uid)}">Claim</button>`
-            : `<span class="quest-pending">In progress</span>`}
-        </article>
-      `;
-    });
-    els.questsList.innerHTML = `${questCards.join("")}${lockCards.join("")}`;
+    const questCards = player.quests.map((quest) => questCardHtml(quest));
+    els.questsList.innerHTML = `${questCards.join("")}${renderQuestLockCards(player.questLocks)}`;
     updateQuestBadge();
   }
 
+  function pushEventQuestLock() {
+    if (!Array.isArray(player.eventQuestLocks)) player.eventQuestLocks = [];
+    if (!shop.noQuestCooldown) {
+      player.eventQuestLocks.push(Date.now() + QUEST_COOLDOWN_MS);
+    }
+  }
+
+  function claimEventQuest(uid) {
+    ensureEventQuests();
+    const index = player.eventQuests.findIndex((q) => q.uid === uid);
+    if (index < 0) return;
+    const quest = player.eventQuests[index];
+    if (!isQuestReady(quest)) return;
+    const reward = grantQuestReward(quest);
+    player.eventQuests.splice(index, 1);
+    pushEventQuestLock();
+    fillEventQuestSlots(player.eventQuests, player.eventQuestLocks);
+    applyInstantQuests(player.eventQuests);
+    questClaimFlash = reward.label ? `Claimed · ${reward.label}` : "Quest claimed.";
+    questClaimFlashUntil = Date.now() + 4000;
+    savePlayer();
+    renderQuests();
+    renderPlayerUi();
+  }
+
+  function refreshEventQuest(uid) {
+    ensureEventQuests();
+    const index = player.eventQuests.findIndex((q) => q.uid === uid);
+    if (index < 0) return;
+    player.eventQuests.splice(index, 1);
+    pushEventQuestLock();
+    fillEventQuestSlots(player.eventQuests, player.eventQuestLocks);
+    applyInstantQuests(player.eventQuests);
+    questClaimFlash = shop.noQuestCooldown
+      ? "Quest skipped."
+      : "Quest skipped. A new one rolls in 30 minutes.";
+    questClaimFlashUntil = Date.now() + 4000;
+    savePlayer();
+    renderQuests();
+    renderPlayerUi();
+  }
+
   function claimQuest(uid) {
+    if ((player.eventQuests || []).some((q) => q.uid === uid)) {
+      claimEventQuest(uid);
+      return;
+    }
     ensureQuestBoard();
     const index = player.quests.findIndex((q) => q.uid === uid);
     if (index < 0) return;
@@ -2760,6 +3474,8 @@
       els.qtyModal,
       els.packReveal,
       els.cardSellModal,
+      els.itemDiscardModal,
+      els.battleItemModal,
       els.loginRequiredModal,
       els.restockTokenModal,
       els.fireMutateModal,
@@ -2813,7 +3529,12 @@
         player.cards[card.id] = (player.cards[card.id] || 0) + 1;
       }
     }
-    progressQuests({ packId, cardIds: drawn.map((card) => card.id) });
+    progressQuests({
+      packId,
+      cardIds: drawn.map((card) => card.id),
+      cardGains: drawn.map((card) => ({ cardId: card.id, qty: 1 })),
+      soldCards: soldFlags.filter(Boolean).length,
+    });
     savePlayer();
     renderPlayerUi();
     showPackReveal(drawn, soldFlags, soldValue);
@@ -2980,126 +3701,240 @@
     );
   }
 
+  function craftJobRowsHtml(recipeId) {
+    const jobs = (Array.isArray(player.craftJobs) ? player.craftJobs : []).filter(
+      (job) => !recipeId || job.recipeId === recipeId
+    );
+    if (!jobs.length) return "";
+    return `<div class="craft-jobs">${jobs
+      .map((job) => {
+        const def = CRAFT_RECIPES[job.recipeId] || CRAFT_RECIPES["fire-gem"];
+        const ready = craftJobReady(job);
+        const wait = formatCountdown(job.readyAt - Date.now());
+        const pct = Math.round(craftJobProgress(job) * 100);
+        return `
+          <div class="craft-job${ready ? " is-ready" : ""}">
+            <div class="craft-job-icon" aria-hidden="true">${def.mark || "🔥"}</div>
+            <div class="craft-job-body">
+              <div class="craft-job-top">
+                <strong>${escapeHtml(def.name)}</strong>
+                <span class="item-note" data-craft-timer="${escapeHtml(job.id)}">${
+                  ready ? "Ready to claim" : wait
+                }</span>
+              </div>
+              <div class="craft-job-track" aria-hidden="true">
+                <span data-craft-bar="${escapeHtml(job.id)}" style="width:${pct}%"></span>
+              </div>
+            </div>
+            <button type="button" class="btn ${ready ? "btn-primary" : "btn-secondary"}" data-claim-craft="${escapeHtml(job.id)}" ${
+              ready ? "" : "disabled"
+            }>Claim</button>
+          </div>`;
+      })
+      .join("")}</div>`;
+  }
+
+  function craftRecipeDetailHtml(recipe) {
+    const coinCost = recipeCoinCost(recipe);
+    const coinOwned = player.coins || 0;
+    const coinChip = coinCost
+      ? `<div class="craft-chip${coinOwned >= coinCost ? "" : " is-short"}">
+        <div class="craft-chip-art craft-chip-coin" aria-hidden="true">$</div>
+        <div class="craft-chip-meta">
+          <strong>Coins</strong>
+          <span>×${coinCost.toLocaleString()}</span>
+          <span class="craft-chip-have">${coinOwned.toLocaleString()}/${coinCost.toLocaleString()}</span>
+        </div>
+      </div>
+      <span class="craft-op" aria-hidden="true">+</span>`
+      : "";
+    let materialBits = "";
+    if (recipe.pick) {
+      const spec = MUTATION_SPECS[recipe.pick.mutation];
+      const owned = ownedMutationCardCount(recipe.pick.mutation);
+      const enough = owned >= recipe.pick.count;
+      const label = spec ? `${spec.label} card` : "Mutated card";
+      materialBits = `
+      <div class="craft-chip${enough ? "" : " is-short"}">
+        <div class="craft-chip-art craft-chip-mut craft-chip-mut-${escapeHtml(recipe.pick.mutation)}" aria-hidden="true">${
+          recipe.pick.mutation === "silver" ? "🥈" : "✨"
+        }</div>
+        <div class="craft-chip-meta">
+          <strong>${escapeHtml(label)}</strong>
+          <span>×${recipe.pick.count}</span>
+          <span class="craft-chip-have">${owned}/${recipe.pick.count}</span>
+        </div>
+      </div>`;
+    } else {
+      materialBits = (recipe.materials || [])
+        .map((mat, i) => {
+          const item = mat.itemId ? ITEMS[mat.itemId] : null;
+          const card = mat.cardId ? CARDS[mat.cardId] : null;
+          const owned = recipeMatOwned(mat);
+          const enough = owned >= mat.count;
+          const plus = i > 0 ? `<span class="craft-op" aria-hidden="true">+</span>` : "";
+          const name = item ? item.name : card ? card.name : mat.itemId || mat.cardId;
+          const art = item
+            ? `<div class="craft-chip-art craft-chip-gem" aria-hidden="true">${item.id === "potion" ? "🧪" : "✦"}</div>`
+            : `<div class="craft-chip-art">${card ? cardArtHtml(card) : ""}</div>`;
+          return `
+      ${plus}
+      <div class="craft-chip${enough ? "" : " is-short"}">
+        ${art}
+        <div class="craft-chip-meta">
+          <strong>${escapeHtml(name)}</strong>
+          <span>×${mat.count}</span>
+          <span class="craft-chip-have">${owned}/${mat.count}</span>
+        </div>
+      </div>`;
+        })
+        .join("");
+    }
+    const canCraft = canAffordRecipe(recipe);
+    const jobs = craftJobRowsHtml(recipe.id);
+    return `
+      <button type="button" class="btn-back craft-detail-back" data-craft-grid-back="1">← Recipes</button>
+      <article class="craft-recipe craft-recipe-${escapeHtml(recipe.theme || "fire")}">
+        <div class="craft-recipe-head">
+          <div class="craft-gem-mark" aria-hidden="true">${recipe.mark || "🔥"}</div>
+          <div>
+            <h3>${escapeHtml(recipe.name)}</h3>
+            <p class="craft-recipe-stats">${escapeHtml(recipe.stats || recipe.blurb || "")}</p>
+          </div>
+        </div>
+        <div class="craft-flow">
+          ${coinChip}
+          ${materialBits}
+          <span class="craft-op" aria-hidden="true">→</span>
+          <div class="craft-chip craft-chip-out">
+            <div class="craft-chip-art craft-chip-gem" aria-hidden="true">${recipe.mark || "🔥"}</div>
+            <div class="craft-chip-meta">
+              <strong>${escapeHtml(recipe.name)}</strong>
+              <span>${formatCraftWait(recipe)}</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary craft-go" data-craft-recipe="${escapeHtml(recipe.id)}" ${
+          canCraft ? "" : "disabled"
+        }>Craft</button>
+      </article>
+      <div class="craft-claim-area">
+        <h3 class="craft-claim-head">Claim</h3>
+        ${jobs || `<p class="inventory-empty">No crafts in progress.</p>`}
+      </div>`;
+  }
+
+  function luckPotionStockCount() {
+    applyDueRestocks();
+    if (shop.infiniteStock) return Infinity;
+    return Math.max(0, Math.floor(Number(shop.luckPotionStock) || 0));
+  }
+
+  function crafterGoodStock(good) {
+    applyDueRestocks();
+    if (!good || !good.stockKey) return Infinity;
+    if (shop.infiniteStock) return Infinity;
+    return Math.max(0, Math.floor(Number(shop[good.stockKey]) || 0));
+  }
+
+  function buyCrafterGood(id) {
+    const good = CRAFTER_SHOP_GOODS.find((item) => item.id === id);
+    if (!good) return;
+    applyDueRestocks();
+    const stock = crafterGoodStock(good);
+    if (player.coins < good.price) return;
+    if (stock !== Infinity && stock <= 0) return;
+    player.coins -= good.price;
+    if (good.stockKey && !shop.infiniteStock) {
+      shop[good.stockKey] = Math.max(0, stock - 1);
+      saveShop();
+    }
+    player.items[good.id] = (player.items[good.id] || 0) + 1;
+    savePlayer();
+    renderPlayerUi();
+    renderCrafting();
+  }
+
+  function buyLuckIPotion() {
+    buyCrafterGood("luck-i-potion");
+  }
+
+  function renderCrafterShop() {
+    applyDueRestocks();
+    const remaining = Math.max(0, shop.nextRestockAt - Date.now());
+    const timer = shop.infiniteStock
+      ? "Infinite stock enabled"
+      : `Restock in ${formatCountdown(remaining)}`;
+    const rows = CRAFTER_SHOP_GOODS.map((good) => {
+      const stock = crafterGoodStock(good);
+      const soldOut = stock !== Infinity && stock <= 0;
+      const canBuy = !soldOut && player.coins >= good.price;
+      const stockLabel =
+        stock === Infinity ? (good.stockKey && shop.infiniteStock ? "In stock: ∞" : "Always in stock") : formatStockLabel(stock);
+      return `
+      <article class="crafter-shop-item is-${escapeHtml(good.theme || "luck")}">
+        <div class="crafter-shop-mark" aria-hidden="true">${good.mark}</div>
+        <div class="crafter-shop-copy">
+          <h3>${escapeHtml(good.name)}</h3>
+          <p>${escapeHtml(good.blurb)}</p>
+          <p class="crafter-shop-meta">${good.price.toLocaleString()} Coins · ${stockLabel}</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-buy-crafter="${escapeHtml(good.id)}" ${
+          canBuy ? "" : "disabled"
+        }>Buy</button>
+      </article>`;
+    }).join("");
+    els.craftingMain.innerHTML = `
+      <h2>Crafter's Shop</h2>
+      <p class="panel-copy">Buy potions and gems for your bench. Stock refreshes with the card shop.</p>
+      <p class="coin-badge crafter-shop-coins"><span class="coin-label">Coins</span> <strong>${player.coins.toLocaleString()}</strong></p>
+      <p class="restock-timer" id="crafter-shop-timer">${timer}</p>
+      <div class="crafter-shop-list">${rows}</div>
+    `;
+  }
+
   function renderCrafting() {
     if (!els.craftingMain) return;
     document.querySelectorAll("[data-craft-tab]").forEach((tab) => {
       tab.classList.toggle("active", tab.getAttribute("data-craft-tab") === craftTab);
     });
+    if (craftTab === "shop") {
+      renderCrafterShop();
+      return;
+    }
     if (craftTab === "bench") {
+      const recipe = selectedCraftRecipeId ? CRAFT_RECIPES[selectedCraftRecipeId] : null;
+      if (recipe) {
+        els.craftingMain.innerHTML = `
+          <h2>Crafting bench</h2>
+          <p class="panel-copy">Craft this recipe, then claim it from the queue.</p>
+          ${craftRecipeDetailHtml(recipe)}
+        `;
+        return;
+      }
       const jobs = Array.isArray(player.craftJobs) ? player.craftJobs : [];
-      const recipeCards = Object.values(CRAFT_RECIPES)
-        .map((recipe) => {
-          const coinCost = recipeCoinCost(recipe);
-          const coinOwned = player.coins || 0;
-          const coinChip = coinCost
-            ? `<div class="craft-chip${coinOwned >= coinCost ? "" : " is-short"}">
-              <div class="craft-chip-art craft-chip-coin" aria-hidden="true">$</div>
-              <div class="craft-chip-meta">
-                <strong>Coins</strong>
-                <span>×${coinCost.toLocaleString()}</span>
-                <span class="craft-chip-have">${coinOwned.toLocaleString()}/${coinCost.toLocaleString()}</span>
-              </div>
-            </div>
-            <span class="craft-op" aria-hidden="true">+</span>`
-            : "";
-          let materialBits = "";
-          if (recipe.pick) {
-            const spec = MUTATION_SPECS[recipe.pick.mutation];
-            const owned = ownedMutationCardCount(recipe.pick.mutation);
-            const enough = owned >= recipe.pick.count;
-            const label = spec ? `${spec.label} card` : "Mutated card";
-            materialBits = `
-            <div class="craft-chip${enough ? "" : " is-short"}">
-              <div class="craft-chip-art craft-chip-mut craft-chip-mut-${escapeHtml(recipe.pick.mutation)}" aria-hidden="true">${
-                recipe.pick.mutation === "silver" ? "🥈" : "✨"
-              }</div>
-              <div class="craft-chip-meta">
-                <strong>${escapeHtml(label)}</strong>
-                <span>×${recipe.pick.count}</span>
-                <span class="craft-chip-have">${owned}/${recipe.pick.count}</span>
-              </div>
-            </div>`;
-          } else {
-            materialBits = (recipe.materials || [])
-              .map((mat, i) => {
-                const card = CARDS[mat.cardId];
-                const owned = ownedBaseCardCount(mat.cardId);
-                const enough = owned >= mat.count;
-                const plus = i > 0 ? `<span class="craft-op" aria-hidden="true">+</span>` : "";
-                return `
-            ${plus}
-            <div class="craft-chip${enough ? "" : " is-short"}">
-              <div class="craft-chip-art">${card ? cardArtHtml(card) : ""}</div>
-              <div class="craft-chip-meta">
-                <strong>${escapeHtml(card ? card.name : mat.cardId)}</strong>
-                <span>×${mat.count}</span>
-                <span class="craft-chip-have">${owned}/${mat.count}</span>
-              </div>
-            </div>`;
-              })
-              .join("");
-          }
-          const canCraft = canAffordRecipe(recipe);
+      const tiles = Object.values(CRAFT_RECIPES)
+        .map((item) => {
+          const pending = jobs.filter((job) => job.recipeId === item.id);
+          const ready = pending.some((job) => craftJobReady(job));
+          const badge = ready
+            ? `<span class="craft-tile-badge is-ready">Ready</span>`
+            : pending.length
+              ? `<span class="craft-tile-badge">${pending.length}</span>`
+              : "";
           return `
-        <article class="craft-recipe craft-recipe-${escapeHtml(recipe.theme || "fire")}">
-          <div class="craft-recipe-head">
-            <div class="craft-gem-mark" aria-hidden="true">${recipe.mark || "🔥"}</div>
-            <div>
-              <h3>${escapeHtml(recipe.name)}</h3>
-              <p class="craft-recipe-stats">${escapeHtml(recipe.stats || recipe.blurb || "")}</p>
-            </div>
-          </div>
-          <div class="craft-flow">
-            ${coinChip}
-            ${materialBits}
-            <span class="craft-op" aria-hidden="true">→</span>
-            <div class="craft-chip craft-chip-out">
-              <div class="craft-chip-art craft-chip-gem" aria-hidden="true">${recipe.mark || "🔥"}</div>
-              <div class="craft-chip-meta">
-                <strong>${escapeHtml(recipe.name)}</strong>
-                <span>${formatCraftWait(recipe)}</span>
-              </div>
-            </div>
-          </div>
-          <button type="button" class="btn btn-primary craft-go" data-craft-recipe="${escapeHtml(recipe.id)}" ${
-            canCraft ? "" : "disabled"
-          }>Craft</button>
-        </article>`;
+            <button type="button" class="craft-recipe-tile craft-recipe-${escapeHtml(item.theme || "fire")}" data-open-recipe="${escapeHtml(item.id)}">
+              ${badge}
+              <span class="craft-gem-mark" aria-hidden="true">${item.mark || "🔥"}</span>
+              <strong>${escapeHtml(item.name)}</strong>
+              <span class="craft-tile-wait">${formatCraftWait(item)}</span>
+            </button>`;
         })
         .join("");
-      const jobRows = jobs.length
-        ? jobs
-            .map((job) => {
-              const def = CRAFT_RECIPES[job.recipeId] || CRAFT_RECIPES["fire-gem"];
-              const ready = craftJobReady(job);
-              const wait = formatCountdown(job.readyAt - Date.now());
-              const pct = Math.round(craftJobProgress(job) * 100);
-              return `
-                <div class="craft-job${ready ? " is-ready" : ""}">
-                  <div class="craft-job-icon" aria-hidden="true">${def.mark || "🔥"}</div>
-                  <div class="craft-job-body">
-                    <div class="craft-job-top">
-                      <strong>${escapeHtml(def.name)}</strong>
-                      <span class="item-note" data-craft-timer="${escapeHtml(job.id)}">${
-                        ready ? "Ready to claim" : wait
-                      }</span>
-                    </div>
-                    <div class="craft-job-track" aria-hidden="true">
-                      <span data-craft-bar="${escapeHtml(job.id)}" style="width:${pct}%"></span>
-                    </div>
-                  </div>
-                  <button type="button" class="btn ${ready ? "btn-primary" : "btn-secondary"}" data-claim-craft="${escapeHtml(job.id)}" ${
-                    ready ? "" : "disabled"
-                  }>Claim</button>
-                </div>`;
-            })
-            .join("")
-        : "";
       els.craftingMain.innerHTML = `
         <h2>Crafting bench</h2>
-        <p class="panel-copy">Fuse cards into gems, then claim them from the queue.</p>
-        <div class="craft-recipes">${recipeCards}</div>
-        ${jobRows ? `<div class="craft-jobs">${jobRows}</div>` : ""}
+        <p class="panel-copy">Pick a recipe to craft and claim.</p>
+        <div class="craft-recipe-grid">${tiles}</div>
       `;
       return;
     }
@@ -3158,8 +3993,25 @@
   function openGemPicker(itemId) {
     if (!(player.items[itemId] > 0) || !GEM_ITEMS[itemId]) return;
     pendingGemItemId = itemId;
+    pendingClearItemId = null;
     pendingFireCardKey = null;
     openInventory("mutate");
+  }
+
+  function clearItemDef(itemId = pendingClearItemId) {
+    return itemId ? CLEAR_ITEMS[itemId] || null : null;
+  }
+
+  function mutationReturnGem(mutation) {
+    return MUTATION_RETURN_GEM[mutation] || "";
+  }
+
+  function openClearPicker(itemId) {
+    if (!(player.items[itemId] > 0) || !CLEAR_ITEMS[itemId]) return;
+    pendingClearItemId = itemId;
+    pendingGemItemId = null;
+    pendingFireCardKey = null;
+    openInventory("clear");
   }
 
   function closeFireConfirm() {
@@ -3173,6 +4025,7 @@
     inventoryMode = "browse";
     inventoryTab = "items";
     pendingGemItemId = null;
+    pendingClearItemId = null;
     showScreen("inventory");
     renderInventoryList();
   }
@@ -3215,6 +4068,71 @@
       return player.cards[fromKey] > 0 ? slot : toKey;
     });
     pendingGemItemId = null;
+    progressQuests({
+      mutate: 1,
+      diamondMutate: gem.mutation === "diamond",
+    });
+    savePlayer();
+    inventoryMode = "browse";
+    inventoryTab = "cards";
+    renderPlayerUi();
+    showScreen("inventory");
+    renderInventoryList();
+  }
+
+  function promptClearMutate(cardKeyVal) {
+    const clear = clearItemDef();
+    if (!clear || !(player.items[clear.itemId] > 0)) return;
+    const parsed = parseCardKey(cardKeyVal);
+    if (!baseCard(cardKeyVal) || !parsed.mutation) return;
+    if (!(player.cards[cardKeyVal] > 0)) return;
+    pendingFireCardKey = cardKeyVal;
+    const spec = MUTATION_SPECS[parsed.mutation];
+    const refundId = clear.refund ? mutationReturnGem(parsed.mutation) : "";
+    const refundItem = refundId ? ITEMS[refundId] : null;
+    if (els.fireMutateTitle) els.fireMutateTitle.textContent = clear.title;
+    if (els.fireMutateCopy) {
+      const extra = clear.refund
+        ? refundItem
+          ? ` The ${refundItem.name} will be returned.`
+          : " This mutation has no gem to return."
+        : " The gem is not returned.";
+      els.fireMutateCopy.textContent = `Remove the ${spec ? spec.label : ""} Mutation from ${cardDisplayName(
+        cardKeyVal
+      )}.${extra}`;
+    }
+    if (els.fireMutateModal) els.fireMutateModal.hidden = false;
+    refreshFabs();
+  }
+
+  function confirmClearMutate() {
+    const clear = clearItemDef();
+    const fromKey = pendingFireCardKey;
+    closeFireConfirm();
+    const parsed = fromKey ? parseCardKey(fromKey) : { baseId: "", mutation: "" };
+    if (!clear || !(player.items[clear.itemId] > 0) || !fromKey || !parsed.mutation) {
+      cancelFireMutate();
+      return;
+    }
+    if (!(player.cards[fromKey] > 0)) {
+      cancelFireMutate();
+      return;
+    }
+    const toKey = parsed.baseId;
+    player.items[clear.itemId] -= 1;
+    if (player.items[clear.itemId] <= 0) delete player.items[clear.itemId];
+    player.cards[fromKey] -= 1;
+    if (player.cards[fromKey] <= 0) delete player.cards[fromKey];
+    player.cards[toKey] = (player.cards[toKey] || 0) + 1;
+    if (clear.refund) {
+      const refundId = mutationReturnGem(parsed.mutation);
+      if (refundId) player.items[refundId] = (player.items[refundId] || 0) + 1;
+    }
+    player.sellSlots = (player.sellSlots || []).map((slot) => {
+      if (slot !== fromKey) return slot;
+      return player.cards[fromKey] > 0 ? slot : toKey;
+    });
+    pendingClearItemId = null;
     savePlayer();
     inventoryMode = "browse";
     inventoryTab = "cards";
@@ -3237,6 +4155,12 @@
     const resultKey = cardKey(parsed.baseId, rolled);
     player.cards[resultKey] = (player.cards[resultKey] || 0) + 1;
     markIndexFound(parsed.baseId);
+    if (rolled) {
+      progressQuests({
+        mutate: 1,
+        diamondMutate: rolled === "diamond",
+      });
+    }
     if ((player.cards[key] || 0) < MERGE_COST) mergerPickKey = null;
     savePlayer();
     renderPlayerUi();
@@ -3263,10 +4187,12 @@
         ? MUTATION_SPECS[craftRecipe.pick.mutation].label
         : "mutated";
     const gem = gemItemDef();
+    const clear = clearItemDef();
     const cardOnlyPick =
       inventoryMode === "sell" ||
       inventoryMode === "battle" ||
       inventoryMode === "mutate" ||
+      inventoryMode === "clear" ||
       inventoryMode === "craft";
     const tradePick = inventoryMode === "trade";
     const pickMode = cardOnlyPick || tradePick;
@@ -3295,6 +4221,10 @@
               ? gem
                 ? `Apply ${gem.title}`
                 : "Apply mutation"
+            : inventoryMode === "clear"
+              ? clear
+                ? `Use ${clear.title}`
+                : "Clear mutation"
               : "Select a card";
       els.inventoryCopy.textContent =
         inventoryMode === "sell"
@@ -3317,6 +4247,8 @@
                 : `Pick ${craftNeed} ${craftLabel} cards.`
             : inventoryMode === "mutate"
               ? "Click a card to apply mutation."
+            : inventoryMode === "clear"
+              ? "Click a mutated card to clear it."
               : "Pick a card, then choose how many to offer.";
       document.querySelectorAll(".inv-tab").forEach((tab) => {
         const on = tab.getAttribute("data-inv-tab") === "cards";
@@ -3331,7 +4263,7 @@
           ? "Tap a pack to open it for 5 cards."
           : inventoryTab === "cards"
             ? "Your collected animal cards. Right-click a card to sell."
-            : "General items will show up here.";
+            : "Tap a usable item to use it. Right-click to discard with no reward.";
       document.querySelectorAll(".inv-tab").forEach((tab) => {
         tab.hidden = false;
         tab.classList.toggle("active", tab.getAttribute("data-inv-tab") === inventoryTab);
@@ -3364,6 +4296,8 @@
                 ? `You need ${craftNeed} ${craftLabel} cards.`
               : inventoryMode === "mutate"
                 ? "You need a card with no mutation."
+              : inventoryMode === "clear"
+                ? "You need a card with a mutation."
           : inventoryTab === "packs"
             ? "No packs. Visit the Card shop."
             : inventoryTab === "cards"
@@ -3425,6 +4359,7 @@
       const list = sortCardEntries(activeEntries).filter(([id, count]) => {
         if (!baseCard(id) || count <= 0) return false;
         if (inventoryMode === "mutate" && parseCardKey(id).mutation) return false;
+        if (inventoryMode === "clear" && !parseCardKey(id).mutation) return false;
         if (inventoryMode === "craft") {
           if (!craftRecipe || !craftRecipe.pick) return false;
           if (parseCardKey(id).mutation !== craftRecipe.pick.mutation) return false;
@@ -3439,6 +4374,8 @@
         els.inventoryList.innerHTML = `<p class="inventory-empty">${
           inventoryMode === "mutate"
             ? "You need a card with no mutation."
+            : inventoryMode === "clear"
+              ? "You need a card with a mutation."
             : inventoryMode === "craft"
               ? `You need ${craftNeed} ${craftLabel} cards.`
             : inventoryMode === "battle"
@@ -3505,7 +4442,7 @@
           : "";
         if (item.usable) {
           return `
-      <button type="button" class="inventory-row pack-row" data-use-item="${escapeHtml(id)}">
+      <button type="button" class="inventory-row pack-row" data-use-item="${escapeHtml(id)}" data-discard-item="${escapeHtml(id)}">
         <div>
           <div class="item-name">${escapeHtml(item.name)}</div>
           ${note}
@@ -3515,7 +4452,7 @@
     `;
         }
         return `
-      <div class="inventory-row">
+      <div class="inventory-row" data-discard-item="${escapeHtml(id)}">
         <div>
           <div class="item-name">${escapeHtml(item.name)}</div>
           ${note}
@@ -3975,7 +4912,10 @@
     giveOfferRows(player.items, theirOffer.items, "itemId");
     for (const row of theirOffer.cards) markIndexFound(row.cardId);
     if (theirOffer.cash > 0) addEarnedCoins(theirOffer.cash);
-    progressQuests({ cardIds: theirOffer.cards.map((row) => row.cardId) });
+    progressQuests({
+      cardIds: theirOffer.cards.map((row) => row.cardId),
+      cardGains: theirOffer.cards.map((row) => ({ cardId: row.cardId, qty: row.qty })),
+    });
 
     savePlayer();
 
@@ -4341,6 +5281,8 @@
       foeIndex: 0,
       youTeam: keys.map((key) => makeBattler(baseCard(key), key)),
       youIndex: 0,
+      youReviveLastTurn: null,
+      foeReviveLastTurn: null,
       turn: 1,
       over: false,
       busy: false,
@@ -4395,6 +5337,7 @@
       serif: def.serif,
       trialWave: waveNumber,
     });
+    progressQuests({ trialWave: waveNumber });
   }
 
   function battleMoveReady(move, battler) {
@@ -4440,7 +5383,40 @@
     return sideId === "you" ? activeYou() : activeFoe();
   }
 
+  function applyBattleItemAction(action) {
+    const team = action.sideId === "you" ? battle.youTeam : battle.foeTeam;
+    const idx = Math.floor(Number(action.targetIndex));
+    const target = team && team[idx];
+    if (!target) return null;
+    const name = cardDisplayName(target.cardKey || target.cardId);
+    const activeIndex = action.sideId === "you" ? battle.youIndex : battle.foeIndex;
+    const showOnActive = idx === activeIndex;
+    if (action.itemId === "potion") {
+      if (target.hp <= 0) return { log: `Potion could not heal ${name}.` };
+      const before = target.hp;
+      target.hp = Math.min(target.maxHp, target.hp + BATTLE_POTION_HEAL);
+      const gained = target.hp - before;
+      return {
+        log: `Potion heals ${name} ${gained} HP.`,
+        heal: showOnActive && gained ? action.sideId : null,
+        amount: gained,
+      };
+    }
+    if (action.itemId === "revive") {
+      if (target.hp > 0) return { log: `Revive could not bring back ${name}.` };
+      const hp = Math.max(1, Math.floor(target.maxHp / 2));
+      target.hp = hp;
+      return {
+        log: `Revive brings ${name} back to ${hp} HP.`,
+        heal: showOnActive ? action.sideId : null,
+        amount: hp,
+      };
+    }
+    return null;
+  }
+
   function applyOneBattleAction(action) {
+    if (action && action.type === "item") return applyBattleItemAction(action);
     const battler = battlerBySide(action.sideId);
     if (!battler || battler.hp <= 0) return null;
     const card = CARDS[battler.cardId];
@@ -4603,6 +5579,15 @@
             action: "leave-pvp",
           });
         } else {
+          if (battle.mode === "trial") {
+            progressQuests({ trialWave: battle.trialWave });
+          } else if (battle.npcId) {
+            const npc = NPC_FIGHTERS[battle.npcId];
+            progressQuests({
+              npcWin: battle.npcId,
+              npcDanger: Boolean(npc && npc.danger),
+            });
+          }
           const reward = grantBattleReward(battle);
           if (battle.mode === "trial") {
             const next = trialWaveDef(battle.trialWave + 1);
@@ -4629,6 +5614,7 @@
           action: "leave-pvp",
         });
       } else if (event.battleOver === "lose" && battle.mode === "trial") {
+        progressQuests({ trialWave: battle.trialWave });
         showBattleReward(null, {
           title: "Trial over",
           copy: `You reached wave ${battle.trialWave}.`,
@@ -4779,6 +5765,197 @@
       if (target && target.hp <= 0) return { engineChargeMode: "revive", reviveIndex: idx };
     }
     return { engineChargeMode: "heal" };
+  }
+
+  function battleActionLocked() {
+    return (
+      !battle ||
+      battle.over ||
+      battle.busy ||
+      battle.mustSwitch ||
+      battle.waitingFoeSwitch ||
+      Boolean(battle.mode === "pvp" && myPvpChoice)
+    );
+  }
+
+  function ownedBattleItem(itemId) {
+    return Math.max(0, Math.floor(Number(player.items[itemId]) || 0));
+  }
+
+  function consumeBattleItem(itemId) {
+    if (ownedBattleItem(itemId) < 1) return false;
+    player.items[itemId] -= 1;
+    if (player.items[itemId] <= 0) delete player.items[itemId];
+    savePlayer();
+    return true;
+  }
+
+  function reviveLastTurn(sideId) {
+    if (!battle) return null;
+    return sideId === "you" ? battle.youReviveLastTurn : battle.foeReviveLastTurn;
+  }
+
+  function reviveItemReady(sideId) {
+    if (!battle) return false;
+    const last = reviveLastTurn(sideId);
+    if (last == null || last < 0) return true;
+    return battle.turn >= last + REVIVE_ITEM_TURN_GAP;
+  }
+
+  function reviveWaitTurns(sideId) {
+    if (!battle) return 0;
+    const last = reviveLastTurn(sideId);
+    if (last == null || last < 0) return 0;
+    return Math.max(0, last + REVIVE_ITEM_TURN_GAP - battle.turn);
+  }
+
+  function markReviveUsed(sideId) {
+    if (!battle) return;
+    if (sideId === "you") battle.youReviveLastTurn = battle.turn;
+    else battle.foeReviveLastTurn = battle.turn;
+  }
+
+  function battleItemTargets(itemId, team) {
+    return (team || [])
+      .map((member, index) => ({ member, index }))
+      .filter(({ member }) => {
+        if (!member) return false;
+        if (itemId === "potion") return member.hp > 0;
+        if (itemId === "revive") return member.hp <= 0;
+        return false;
+      });
+  }
+
+  function canCommitBattleItem(itemId, targetIndex, sideId = "you") {
+    if (itemId !== "potion" && itemId !== "revive") return false;
+    const team = sideId === "you" ? battle.youTeam : battle.foeTeam;
+    const target = team && team[targetIndex];
+    if (!target) return false;
+    if (itemId === "potion") return target.hp > 0;
+    return target.hp <= 0 && reviveItemReady(sideId);
+  }
+
+  function hideBattleItemModal() {
+    pendingBattleItem = null;
+    if (els.battleItemModal) els.battleItemModal.hidden = true;
+    if (els.battleItemList) els.battleItemList.innerHTML = "";
+    refreshFabs();
+  }
+
+  function openBattleItemPicker(itemId) {
+    if (battleActionLocked()) return;
+    if (itemId === "potion" && ownedBattleItem("potion") < 1) return;
+    if (itemId === "revive" && (ownedBattleItem("revive") < 1 || !reviveItemReady("you"))) return;
+    const targets = battleItemTargets(itemId, battle.youTeam);
+    if (!targets.length) return;
+    pendingBattleItem = itemId;
+    if (els.battleItemTitle) els.battleItemTitle.textContent = itemId === "revive" ? "Revive" : "Potion";
+    if (els.battleItemCopy) {
+      els.battleItemCopy.textContent =
+        itemId === "revive"
+          ? "Choose one fainted card to revive to half HP."
+          : "Choose one living card to heal 30 HP.";
+    }
+    if (els.battleItemList) {
+      els.battleItemList.innerHTML = targets
+        .map(
+          ({ member, index }) => `
+        <button type="button" class="engine-charge-revive-pick" data-battle-item-target="${index}">
+          ${cardFaceHtml(CARDS[member.cardId], {
+            compact: true,
+            showValue: false,
+            hp: member.hp,
+            cardKey: member.cardKey || member.cardId,
+          })}
+        </button>`
+        )
+        .join("");
+    }
+    if (els.battleItemModal) els.battleItemModal.hidden = false;
+    refreshFabs();
+  }
+
+  function confirmBattleItemTarget(targetIndex) {
+    const itemId = pendingBattleItem;
+    hideBattleItemModal();
+    if (!itemId) return;
+    commitBattleItem(itemId, targetIndex);
+  }
+
+  async function commitBattleItem(itemId, targetIndex) {
+    if (battleActionLocked()) return;
+    const idx = Math.floor(Number(targetIndex));
+    if (itemId === "potion" && ownedBattleItem("potion") < 1) return;
+    if (itemId === "revive" && ownedBattleItem("revive") < 1) return;
+    if (!canCommitBattleItem(itemId, idx, "you")) return;
+    if (battle.mode === "pvp") {
+      if (battle.waitingFoeSwitch || myPvpChoice) return;
+      if (!consumeBattleItem(itemId)) return;
+      if (itemId === "revive") markReviveUsed("you");
+      lockInPvpChoice({ type: "item", itemId, targetIndex: idx });
+      return;
+    }
+    const you = activeYou();
+    const foe = activeFoe();
+    const foeCard = foe && CARDS[foe.cardId];
+    if (!you || !foeCard) return;
+    if (!consumeBattleItem(itemId)) return;
+    if (itemId === "revive") markReviveUsed("you");
+    const foeMove = pickNpcMove(foeCard, foe);
+    const foeExtras = autoEngineChargeExtras(foeMove, battle.foeTeam);
+    const actions = resolveBattleTurn(
+      {
+        id: "you",
+        item: itemId,
+        targetIndex: idx,
+        jumpscareUses: you.jumpscareUses,
+        statMult: you.statMult || 1,
+        healMult: you.healMult != null ? you.healMult : 1,
+      },
+      {
+        id: "foe",
+        move: foeMove,
+        jumpscareUses: foe.jumpscareUses,
+        statMult: foe.statMult || 1,
+        healMult: foe.healMult != null ? foe.healMult : 1,
+        ...foeExtras,
+      }
+    );
+    if (foeMove) {
+      if (foeMove.isHeal) foe.healLastTurn[foeMove.id] = battle.turn;
+      if (foeMove.isJumpscare) foe.jumpscareUses += 1;
+    }
+    await resolvePlayedActions(actions);
+  }
+
+  function renderBattleItemDock() {
+    if (!els.battleItemDock) return;
+    if (!battle) {
+      els.battleItemDock.innerHTML = "";
+      return;
+    }
+    const locked = battleActionLocked();
+    const potionCount = ownedBattleItem("potion");
+    const reviveCount = ownedBattleItem("revive");
+    const potionReady = !locked && potionCount > 0 && battleItemTargets("potion", battle.youTeam).length > 0;
+    const reviveWait = reviveWaitTurns("you");
+    const reviveReady =
+      !locked && reviveCount > 0 && reviveItemReady("you") && battleItemTargets("revive", battle.youTeam).length > 0;
+    els.battleItemDock.innerHTML = `
+      <button type="button" class="battle-item-btn is-potion" data-battle-item="potion" ${
+        potionReady ? "" : "disabled"
+      } title="Potion: heal 30 HP">
+        <span aria-hidden="true">🧪</span>
+        <span class="battle-item-count">${potionCount}</span>
+      </button>
+      <button type="button" class="battle-item-btn is-revive" data-battle-item="revive" ${
+        reviveReady ? "" : "disabled"
+      } title="Revive: half HP">
+        <span aria-hidden="true">💗</span>
+        <span class="battle-item-count">${reviveCount}</span>
+        ${reviveWait > 0 ? `<span class="battle-item-wait">${reviveWait}</span>` : ""}
+      </button>
+    `;
   }
 
   async function playBattleMove(index) {
@@ -4945,6 +6122,7 @@
         `;
       })
       .join("");
+    renderBattleItemDock();
   }
 
   function renderBattleParty() {
@@ -5007,6 +6185,8 @@
     pendingBattleTeam = [];
     hideBattleReward();
     hideEngineChargeModal();
+    hideBattleItemModal();
+    if (els.battleItemDock) els.battleItemDock.innerHTML = "";
     els.battleLog.classList.remove("is-in");
     els.battleParty.hidden = true;
     showScreen(dest);
@@ -5049,10 +6229,11 @@
   function openInventory(mode = "browse", sellSlotIndex = null) {
     inventoryMode = mode;
     pendingSellSlot = mode === "sell" ? sellSlotIndex : null;
-    if (mode === "sell" || mode === "mutate" || mode === "craft") inventoryTab = "cards";
+    if (mode === "sell" || mode === "battle" || mode === "mutate" || mode === "clear" || mode === "craft") inventoryTab = "cards";
     if (mode === "trade") inventoryTab = "cards";
     if (mode !== "craft") clearCraftPicks();
     if (mode !== "mutate") pendingGemItemId = null;
+    if (mode !== "clear") pendingClearItemId = null;
     inventoryReturnScreen = currentScreen === "inventory" ? inventoryReturnScreen : currentScreen;
     showScreen("inventory");
     renderInventoryList();
@@ -5140,6 +6321,59 @@
     refreshFabs();
   }
 
+  function openItemDiscardModal(itemId) {
+    const owned = player.items[itemId] || 0;
+    if (owned < 1) return;
+    pendingDiscardItemId = itemId;
+    const item = ITEMS[itemId] || { name: itemId };
+    if (els.itemDiscardName) els.itemDiscardName.textContent = item.name;
+    els.itemDiscardQty.max = String(owned);
+    els.itemDiscardQty.value = "1";
+    if (els.itemDiscardHint) els.itemDiscardHint.textContent = `Owned: ${owned}`;
+    if (els.btnDiscardKeepOne) els.btnDiscardKeepOne.disabled = owned < 2;
+    updateItemDiscardQty();
+    els.itemDiscardModal.hidden = false;
+    refreshFabs();
+  }
+
+  function updateItemDiscardQty() {
+    if (!pendingDiscardItemId || !els.itemDiscardQty) return;
+    const owned = player.items[pendingDiscardItemId] || 0;
+    let qty = Math.floor(Number(els.itemDiscardQty.value) || 0);
+    qty = Math.max(1, Math.min(owned, qty));
+    els.itemDiscardQty.value = String(qty);
+    if (els.btnItemDiscardConfirm) els.btnItemDiscardConfirm.disabled = qty < 1 || qty > owned;
+  }
+
+  function setDiscardKeepOne() {
+    const owned = player.items[pendingDiscardItemId] || 0;
+    if (owned < 2) return;
+    els.itemDiscardQty.value = String(owned - 1);
+    updateItemDiscardQty();
+  }
+
+  function closeItemDiscardModal() {
+    if (els.itemDiscardModal) els.itemDiscardModal.hidden = true;
+    pendingDiscardItemId = null;
+    refreshFabs();
+  }
+
+  function confirmItemDiscard() {
+    const itemId = pendingDiscardItemId;
+    const owned = player.items[itemId] || 0;
+    if (!itemId || owned < 1) {
+      closeItemDiscardModal();
+      return;
+    }
+    let qty = Math.floor(Number(els.itemDiscardQty.value) || 0);
+    qty = Math.max(1, Math.min(owned, qty));
+    player.items[itemId] -= qty;
+    if (player.items[itemId] <= 0) delete player.items[itemId];
+    savePlayer();
+    closeItemDiscardModal();
+    renderPlayerUi();
+  }
+
   function confirmCardSell() {
     const cardId = pendingSellCardId;
     const card = baseCard(cardId);
@@ -5154,6 +6388,7 @@
     player.cards[cardId] -= qty;
     if (player.cards[cardId] <= 0) delete player.cards[cardId];
     addEarnedCoins(payout);
+    progressQuests({ soldCards: qty });
     savePlayer();
     closeCardSellModal();
     renderPlayerUi();
@@ -5252,6 +6487,15 @@
         reviveIndex: packedReviveIndex(choice.reviveIndex),
       };
     }
+    if (choice.type === "item") {
+      const itemId = choice.itemId === "revive" ? "revive" : choice.itemId === "potion" ? "potion" : "";
+      if (!itemId) return { type: "none" };
+      return {
+        type: "item",
+        itemId,
+        targetIndex: packedReviveIndex(choice.targetIndex),
+      };
+    }
     return { type: "none" };
   }
 
@@ -5314,6 +6558,11 @@
     if (choice.type === "switch") {
       const next = battle.youTeam[choice.index];
       if (!next || next.hp <= 0 || choice.index === battle.youIndex) return;
+    }
+    if (choice.type === "item") {
+      const itemId = choice.itemId === "revive" ? "revive" : choice.itemId === "potion" ? "potion" : "";
+      const idx = Math.floor(Number(choice.targetIndex));
+      if (!itemId || !canCommitBattleItem(itemId, idx, "you")) return;
     }
     myPvpChoice = choice;
     sendPayload({ type: "pvp-choice", choice, turn: battle.turn });
@@ -5386,13 +6635,47 @@
       if (foeMove.isHeal) foe.healLastTurn[foeMove.id] = battle.turn;
       if (foeMove.isJumpscare) foe.jumpscareUses += 1;
     }
+    if (myPacked.type === "item" && myPacked.itemId === "revive") markReviveUsed("you");
+    if (foePacked.type === "item" && foePacked.itemId === "revive") markReviveUsed("foe");
     const youExtras = battleSideExtras("you", youMove, myPacked);
     const foeExtras = battleSideExtras("foe", foeMove, foePacked);
-    const actions = resolveBattleTurn(
-      { id: "you", move: youMove, jumpscareUses: you ? you.jumpscareUses : 0, statMult: you ? you.statMult || 1 : 1, healMult: you && you.healMult != null ? you.healMult : 1, ...youExtras },
-      { id: "foe", move: foeMove, jumpscareUses: foe ? foe.jumpscareUses : 0, statMult: foe ? foe.statMult || 1 : 1, healMult: foe && foe.healMult != null ? foe.healMult : 1, ...foeExtras },
-      rng
-    );
+    const youSide =
+      myPacked.type === "item"
+        ? {
+            id: "you",
+            item: myPacked.itemId,
+            targetIndex: myPacked.targetIndex,
+            jumpscareUses: you ? you.jumpscareUses : 0,
+            statMult: you ? you.statMult || 1 : 1,
+            healMult: you && you.healMult != null ? you.healMult : 1,
+          }
+        : {
+            id: "you",
+            move: youMove,
+            jumpscareUses: you ? you.jumpscareUses : 0,
+            statMult: you ? you.statMult || 1 : 1,
+            healMult: you && you.healMult != null ? you.healMult : 1,
+            ...youExtras,
+          };
+    const foeSide =
+      foePacked.type === "item"
+        ? {
+            id: "foe",
+            item: foePacked.itemId,
+            targetIndex: foePacked.targetIndex,
+            jumpscareUses: foe ? foe.jumpscareUses : 0,
+            statMult: foe ? foe.statMult || 1 : 1,
+            healMult: foe && foe.healMult != null ? foe.healMult : 1,
+          }
+        : {
+            id: "foe",
+            move: foeMove,
+            jumpscareUses: foe ? foe.jumpscareUses : 0,
+            statMult: foe ? foe.statMult || 1 : 1,
+            healMult: foe && foe.healMult != null ? foe.healMult : 1,
+            ...foeExtras,
+          };
+    const actions = resolveBattleTurn(youSide, foeSide, rng);
     await resolvePlayedActions(actions, prefix);
   }
 
@@ -6388,9 +7671,10 @@
     playBattleMove(Number(btn.getAttribute("data-battle-move")));
   });
   els.btnInventoryBack.addEventListener("click", () => {
-    if (inventoryMode === "mutate") {
+    if (inventoryMode === "mutate" || inventoryMode === "clear") {
       closeFireConfirm();
       pendingGemItemId = null;
+      pendingClearItemId = null;
       inventoryMode = "browse";
       inventoryTab = "items";
       renderInventoryList();
@@ -6443,11 +7727,18 @@
   });
   els.btnCrafting.addEventListener("click", openCrafting);
   els.btnCraftingBack.addEventListener("click", () => {
+    if (craftTab === "bench" && selectedCraftRecipeId) {
+      selectedCraftRecipeId = null;
+      renderCrafting();
+      return;
+    }
     showScreen(craftReturnScreen || "title");
   });
   document.querySelectorAll("[data-craft-tab]").forEach((tab) => {
     tab.addEventListener("click", () => {
-      craftTab = tab.getAttribute("data-craft-tab") === "merger" ? "merger" : "bench";
+      const next = tab.getAttribute("data-craft-tab");
+      craftTab = next === "merger" || next === "shop" ? next : "bench";
+      selectedCraftRecipeId = null;
       renderCrafting();
     });
   });
@@ -6459,6 +7750,23 @@
       return;
     }
     if (e.target.closest("#btn-merge-combine")) combineMutation();
+    const gridBack = e.target.closest("[data-craft-grid-back]");
+    if (gridBack) {
+      selectedCraftRecipeId = null;
+      renderCrafting();
+      return;
+    }
+    const openRecipe = e.target.closest("[data-open-recipe]");
+    if (openRecipe) {
+      selectedCraftRecipeId = openRecipe.getAttribute("data-open-recipe");
+      renderCrafting();
+      return;
+    }
+    const buyBtn = e.target.closest("[data-buy-crafter]");
+    if (buyBtn) {
+      buyCrafterGood(buyBtn.getAttribute("data-buy-crafter"));
+      return;
+    }
     const craftBtn = e.target.closest("[data-craft-recipe]");
     if (craftBtn) startCraftRecipe(craftBtn.getAttribute("data-craft-recipe"));
     const claim = e.target.closest("[data-claim-craft]");
@@ -6473,6 +7781,11 @@
     });
   });
   els.questsList.addEventListener("click", (e) => {
+    const refresh = e.target.closest("[data-refresh-quest]");
+    if (refresh) {
+      refreshEventQuest(refresh.getAttribute("data-refresh-quest"));
+      return;
+    }
     const btn = e.target.closest("[data-claim-quest]");
     if (!btn || btn.disabled) return;
     claimQuest(btn.getAttribute("data-claim-quest"));
@@ -6500,6 +7813,26 @@
       confirmEngineChargeRevive(Number(btn.getAttribute("data-engine-revive")));
     });
   }
+  if (els.battleItemDock) {
+    els.battleItemDock.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-battle-item]");
+      if (!btn) return;
+      openBattleItemPicker(btn.getAttribute("data-battle-item"));
+    });
+  }
+  if (els.btnBattleItemCancel) els.btnBattleItemCancel.addEventListener("click", hideBattleItemModal);
+  if (els.battleItemList) {
+    els.battleItemList.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-battle-item-target]");
+      if (!btn) return;
+      confirmBattleItemTarget(Number(btn.getAttribute("data-battle-item-target")));
+    });
+  }
+  if (els.battleItemModal) {
+    els.battleItemModal.addEventListener("click", (e) => {
+      if (e.target === els.battleItemModal) hideBattleItemModal();
+    });
+  }
   els.btnRevealDone.addEventListener("click", hidePackReveal);
 
   els.btnAdminGateCancel.addEventListener("click", closeAdminGate);
@@ -6511,7 +7844,12 @@
   els.btnRestockTokenNo.addEventListener("click", closeRestockTokenModal);
   els.btnRestockTokenYes.addEventListener("click", confirmRestockToken);
   if (els.btnFireMutateNo) els.btnFireMutateNo.addEventListener("click", cancelFireMutate);
-  if (els.btnFireMutateYes) els.btnFireMutateYes.addEventListener("click", confirmFireMutate);
+  if (els.btnFireMutateYes) {
+    els.btnFireMutateYes.addEventListener("click", () => {
+      if (pendingClearItemId) confirmClearMutate();
+      else confirmFireMutate();
+    });
+  }
   els.adminInfiniteStock.addEventListener("change", () => {
     shop.infiniteStock = els.adminInfiniteStock.checked;
     saveShop();
@@ -6533,7 +7871,10 @@
   els.adminNoQuestCooldown.addEventListener("change", () => {
     shop.noQuestCooldown = els.adminNoQuestCooldown.checked;
     saveShop();
-    if (shop.noQuestCooldown) player.questLocks = [];
+    if (shop.noQuestCooldown) {
+      player.questLocks = [];
+      player.eventQuestLocks = [];
+    }
     ensureQuestBoard();
     savePlayer();
     if (currentScreen === "quests") renderQuests();
@@ -6565,6 +7906,8 @@
     if (e.key !== "Alt" || e.repeat) return;
     if (!els.adminGate.hidden || !els.adminSettings.hidden) return;
     if (!els.qtyModal.hidden || !els.packReveal.hidden || !els.cardSellModal.hidden) return;
+    if (els.itemDiscardModal && !els.itemDiscardModal.hidden) return;
+    if (els.battleItemModal && !els.battleItemModal.hidden) return;
     if (els.restockTokenModal && !els.restockTokenModal.hidden) return;
     if (els.fireMutateModal && !els.fireMutateModal.hidden) return;
     if (els.craftResult && !els.craftResult.hidden) return;
@@ -6579,7 +7922,7 @@
 
   document.querySelectorAll(".inv-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
-      if (inventoryMode === "sell" || inventoryMode === "battle" || inventoryMode === "mutate" || inventoryMode === "craft") return;
+      if (inventoryMode === "sell" || inventoryMode === "battle" || inventoryMode === "mutate" || inventoryMode === "clear" || inventoryMode === "craft") return;
       inventoryTab = tab.getAttribute("data-inv-tab");
       renderInventoryList();
     });
@@ -6595,7 +7938,9 @@
     if (useBtn && inventoryMode === "browse") {
       const itemId = useBtn.getAttribute("data-use-item");
       if (itemId === "restock-token") openRestockTokenModal();
+      else if (itemId === "luck-i-potion") useLuckIPotion();
       else if (GEM_ITEMS[itemId]) openGemPicker(itemId);
+      else if (CLEAR_ITEMS[itemId]) openClearPicker(itemId);
       return;
     }
     const packPick = e.target.closest("[data-pick-pack]");
@@ -6653,13 +7998,23 @@
     }
     if (inventoryMode === "mutate") {
       promptFireMutate(cardId);
+      return;
+    }
+    if (inventoryMode === "clear") {
+      promptClearMutate(cardId);
     }
   });
 
   els.inventoryList.addEventListener("contextmenu", (e) => {
+    if (inventoryMode !== "browse") return;
+    const itemRow = e.target.closest("[data-discard-item]");
+    if (itemRow && els.inventoryList.contains(itemRow)) {
+      e.preventDefault();
+      openItemDiscardModal(itemRow.getAttribute("data-discard-item"));
+      return;
+    }
     const cardBtn = e.target.closest("[data-pick-card]");
     if (!cardBtn) return;
-    if (inventoryMode !== "browse") return;
     e.preventDefault();
     openCardSellModal(cardBtn.getAttribute("data-pick-card"));
   });
@@ -6668,6 +8023,15 @@
   els.btnSellKeepOne.addEventListener("click", setSellKeepOne);
   els.btnCardSellCancel.addEventListener("click", closeCardSellModal);
   els.btnCardSellConfirm.addEventListener("click", confirmCardSell);
+  if (els.itemDiscardQty) els.itemDiscardQty.addEventListener("input", updateItemDiscardQty);
+  if (els.btnDiscardKeepOne) els.btnDiscardKeepOne.addEventListener("click", setDiscardKeepOne);
+  if (els.btnItemDiscardCancel) els.btnItemDiscardCancel.addEventListener("click", closeItemDiscardModal);
+  if (els.btnItemDiscardConfirm) els.btnItemDiscardConfirm.addEventListener("click", confirmItemDiscard);
+  if (els.itemDiscardModal) {
+    els.itemDiscardModal.addEventListener("click", (e) => {
+      if (e.target === els.itemDiscardModal) closeItemDiscardModal();
+    });
+  }
 
   els.myTradeItems.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-remove-kind]");
@@ -6764,6 +8128,11 @@
 
   window.addEventListener("visibilitychange", () => {
     if (document.hidden) savePlayer();
+    else renderLuckBoostHud();
+  });
+  window.addEventListener("pageshow", () => {
+    startLuckBoostHudTimer();
+    renderLuckBoostHud();
   });
 
   window.addEventListener("beforeunload", () => {
@@ -6777,5 +8146,7 @@
   renderPlayerUi();
   startSellTicker();
   startShopUiTimer();
+  startLuckBoostHudTimer();
+  renderLuckBoostHud();
   savePlayer();
 })();

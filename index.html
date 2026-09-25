@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -10,13 +10,14 @@
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260919-edx" />
+    <link rel="stylesheet" href="styles.css?v=20260925-potion" />
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js" defer></script>
-    <script src="app.js?v=20260919-edx" defer></script>
+    <script src="app.js?v=20260925-potion" defer></script>
   </head>
   <body>
     <div class="bg-grid" aria-hidden="true"></div>
     <div class="bg-glow" aria-hidden="true"></div>
+    <div id="luck-boost-hud" class="luck-boost-hud" aria-live="polite"></div>
 
     <section id="screen-title" class="screen active">
       <div class="title-wrap">
@@ -252,6 +253,7 @@
         <div class="battle-you-card" id="battle-you-card"></div>
         <div class="battle-moves" id="battle-moves"></div>
       </div>
+      <div class="battle-item-dock" id="battle-item-dock"></div>
       <div class="battle-party" id="battle-party" hidden>
         <div class="battle-party-panel">
           <h3>Your cards</h3>
@@ -296,6 +298,9 @@
           <nav class="quests-side" aria-label="Crafting">
             <button type="button" class="quests-side-tab active" data-craft-tab="bench" role="tab">
               Crafting bench
+            </button>
+            <button type="button" class="quests-side-tab" data-craft-tab="shop" role="tab">
+              Crafter's Shop
             </button>
             <button type="button" class="quests-side-tab" data-craft-tab="merger" role="tab">
               Mutation merger
@@ -519,6 +524,28 @@
       </div>
     </div>
 
+    <div id="item-discard-modal" class="overlay" hidden>
+      <div class="overlay-panel qty-panel">
+        <h2>Discard item</h2>
+        <p class="panel-copy" id="item-discard-name">Item</p>
+        <label class="field">
+          <span>Quantity</span>
+          <div class="qty-with-keep">
+            <input id="item-discard-qty" type="number" min="1" step="1" value="1" />
+            <button type="button" class="btn-keep-one" id="btn-discard-keep-one" title="Discard all but one">
+              =1
+            </button>
+          </div>
+        </label>
+        <p class="qty-total">You receive: <strong>Nothing</strong></p>
+        <p class="panel-copy" id="item-discard-hint">Owned: 0</p>
+        <div class="cta-row">
+          <button type="button" class="btn btn-secondary" id="btn-item-discard-cancel">Cancel</button>
+          <button type="button" class="btn btn-danger" id="btn-item-discard-confirm">Delete</button>
+        </div>
+      </div>
+    </div>
+
     <div id="card-sell-modal" class="overlay" hidden>
       <div class="overlay-panel qty-panel">
         <h2>Sell card</h2>
@@ -551,6 +578,15 @@
           <button type="button" class="btn btn-secondary" id="btn-restock-token-no">No</button>
           <button type="button" class="btn btn-primary" id="btn-restock-token-yes">Yes</button>
         </div>
+      </div>
+    </div>
+
+    <div id="battle-item-modal" class="overlay" hidden>
+      <div class="overlay-panel qty-panel engine-charge-panel">
+        <h2 id="battle-item-title">Potion</h2>
+        <p class="panel-copy" id="battle-item-copy">Choose a card to heal 30 HP.</p>
+        <div id="battle-item-list" class="engine-charge-revive-list"></div>
+        <button type="button" class="btn btn-secondary" id="btn-battle-item-cancel">Cancel</button>
       </div>
     </div>
 
